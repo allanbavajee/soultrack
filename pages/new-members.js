@@ -40,32 +40,37 @@ export default function NewMembers() {
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>📋 Liste des nouveaux membres</h2>
+    <div style={{ padding: 20, fontFamily: "'Roboto', sans-serif", maxWidth: 600, margin: "0 auto" }}>
+      <h2 style={{ color: "#4A90E2", textAlign: "center", marginBottom: 20 }}>📋 Nouveaux membres</h2>
+
       <input
         type="text"
         placeholder="Rechercher par nom ou prénom"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        style={{ marginBottom: 20, padding: 8, width: "100%", borderRadius: 6 }}
+        style={{ marginBottom: 20, padding: 10, width: "100%", borderRadius: 8, border: "1px solid #ccc" }}
       />
+
       <ul style={{ listStyle: "none", padding: 0 }}>
         {filteredMembers.map(m => (
           <li key={m.id} style={{
-            marginBottom: 10,
-            padding: 12,
-            borderRadius: 8,
+            marginBottom: 12,
+            padding: 15,
+            borderRadius: 10,
             backgroundColor: getStatusColor(m.statut),
             color: "#fff",
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center"
+            alignItems: "center",
+            flexWrap: "wrap"
           }}>
-            <div>
-              {m.prenom} {m.nom} <br/>
-              Cellule : {m.cellule_name} <br/>
-              Responsable : {m.responsable_suivi}
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <strong>{m.prenom} {m.nom}</strong> <br/>
+              Assignée : {m.cellule_name || "N/A"} <br/>
+              Besoin : {m.notes || "Aucun"} <br/>
+              Responsable : {m.responsable_suivi || "N/A"}
             </div>
+
             {m.statut === "veut rejoindre ICC" && (
               <a
                 href={createWhatsAppLink(m)}
@@ -73,7 +78,7 @@ export default function NewMembers() {
                 rel="noopener noreferrer"
                 style={{ marginLeft: 10 }}
               >
-                <img src="/whatsapp-logo.png" alt="WhatsApp" width={30} />
+                <img src="/whatsapp-logo.png" alt="WhatsApp" width={35} />
               </a>
             )}
           </li>
