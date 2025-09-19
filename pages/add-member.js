@@ -8,27 +8,25 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+/* Liste des cellules */
+const CELLULES = [
+  { id: "1", name: "Curepipe", responsable_name: "Charlotte", phone_e164: "59732188" },
+  { id: "2", name: "Bois Rouge", responsable_name: "Lucie", phone_e164: "51234567" },
+  { id: "3", name: "Bambous", responsable_name: "Manish", phone_e164: "59865475" },
+  { id: "4", name: "Mon Gout", responsable_name: "May Jane", phone_e164: "59876413" },
+  { id: "5", name: "Rose Hill", responsable_name: "Fabrice", phone_e164: "59861473" },
+];
+
 export default function AddMember() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [statut, setStatut] = useState("nouveau");
   const [wantsVisit, setWantsVisit] = useState(true);
+  const [howCame, setHowCame] = useState("Invité");
   const [cellId, setCellId] = useState("");
-  const [cells, setCells] = useState([]);
   const [message, setMessage] = useState("");
-
-  /* Fetch cells from Supabase */
-  useEffect(() => {
-    async function fetchCells() {
-      const { data, error } = await supabase.from("cells").select("*");
-      if (!error) setCells(data);
-    }
-    fetchCells();
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,11 +35,11 @@ export default function AddMember() {
       return;
     }
 
-    const cell = cells.find(c => c.id === cellId);
+    const cell = CELLULES.find(c => c.id === cellId);
     if (!cell) return;
 
     /* Insert into membres */
-    const { data: memberData, error: memberError } = await supabase.from("membres").insert([
+    const { error: memberError } = await supabase.from("membres").insert([
       {
         nom: firstName,
         prenom: lastName,
@@ -53,6 +51,7 @@ export default function AddMember() {
         notes: "",
         responsable_suivi: cell.responsable_name,
         created_at: new Date().toISOString(),
+        how_came: howCame,
       },
     ]);
 
@@ -69,20 +68,20 @@ export default function AddMember() {
         notes: "",
         responsable_suivi: cell.responsable_name,
         created_at: new Date().toISOString(),
+        how_came: howCame,
       },
     ]);
 
     if (memberError) setMessage("Erreur : " + memberError.message);
     else setMessage("Membre ajouté avec succès !");
 
-    setFirstName(""); setLastName(""); setAddress(""); setCity("");
-    setPhone(""); setEmail(""); setStatut("nouveau"); setWantsVisit(true);
-    setCellId("");
+    setFirstName(""); setLastName(""); setPhone(""); setEmail(""); setStatut("nouveau");
+    setWantsVisit(true); setHowCame("Invité"); setCellId("");
   };
 
   const createWhatsAppLink = () => {
     if (!cellId) return "#";
-    const cell = cells.find(c => c.id === cellId);
+    const cell = CELLULES.find(c => c.id === cellId);
     return `https://wa.me/${cell.phone_e164}?text=${encodeURIComponent(
       `Bonjour ${cell.responsable_name}, un nouveau membre ${firstName} ${lastName} a été assigné à votre cellule ${cell.name}.`
     )}`;
@@ -94,30 +93,38 @@ export default function AddMember() {
       <form onSubmit={handleSubmit}>
         <input type="text" placeholder="Prénom" value={firstName} onChange={(e) => setFirstName(e.target.value)} required /><br/><br/>
         <input type="text" placeholder="Nom" value={lastName} onChange={(e) => setLastName(e.target.value)} required /><br/><br/>
-        <input type="text" placeholder="Adresse" value={address} onChange={(e) => setAddress(e.target.value)} /><br/><br/>
-        <input type="text" placeholder="Ville" value={city} onChange={(e) => setCity(e.target.value)} /><br/><br/>
         <input type="text" placeholder="Téléphone (+230...)" value={phone} onChange={(e) => setPhone(e.target.value)} required /><br/><br/>
         <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} /><br/><br/>
+
         <label>Statut : </label>
         <select value={statut} onChange={(e) => setStatut(e.target.value)}>
           <option value="nouveau">Nouveau</option>
           <option value="de passage">De passage</option>
           <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
         </select><br/><br/>
+
+        <label>Comment es-tu venu à l'église ?</label>
+        <select value={howCame} onChange={(e) => setHowCame(e.target.value)}>
+          <option>Invité</option>
+          <option>Réseaux</option>
+          <option>Autre</option>
+        </select><br/><br/>
+
         <label>
           <input type="checkbox" checked={wantsVisit} onChange={(e) => setWantsVisit(e.target.checked)} /> Souhaite être visité
         </label><br/><br/>
+
         <label>Cellule : </label>
         <select value={cellId} onChange={(e) => setCellId(e.target.value)} required>
           <option value="">-- Sélectionner une cellule --</option>
-          {cells.map((c) => (
+          {CELLULES.map((c) => (
             <option key={c.id} value={c.id}>{c.name} ({c.responsable_name})</option>
           ))}
         </select><br/><br/>
 
         {cellId && (
           <div>
-            Responsable : {cells.find(c => c.id === cellId)?.responsable_name}
+            Responsable : {CELLULES.find(c => c.id === cellId)?.responsable_name}
             <a
               href={createWhatsAppLink()}
               target="_blank"
