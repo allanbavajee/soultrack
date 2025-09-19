@@ -1,3 +1,5 @@
+/*pages/add-member.js*/
+console.log("Supabase URL (frontend) :", process.env.NEXT_PUBLIC_SUPABASE_URL);
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
