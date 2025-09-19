@@ -8,11 +8,12 @@ export default function AddMember() {
     prenom: "",
     telephone: "",
     email: "",
-    statut: "veut_rejoindre_ICC",
+    statut: "nouveau", // valeur par défaut valide
     how_came: "",
     assignee: "",
     besoins: "",
   });
+
   const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
@@ -21,7 +22,9 @@ export default function AddMember() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const { error } = await supabase.from("membres").insert([formData]);
+
     if (error) {
       setMessage("Erreur : " + error.message);
     } else {
@@ -31,7 +34,7 @@ export default function AddMember() {
         prenom: "",
         telephone: "",
         email: "",
-        statut: "veut_rejoindre_ICC",
+        statut: "nouveau",
         how_came: "",
         assignee: "",
         besoins: "",
@@ -53,7 +56,7 @@ export default function AddMember() {
         className="bg-white shadow-lg rounded-xl p-6 w-full max-w-md"
       >
         <h1 className="text-2xl font-bold text-center mb-4 text-blue-700">
-          Ajouter un nouveau
+          Ajouter un nouveau membre
         </h1>
 
         <input
@@ -91,14 +94,20 @@ export default function AddMember() {
           className="w-full border p-2 mb-3 rounded"
         />
 
+        {/* ✅ Statut - uniquement valeurs valides de l'enum */}
         <select
           name="statut"
           value={formData.statut}
           onChange={handleChange}
           className="w-full border p-2 mb-3 rounded"
         >
-          <option value="veut_rejoindre_ICC">Veut rejoindre ICC</option>
-          <option value="a_deja_mon_eglise">A déjà mon église</option>
+          <option value="nouveau">Nouveau</option>
+          <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+          <option value="a déjà mon église">A déjà mon église</option>
+          <option value="ancien">Ancien</option>
+          <option value="visiteur">Visiteur</option>
+          <option value="suivi">Suivi</option>
+          <option value="inactif">Inactif</option>
         </select>
 
         <select
