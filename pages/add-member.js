@@ -25,7 +25,7 @@ export default function AddMember() {
   const [wantsVisit, setWantsVisit] = useState(true);
   const [howCame, setHowCame] = useState("Invité");
   const [assignedCell, setAssignedCell] = useState("");
-  const [need, setNeed] = useState(""); // nouveau champ
+  const [need, setNeed] = useState(""); // Champ "Besoin de la personne"
   const [message, setMessage] = useState("");
 
   const handleSubmit = async (e) => {
@@ -45,7 +45,7 @@ export default function AddMember() {
         statut,
         date_premiere_visite: new Date().toISOString(),
         welcome_sent_at: null,
-        notes: need, // on utilise le champ "Besoin de la personne"
+        notes: need,
         responsable_suivi: cell.responsable_name,
         created_at: new Date().toISOString(),
         how_came: howCame,
@@ -61,7 +61,7 @@ export default function AddMember() {
   };
 
   return (
-    <div style={{ padding: 20, fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", maxWidth: 500, margin: "0 auto" }}>
+    <div style={{ padding: 20, fontFamily: "'Roboto', sans-serif", maxWidth: 500, margin: "0 auto" }}>
       {/* Logo + verset biblique */}
       <div style={{ textAlign: "center", marginBottom: 20 }}>
         <img src="/logo.png" alt="Logo de l'église" style={{ width: 100, marginBottom: 10 }} />
