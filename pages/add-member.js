@@ -20,7 +20,7 @@ export default function AddMember() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [statut, setStatut] = useState("nouveau");
+  const [statut, setStatut] = useState("de passage");
   const [wantsVisit, setWantsVisit] = useState(true);
   const [howCame, setHowCame] = useState("Invité");
   const [cellId, setCellId] = useState("");
@@ -29,10 +29,9 @@ export default function AddMember() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!cellId) {
-      setMessage("Veuillez sélectionner une cellule !");
+      setMessage("Veuillez sélectionner une cellule pour ce membre.");
       return;
     }
-
     const cell = CELLULES.find(c => c.id === cellId);
     if (!cell) return;
 
@@ -54,30 +53,45 @@ export default function AddMember() {
 
     if (error) setMessage("Erreur : " + error.message);
     else {
-      setMessage("Membre ajouté avec succès !");
-      setFirstName(""); setLastName(""); setPhone(""); setEmail(""); setStatut("nouveau");
+      setMessage("👏 Membre enregistré avec succès !");
+      setFirstName(""); setLastName(""); setPhone(""); setEmail(""); setStatut("de passage");
       setWantsVisit(true); setHowCame("Invité"); setCellId("");
     }
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>➕ Enregistrer un nouveau membre</h2>
+    <div style={{ padding: 20, fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", maxWidth: 500, margin: "0 auto" }}>
+      {/* Logo + verset biblique */}
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
+        <img src="/logo.png" alt="Logo de l'église" style={{ width: 100, marginBottom: 10 }} />
+        <p style={{ fontStyle: "italic", color: "#555" }}>
+          "Car là où deux ou trois sont assemblés en mon nom, je suis au milieu d’eux." - Matthieu 18:20
+        </p>
+      </div>
+
+      <h2 style={{ color: "#4A90E2", textAlign: "center", marginBottom: 20 }}>📋 Enregistrer un nouveau membre</h2>
+
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-        <input type="text" placeholder="Prénom" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
-        <input type="text" placeholder="Nom" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-        <input type="text" placeholder="Téléphone (+230...)" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        
-        <label>Statut :</label>
-        <select value={statut} onChange={(e) => setStatut(e.target.value)}>
+        <input type="text" placeholder="Prénom" value={firstName} onChange={(e) => setFirstName(e.target.value)} required
+          style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }} />
+        <input type="text" placeholder="Nom" value={lastName} onChange={(e) => setLastName(e.target.value)} required
+          style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }} />
+        <input type="text" placeholder="Téléphone (+230...)" value={phone} onChange={(e) => setPhone(e.target.value)} required
+          style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }} />
+        <input type="email" placeholder="Email (optionnel)" value={email} onChange={(e) => setEmail(e.target.value)}
+          style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }} />
+
+        <label>Statut du membre :</label>
+        <select value={statut} onChange={(e) => setStatut(e.target.value)}
+          style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }}>
           <option value="de passage">De passage</option>
           <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
           <option value="a déjà mon église">A déjà mon église</option>
         </select>
 
-        <label>Comment es-tu venu à l'église ?</label>
-        <select value={howCame} onChange={(e) => setHowCame(e.target.value)}>
+        <label>Comment as-tu connu notre église ?</label>
+        <select value={howCame} onChange={(e) => setHowCame(e.target.value)}
+          style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }}>
           <option>Invité</option>
           <option>Réseaux</option>
           <option>Autre</option>
@@ -87,17 +101,22 @@ export default function AddMember() {
           <input type="checkbox" checked={wantsVisit} onChange={(e) => setWantsVisit(e.target.checked)} /> Souhaite être visité
         </label>
 
-        <label>Cellule :</label>
-        <select value={cellId} onChange={(e) => setCellId(e.target.value)} required>
+        <label>Cellule assignée :</label>
+        <select value={cellId} onChange={(e) => setCellId(e.target.value)} required
+          style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }}>
           <option value="">-- Sélectionner une cellule --</option>
           {CELLULES.map((c) => (
             <option key={c.id} value={c.id}>{c.name} ({c.responsable_name})</option>
           ))}
         </select>
 
-        <button type="submit" style={{ padding: "10px", background: "#4CAF50", color: "#fff", border: "none", borderRadius: "6px" }}>Ajouter le membre</button>
+        <button type="submit"
+          style={{ padding: 12, background: "#4A90E2", color: "#fff", border: "none", borderRadius: 8, fontWeight: "bold" }}>
+          Ajouter le membre
+        </button>
       </form>
-      {message && <p>{message}</p>}
+
+      {message && <p style={{ marginTop: 15, color: "#2E7D32", fontWeight: "bold", textAlign: "center" }}>{message}</p>}
     </div>
   );
 }
