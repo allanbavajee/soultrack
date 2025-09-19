@@ -8,11 +8,12 @@ const supabase = createClient(
 );
 
 const CELLULES = [
-  { id: "1", name: "Curepipe", responsable_name: "Charlotte", phone_e164: "59732188" },
-  { id: "2", name: "Bois Rouge", responsable_name: "Lucie", phone_e164: "51234567" },
-  { id: "3", name: "Bambous", responsable_name: "Manish", phone_e164: "59865475" },
-  { id: "4", name: "Mon Gout", responsable_name: "May Jane", phone_e164: "59876413" },
-  { id: "5", name: "Rose Hill", responsable_name: "Fabrice", phone_e164: "59861473" },
+  { id: "1", name: "Cellule de Curepipe", responsable_name: "Charlotte", phone_e164: "59732188" },
+  { id: "2", name: "Cellule de Bois Rouge", responsable_name: "Lucie", phone_e164: "51234567" },
+  { id: "3", name: "Cellule de Bambous", responsable_name: "Manish", phone_e164: "59865475" },
+  { id: "4", name: "Cellule de Mon Gout", responsable_name: "May Jane", phone_e164: "59876413" },
+  { id: "5", name: "Cellule de Rose Hill", responsable_name: "Fabrice", phone_e164: "59861473" },
+  { id: "6", name: "Eglise", responsable_name: "", phone_e164: "" },
 ];
 
 export default function AddMember() {
@@ -23,17 +24,17 @@ export default function AddMember() {
   const [statut, setStatut] = useState("de passage");
   const [wantsVisit, setWantsVisit] = useState(true);
   const [howCame, setHowCame] = useState("Invité");
-  const [cellId, setCellId] = useState("");
+  const [assignedCell, setAssignedCell] = useState("");
+  const [need, setNeed] = useState(""); // nouveau champ
   const [message, setMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!cellId) {
-      setMessage("Veuillez sélectionner une cellule pour ce membre.");
+    if (!assignedCell) {
+      setMessage("Veuillez sélectionner où la personne est assignée.");
       return;
     }
-    const cell = CELLULES.find(c => c.id === cellId);
-    if (!cell) return;
+    const cell = CELLULES.find(c => c.id === assignedCell);
 
     const { error } = await supabase.from("membres").insert([
       {
@@ -44,7 +45,7 @@ export default function AddMember() {
         statut,
         date_premiere_visite: new Date().toISOString(),
         welcome_sent_at: null,
-        notes: "",
+        notes: need, // on utilise le champ "Besoin de la personne"
         responsable_suivi: cell.responsable_name,
         created_at: new Date().toISOString(),
         how_came: howCame,
@@ -55,7 +56,7 @@ export default function AddMember() {
     else {
       setMessage("👏 Membre enregistré avec succès !");
       setFirstName(""); setLastName(""); setPhone(""); setEmail(""); setStatut("de passage");
-      setWantsVisit(true); setHowCame("Invité"); setCellId("");
+      setWantsVisit(true); setHowCame("Invité"); setAssignedCell(""); setNeed("");
     }
   };
 
@@ -97,16 +98,16 @@ export default function AddMember() {
           <option>Autre</option>
         </select>
 
-        <label>
-          <input type="checkbox" checked={wantsVisit} onChange={(e) => setWantsVisit(e.target.checked)} /> Souhaite être visité
-        </label>
+        <label>Besoin de la personne :</label>
+        <textarea placeholder="Notes ou besoin spécifique..." value={need} onChange={(e) => setNeed(e.target.value)}
+          style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc", minHeight: 60 }} />
 
-        <label>Cellule assignée :</label>
-        <select value={cellId} onChange={(e) => setCellId(e.target.value)} required
+        <label>Assignée :</label>
+        <select value={assignedCell} onChange={(e) => setAssignedCell(e.target.value)} required
           style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }}>
-          <option value="">-- Sélectionner une cellule --</option>
+          <option value="">-- Sélectionner --</option>
           {CELLULES.map((c) => (
-            <option key={c.id} value={c.id}>{c.name} ({c.responsable_name})</option>
+            <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
 
