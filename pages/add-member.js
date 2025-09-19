@@ -83,7 +83,7 @@ export default function AddMember() {
     if (!cellId) return "#";
     const cell = CELLULES.find(c => c.id === cellId);
     return `https://wa.me/${cell.phone_e164}?text=${encodeURIComponent(
-      `Bonjour ${cell.responsable_name}, un nouveau membre ${firstName} ${lastName} a été assigné à votre cellule ${cell.name}.`
+     `Bonjour ${cell.responsable_name} 🌸, nous avons la joie d’accueillir ${firstName} ${lastName} dans notre église. Il habite à ${address || "n/a"} et son téléphone est ${phone}. Il a été assigné à votre cellule ${cell.name}. Merci de l’accueillir avec amour ! 🙏`
     )}`;
   };
 
