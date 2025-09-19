@@ -8,7 +8,7 @@ export default function AddMember() {
     prenom: "",
     telephone: "",
     email: "",
-    statut: "nouveau", // valeur par défaut valide
+    statut: "nouveau",
     how_came: "",
     assignee: "",
     besoins: "",
@@ -94,7 +94,6 @@ export default function AddMember() {
           className="w-full border p-2 mb-3 rounded"
         />
 
-        {/* ✅ Statut - uniquement valeurs valides de l'enum */}
         <select
           name="statut"
           value={formData.statut}
