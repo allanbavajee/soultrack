@@ -16,7 +16,7 @@ export default function NewMembers() {
       const { data, error } = await supabase
         .from("members")
         .select("*")
-        .eq("welcome_sent", false)  // seulement les nouveaux
+        .eq("welcome_sent", false)
         .order("date_premiere_visite", { ascending: true });
       if (!error) setMembers(data);
     }
@@ -35,9 +35,9 @@ export default function NewMembers() {
         {members.map(m => (
           <li key={m.id} style={{ marginBottom: 10 }}>
             {m.first_name} {m.last_name} — {m.phone_e164} 
-            <a 
-              href={createWhatsAppLink(m.phone_e164, m.first_name)} 
-              target="_blank" 
+            <a
+              href={createWhatsAppLink(m.phone_e164, m.first_name)}
+              target="_blank"
               rel="noopener noreferrer"
               style={{ marginLeft: 10, color: 'green', fontWeight: 'bold' }}
             >
