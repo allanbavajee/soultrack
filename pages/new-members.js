@@ -15,7 +15,7 @@ export default function NewMembers() {
 
   useEffect(() => {
     async function fetchData() {
-      const { data: membersData } = await supabase.from("members").select("*").eq("welcome_sent", false);
+      const { data: membersData } = await supabase.from("to_welcome").select("*").order("date_premiere_visite", { ascending: true });
       const { data: cellsData } = await supabase.from("cells").select("*");
       setMembers(membersData);
       setCells(cellsData);
@@ -24,15 +24,16 @@ export default function NewMembers() {
   }, []);
 
   const filteredMembers = members.filter(
-    m => m.first_name.toLowerCase().includes(search.toLowerCase()) ||
-         m.last_name.toLowerCase().includes(search.toLowerCase())
+    m => m.nom.toLowerCase().includes(search.toLowerCase()) ||
+         m.prenom.toLowerCase().includes(search.toLowerCase())
   );
 
-  const createWhatsAppLink = (phone, firstName, cellId) => {
-    const cell = cells.find(c => c.id === cellId);
+  const createWhatsAppLink = (m) => {
+    const cell = cells.find(c => c.responsable_name === m.responsable_suivi);
     if (!cell) return "#";
-    const message = `Bonjour ${cell.responsable_name}, un nouveau membre ${firstName} a été assigné à votre cellule ${cell.name}.`;
-    return `https://wa.me/${cell.phone_e164}?text=${encodeURIComponent(message)}`;
+    return `https://wa.me/${cell.phone_e164}?text=${encodeURIComponent(
+      `Bonjour ${cell.responsable_name}, un nouveau membre ${m.nom} ${m.prenom} a été assigné à votre cellule ${cell.name}.`
+    )}`;
   };
 
   return (
@@ -48,14 +49,14 @@ export default function NewMembers() {
       <ul>
         {filteredMembers.map(m => (
           <li key={m.id} style={{ marginBottom: 10 }}>
-            {m.first_name} {m.last_name} — {m.phone_e164} — Cellule : {cells.find(c => c.id === m.cell_id)?.name || "Non assignée"}
+            {m.nom} {m.prenom} — {m.telephone} — Responsable : {m.responsable_suivi}
             <a
-              href={createWhatsAppLink(m.phone_e164, m.first_name, m.cell_id)}
+              href={createWhatsAppLink(m)}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ marginLeft: 10, color: 'green', fontWeight: 'bold' }}
+              style={{ marginLeft: 10 }}
             >
-              📲 Notifier le responsable
+              <img src="/whatsapp-logo.png" alt="WhatsApp" width={24} />
             </a>
           </li>
         ))}
