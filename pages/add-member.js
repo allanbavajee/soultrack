@@ -1,163 +1,154 @@
 // pages/add-member.js
 import { useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 export default function AddMember() {
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     nom: "",
     prenom: "",
     telephone: "",
     email: "",
-    visiteur: "",
-    commentaire: "",
+    statut: "visiteur",
+    how_came: "",
     besoin: "",
-    assigne: "",
+    assignee: "",
   });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form data:", formData);
-    // Ici tu pourras ajouter l’appel à Supabase
+    const { error } = await supabase.from("membres").insert([form]);
+    if (error) {
+      alert("Erreur : " + error.message);
+    } else {
+      alert("✅ Membre ajouté avec succès !");
+      setForm({
+        nom: "",
+        prenom: "",
+        telephone: "",
+        email: "",
+        statut: "visiteur",
+        how_came: "",
+        besoin: "",
+        assignee: "",
+      });
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-6">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-2">
-          Ajouter un nouveau membre
-        </h1>
-        <p className="text-gray-500 text-center mb-6 italic">
-          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+        <h1 className="text-2xl font-bold text-center mb-2">Ajouter un membre</h1>
+        <p className="text-center text-gray-500 mb-6">
+          « Allez, faites de toutes les nations des disciples » <br />– Matthieu 28:19
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Nom */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nom
-            </label>
+            <label className="block text-sm font-medium mb-1">Nom</label>
             <input
               type="text"
               name="nom"
-              value={formData.nom}
+              value={form.nom}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              placeholder="Entrez le nom"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              required
             />
           </div>
 
-          {/* Prénom */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Prénom
-            </label>
+            <label className="block text-sm font-medium mb-1">Prénom</label>
             <input
               type="text"
               name="prenom"
-              value={formData.prenom}
+              value={form.prenom}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              placeholder="Entrez le prénom"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
 
-          {/* Téléphone */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Téléphone
-            </label>
+            <label className="block text-sm font-medium mb-1">Téléphone</label>
             <input
-              type="text"
+              type="tel"
               name="telephone"
-              value={formData.telephone}
+              value={form.telephone}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              placeholder="Numéro de téléphone"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
 
-          {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
+            <label className="block text-sm font-medium mb-1">Email</label>
             <input
               type="email"
               name="email"
-              value={formData.email}
+              value={form.email}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              placeholder="Adresse email"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
 
-          {/* Visiteur */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Visiteur
-            </label>
+            <label className="block text-sm font-medium mb-1">Statut</label>
+            <select
+              name="statut"
+              value={form.statut}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            >
+              <option value="visiteur">Visiteur</option>
+              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+              <option value="a déjà mon église">A déjà mon église</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Comment il est venu</label>
             <input
               type="text"
-              name="visiteur"
-              value={formData.visiteur}
+              name="how_came"
+              value={form.how_came}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              placeholder="Oui / Non"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
 
-          {/* Commentaire */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Commentaire
-            </label>
+            <label className="block text-sm font-medium mb-1">Besoin de la personne</label>
             <textarea
-              name="commentaire"
-              value={formData.commentaire}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              rows="3"
-              placeholder="Ajoutez un commentaire"
-            ></textarea>
-          </div>
-
-          {/* Besoin */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Besoin
-            </label>
-            <input
-              type="text"
               name="besoin"
-              value={formData.besoin}
+              value={form.besoin}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              placeholder="Ex: prière, soutien..."
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              rows="3"
             />
           </div>
 
-          {/* Assigné */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Assigné à
-            </label>
-            <input
-              type="text"
-              name="assigne"
-              value={formData.assigne}
+            <label className="block text-sm font-medium mb-1">Assignée à</label>
+            <select
+              name="assignee"
+              value={form.assignee}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              placeholder="Nom du responsable"
-            />
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            >
+              <option value="">-- Sélectionner --</option>
+              <option value="Cellule de Curepipe">Cellule de Curepipe</option>
+              <option value="Cellule de Bois Rouge">Cellule de Bois Rouge</option>
+              <option value="Cellule de Bambous">Cellule de Bambous</option>
+              <option value="Cellule de Rose Hill">Cellule de Rose Hill</option>
+              <option value="Cellule de Mon Gout">Cellule de Mon Gout</option>
+              <option value="Église">Église</option>
+            </select>
           </div>
 
-          {/* Bouton */}
           <button
             type="submit"
-            className="w-full py-3 rounded-md bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition"
+            className="w-full bg-indigo-600 text-white font-medium py-2 rounded-lg hover:bg-indigo-700 transition"
           >
             ➕ Ajouter
           </button>
