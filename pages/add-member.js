@@ -14,15 +14,6 @@ export default function AddMember() {
     responsable_suivi: "",
   });
 
-  const cellules = [
-    "Cellule de Curepipe",
-    "Cellule de Bois Rouge",
-    "Cellule de Bambous",
-    "Cellule de Rose Hill",
-    "Cellule de Mon Gout",
-    "Eglise",
-  ];
-
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -45,8 +36,6 @@ export default function AddMember() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex flex-col items-center p-4">
-
-      {/* Header */}
       <div className="text-center mb-6">
         <img src="/logo.png" alt="Logo ICC" className="mx-auto w-24 h-24 mb-2" />
         <h1 className="text-3xl font-bold text-indigo-700">Ajouter un nouveau membre</h1>
@@ -55,12 +44,10 @@ export default function AddMember() {
         </p>
       </div>
 
-      {/* Formulaire */}
       <form
         onSubmit={handleSubmit}
         className="bg-white shadow-lg rounded-2xl w-full max-w-md p-8 space-y-6"
       >
-        {/* Nom */}
         <div>
           <label className="block text-indigo-600 font-semibold mb-1">Nom</label>
           <input
@@ -74,7 +61,6 @@ export default function AddMember() {
           />
         </div>
 
-        {/* Prénom */}
         <div>
           <label className="block text-indigo-600 font-semibold mb-1">Prénom</label>
           <input
@@ -87,7 +73,6 @@ export default function AddMember() {
           />
         </div>
 
-        {/* Téléphone */}
         <div>
           <label className="block text-indigo-600 font-semibold mb-1">Téléphone</label>
           <input
@@ -100,7 +85,6 @@ export default function AddMember() {
           />
         </div>
 
-        {/* Email */}
         <div>
           <label className="block text-indigo-600 font-semibold mb-1">Email</label>
           <input
@@ -113,7 +97,6 @@ export default function AddMember() {
           />
         </div>
 
-        {/* Statut */}
         <div>
           <label className="block text-indigo-600 font-semibold mb-1">Statut</label>
           <select
@@ -128,7 +111,6 @@ export default function AddMember() {
           </select>
         </div>
 
-        {/* Comment es-tu venu ? */}
         <div>
           <label className="block text-indigo-600 font-semibold mb-1">
             Comment es-tu venu ?
@@ -146,7 +128,6 @@ export default function AddMember() {
           </select>
         </div>
 
-        {/* Besoin */}
         <div>
           <label className="block text-indigo-600 font-semibold mb-1">
             Besoin de la personne
@@ -160,7 +141,6 @@ export default function AddMember() {
           />
         </div>
 
-        {/* Assignée à */}
         <div>
           <label className="block text-indigo-600 font-semibold mb-1">Assignée à</label>
           <select
@@ -170,13 +150,15 @@ export default function AddMember() {
             className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-400 bg-indigo-50"
           >
             <option value="">Sélectionner</option>
-            {cellules.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
+            <option value="Cellule de Curepipe">Cellule de Curepipe</option>
+            <option value="Cellule de Bois Rouge">Cellule de Bois Rouge</option>
+            <option value="Cellule de Bambous">Cellule de Bambous</option>
+            <option value="Cellule de Rose Hill">Cellule de Rose Hill</option>
+            <option value="Cellule de Mon Gout">Cellule de Mon Gout</option>
+            <option value="Eglise">Eglise</option>
           </select>
         </div>
 
-        {/* Bouton */}
         <button
           type="submit"
           className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition transform hover:scale-[1.02]"
