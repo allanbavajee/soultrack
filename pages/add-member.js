@@ -35,9 +35,10 @@ export default function AddMember() {
         <input name="telephone" placeholder="Téléphone" onChange={handleChange} className="w-full p-2 border rounded"/>
         <input name="email" placeholder="Email" onChange={handleChange} className="w-full p-2 border rounded"/>
         <select name="statut" onChange={handleChange} className="w-full p-2 border rounded">
+          <option value=""></option>
           <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
           <option value="a déjà mon église">A déjà mon église</option>
-          <option value="visiteur">Ancien</option>          
+          <option value="visiteur">visiteur</option>          
         </select>
         <select name="assignee" onChange={handleChange} className="w-full p-2 border rounded">
           <option value="">Assignée a :</option>
