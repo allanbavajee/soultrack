@@ -54,95 +54,104 @@ export default function AddMember() {
         </p>
       </div>
 
-      {/* Formulaire */}
+      {/* Formulaire vertical */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white shadow-md rounded-xl w-full max-w-md p-6 space-y-5"
+        className="bg-white shadow-md rounded-xl w-full max-w-md p-6 space-y-4"
       >
-        {/* Informations personnelles */}
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-indigo-600 border-b pb-1">Informations personnelles</h2>
-          <input
-            name="nom"
-            placeholder="Nom"
-            value={form.nom}
-            onChange={handleChange}
-            required
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-          />
-          <input
-            name="prenom"
-            placeholder="Prénom"
-            value={form.prenom}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-          />
-          <input
-            name="telephone"
-            placeholder="📞 Téléphone"
-            value={form.telephone}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-          />
-          <input
-            name="email"
-            placeholder="✉️ Email"
-            value={form.email}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-          />
-        </section>
+        {/* Nom */}
+        <label className="font-semibold text-indigo-600">Nom</label>
+        <input
+          name="nom"
+          value={form.nom}
+          onChange={handleChange}
+          placeholder="Nom"
+          required
+          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+        />
 
-        {/* Statut et provenance */}
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-indigo-600 border-b pb-1">Statut et provenance</h2>
-          <select
-            name="statut"
-            value={form.statut}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 bg-indigo-50"
-          >
-            <option value="visiteur">👋 Visiteur</option>
-            <option value="veut rejoindre ICC">🙏 Veut rejoindre ICC</option>
-            <option value="a déjà mon église">⛪ A déjà mon église</option>
-          </select>
+        {/* Prénom */}
+        <label className="font-semibold text-indigo-600">Prénom</label>
+        <input
+          name="prenom"
+          value={form.prenom}
+          onChange={handleChange}
+          placeholder="Prénom"
+          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+        />
 
-          <select
-            name="how_came"
-            value={form.how_came}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 bg-indigo-50"
-          >
-            <option value="">Comment es-tu venu à l'église ?</option>
-            <option value="invite">👤 Invité</option>
-            <option value="reseaux">🌐 Réseaux</option>
-            <option value="autre">📌 Autre</option>
-          </select>
-        </section>
+        {/* Téléphone */}
+        <label className="font-semibold text-indigo-600">Téléphone</label>
+        <input
+          name="telephone"
+          value={form.telephone}
+          onChange={handleChange}
+          placeholder="Téléphone"
+          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+        />
 
-        {/* Besoin et assignation */}
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-indigo-600 border-b pb-1">Besoin & Assignation</h2>
-          <textarea
-            name="besoin"
-            placeholder="📝 Besoin de la personne"
-            value={form.besoin}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-          />
-          <select
-            name="responsable_suivi"
-            value={form.responsable_suivi}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 bg-indigo-50"
-          >
-            <option value="">Assignée à</option>
-            {cellules.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-        </section>
+        {/* Email */}
+        <label className="font-semibold text-indigo-600">Email</label>
+        <input
+          name="email"
+          value={form.email}
+          onChange={handleChange}
+          placeholder="Email"
+          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+        />
 
+        {/* Statut */}
+        <label className="font-semibold text-indigo-600">Statut</label>
+        <select
+          name="statut"
+          value={form.statut}
+          onChange={handleChange}
+          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 bg-indigo-50"
+        >
+          <option value="visiteur">Visiteur</option>
+          <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+          <option value="a déjà mon église">A déjà mon église</option>
+        </select>
+
+        {/* Comment es-tu venu ? */}
+        <label className="font-semibold text-indigo-600">Comment es-tu venu ?</label>
+        <select
+          name="how_came"
+          value={form.how_came}
+          onChange={handleChange}
+          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 bg-indigo-50"
+        >
+          <option value="">Sélectionner</option>
+          <option value="invite">Invité</option>
+          <option value="reseaux">Réseaux</option>
+          <option value="autre">Autre</option>
+        </select>
+
+        {/* Besoin de la personne */}
+        <label className="font-semibold text-indigo-600">Besoin de la personne</label>
+        <textarea
+          name="besoin"
+          value={form.besoin}
+          onChange={handleChange}
+          placeholder="Besoin de la personne"
+          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+        />
+
+        {/* Assignée à */}
+        <label className="font-semibold text-indigo-600">Assignée à</label>
+        <select
+          name="responsable_suivi"
+          value={form.responsable_suivi}
+          onChange={handleChange}
+          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 bg-indigo-50"
+        >
+          <option value="">Sélectionner</option>
+          {cellules.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+
+        {/* Bouton */}
         <button
           type="submit"
           className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition transform hover:scale-[1.02]"
