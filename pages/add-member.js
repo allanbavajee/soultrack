@@ -49,6 +49,7 @@ export default function AddMember() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-white p-6 flex flex-col items-center">
+      {/* Header */}
       <div className="text-center mb-6">
         <img src="/logo.png" alt="Logo ICC" className="mx-auto w-20 h-20 drop-shadow-md" />
         <p className="mt-3 text-sm italic text-indigo-700 font-medium">
@@ -96,6 +97,7 @@ export default function AddMember() {
             className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
           />
 
+          {/* Statut */}
           <select
             name="statut"
             value={form.statut}
@@ -107,6 +109,7 @@ export default function AddMember() {
             <option value="a déjà mon église">⛪ A déjà mon église</option>
           </select>
 
+          {/* Comment il est venu */}
           <select
             name="how_came"
             value={form.how_came}
@@ -119,6 +122,7 @@ export default function AddMember() {
             <option value="autre">📌 Autre</option>
           </select>
 
+          {/* Besoin */}
           <textarea
             name="besoin"
             placeholder="📝 Besoin de la personne"
@@ -127,6 +131,7 @@ export default function AddMember() {
             className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
           />
 
+          {/* Assignée à */}
           <select
             name="responsable_suivi"
             value={form.responsable_suivi}
@@ -141,6 +146,7 @@ export default function AddMember() {
             ))}
           </select>
 
+          {/* Submit */}
           <button
             type="submit"
             className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition transform hover:scale-[1.02]"
