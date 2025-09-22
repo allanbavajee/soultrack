@@ -33,7 +33,7 @@ export default function AddMember() {
     if (error) {
       alert("❌ Erreur : " + error.message);
     } else {
-      alert("✅ Nouveau membre ajouté avec succès !");
+      alert("✅ Nouveau membre ajouté !");
       setForm({
         nom: "",
         prenom: "",
@@ -48,33 +48,37 @@ export default function AddMember() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-400 via-indigo-300 to-white p-6 flex flex-col items-center">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 p-6 flex flex-col items-center">
       {/* Header */}
-      <div className="text-center mb-8">
-        <div className="bg-white/20 backdrop-blur-md inline-block px-6 py-4 rounded-3xl shadow-lg">
-          <img src="/logo.png" alt="Logo ICC" className="mx-auto w-24 h-24 mb-2 animate-bounce" />
-          <p className="text-indigo-900 font-bold text-lg">
+      <div className="mb-8 text-center">
+        <div className="inline-block bg-white/20 backdrop-blur-md px-6 py-4 rounded-3xl shadow-lg animate-pulse">
+          <img
+            src="/logo.png"
+            alt="Logo ICC"
+            className="mx-auto w-24 h-24 rounded-full shadow-lg mb-3"
+          />
+          <p className="text-white font-bold text-lg italic drop-shadow-md">
             « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
           </p>
         </div>
       </div>
 
-      {/* Card Form */}
-      <div className="w-full max-w-md bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-2xl border border-indigo-200 animate-fade-in">
-        <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-6">
-          Ajouter un membre
+      {/* Form Card */}
+      <div className="w-full max-w-lg bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl p-8 space-y-6 border border-white/20 animate-fade-in">
+        <h1 className="text-3xl font-extrabold text-center text-purple-800 mb-4">
+          ➕ Ajouter un membre
         </h1>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
-          {/* Nom & Prénom */}
-          <div className="space-y-2">
+          {/* Nom / Prénom */}
+          <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
               name="nom"
               placeholder="Nom"
               value={form.nom}
               onChange={handleChange}
-              className="w-full p-4 rounded-2xl border-2 border-purple-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-200 shadow-sm transition"
+              className="p-4 rounded-2xl border-2 border-purple-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-200 shadow-sm transition duration-300 hover:scale-105"
               required
             />
             <input
@@ -83,19 +87,19 @@ export default function AddMember() {
               placeholder="Prénom"
               value={form.prenom}
               onChange={handleChange}
-              className="w-full p-4 rounded-2xl border-2 border-purple-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-200 shadow-sm transition"
+              className="p-4 rounded-2xl border-2 border-purple-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-200 shadow-sm transition duration-300 hover:scale-105"
             />
           </div>
 
-          {/* Téléphone & Email */}
-          <div className="space-y-2">
+          {/* Contact */}
+          <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
               name="telephone"
               placeholder="📞 Téléphone"
               value={form.telephone}
               onChange={handleChange}
-              className="w-full p-4 rounded-2xl border-2 border-indigo-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 shadow-sm transition"
+              className="p-4 rounded-2xl border-2 border-indigo-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 shadow-sm transition duration-300 hover:scale-105"
             />
             <input
               type="email"
@@ -103,7 +107,7 @@ export default function AddMember() {
               placeholder="✉️ Email"
               value={form.email}
               onChange={handleChange}
-              className="w-full p-4 rounded-2xl border-2 border-indigo-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 shadow-sm transition"
+              className="p-4 rounded-2xl border-2 border-indigo-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 shadow-sm transition duration-300 hover:scale-105"
             />
           </div>
 
@@ -112,7 +116,7 @@ export default function AddMember() {
             name="statut"
             value={form.statut}
             onChange={handleChange}
-            className="w-full p-4 rounded-2xl border-2 border-green-300 bg-green-50 focus:border-green-500 focus:ring-1 focus:ring-green-200 shadow-sm transition"
+            className="w-full p-4 rounded-2xl border-2 border-green-400 bg-green-50 focus:border-green-500 focus:ring-1 focus:ring-green-200 shadow-sm transition duration-300 hover:scale-105"
           >
             <option value="visiteur">👋 Visiteur</option>
             <option value="veut rejoindre ICC">🙏 Veut rejoindre ICC</option>
@@ -124,7 +128,7 @@ export default function AddMember() {
             name="how_came"
             value={form.how_came}
             onChange={handleChange}
-            className="w-full p-4 rounded-2xl border-2 border-yellow-300 bg-yellow-50 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-200 shadow-sm transition"
+            className="w-full p-4 rounded-2xl border-2 border-yellow-400 bg-yellow-50 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-200 shadow-sm transition duration-300 hover:scale-105"
           >
             <option value="">Comment es-tu venu à l'église ?</option>
             <option value="invite">👤 Invité</option>
@@ -138,7 +142,7 @@ export default function AddMember() {
             placeholder="📝 Besoin de la personne"
             value={form.besoin}
             onChange={handleChange}
-            className="w-full p-4 rounded-2xl border-2 border-pink-300 focus:border-pink-500 focus:ring-1 focus:ring-pink-200 shadow-sm transition"
+            className="w-full p-4 rounded-2xl border-2 border-pink-400 focus:border-pink-500 focus:ring-1 focus:ring-pink-200 shadow-sm transition duration-300 hover:scale-105"
           />
 
           {/* Assignée à */}
@@ -146,7 +150,7 @@ export default function AddMember() {
             name="responsable_suivi"
             value={form.responsable_suivi}
             onChange={handleChange}
-            className="w-full p-4 rounded-2xl border-2 border-indigo-300 bg-indigo-50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 shadow-sm transition"
+            className="w-full p-4 rounded-2xl border-2 border-indigo-300 bg-indigo-50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 shadow-sm transition duration-300 hover:scale-105"
           >
             <option value="">Assignée à</option>
             {cellules.map((c) => (
@@ -159,7 +163,7 @@ export default function AddMember() {
           {/* Bouton Ajouter */}
           <button
             type="submit"
-            className="w-full py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-3xl shadow-lg hover:scale-105 transition transform"
+            className="w-full py-4 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 text-white font-extrabold rounded-3xl shadow-lg hover:scale-105 transition transform duration-300"
           >
             Ajouter le membre
           </button>
