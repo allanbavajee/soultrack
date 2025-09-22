@@ -48,61 +48,71 @@ export default function AddMember() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-white p-6 flex flex-col items-center">
+    <div className="min-h-screen bg-gradient-to-b from-purple-400 via-indigo-300 to-white p-6 flex flex-col items-center">
       {/* Header */}
-      <div className="text-center mb-6">
-        <img src="/logo.png" alt="Logo ICC" className="mx-auto w-20 h-20 drop-shadow-md" />
-        <p className="mt-3 text-sm italic text-indigo-700 font-medium">
-          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
-        </p>
+      <div className="text-center mb-8">
+        <div className="bg-white/20 backdrop-blur-md inline-block px-6 py-4 rounded-3xl shadow-lg">
+          <img src="/logo.png" alt="Logo ICC" className="mx-auto w-24 h-24 mb-2 animate-bounce" />
+          <p className="text-indigo-900 font-bold text-lg">
+            « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
+          </p>
+        </div>
       </div>
 
-      <div className="w-full max-w-md bg-white p-6 rounded-2xl shadow-xl border border-indigo-100">
-        <h1 className="text-2xl font-extrabold text-center text-indigo-700 mb-6">
-          ➕ Ajouter un membre
+      {/* Card Form */}
+      <div className="w-full max-w-md bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-2xl border border-indigo-200 animate-fade-in">
+        <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-6">
+          Ajouter un membre
         </h1>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            name="nom"
-            placeholder="Nom"
-            value={form.nom}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-            required
-          />
-          <input
-            type="text"
-            name="prenom"
-            placeholder="Prénom"
-            value={form.prenom}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-          />
-          <input
-            type="text"
-            name="telephone"
-            placeholder="📞 Téléphone"
-            value={form.telephone}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="✉️ Email"
-            value={form.email}
-            onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-          />
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          {/* Nom & Prénom */}
+          <div className="space-y-2">
+            <input
+              type="text"
+              name="nom"
+              placeholder="Nom"
+              value={form.nom}
+              onChange={handleChange}
+              className="w-full p-4 rounded-2xl border-2 border-purple-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-200 shadow-sm transition"
+              required
+            />
+            <input
+              type="text"
+              name="prenom"
+              placeholder="Prénom"
+              value={form.prenom}
+              onChange={handleChange}
+              className="w-full p-4 rounded-2xl border-2 border-purple-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-200 shadow-sm transition"
+            />
+          </div>
+
+          {/* Téléphone & Email */}
+          <div className="space-y-2">
+            <input
+              type="text"
+              name="telephone"
+              placeholder="📞 Téléphone"
+              value={form.telephone}
+              onChange={handleChange}
+              className="w-full p-4 rounded-2xl border-2 border-indigo-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 shadow-sm transition"
+            />
+            <input
+              type="email"
+              name="email"
+              placeholder="✉️ Email"
+              value={form.email}
+              onChange={handleChange}
+              className="w-full p-4 rounded-2xl border-2 border-indigo-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 shadow-sm transition"
+            />
+          </div>
 
           {/* Statut */}
           <select
             name="statut"
             value={form.statut}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 bg-indigo-50"
+            className="w-full p-4 rounded-2xl border-2 border-green-300 bg-green-50 focus:border-green-500 focus:ring-1 focus:ring-green-200 shadow-sm transition"
           >
             <option value="visiteur">👋 Visiteur</option>
             <option value="veut rejoindre ICC">🙏 Veut rejoindre ICC</option>
@@ -114,7 +124,7 @@ export default function AddMember() {
             name="how_came"
             value={form.how_came}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 bg-indigo-50"
+            className="w-full p-4 rounded-2xl border-2 border-yellow-300 bg-yellow-50 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-200 shadow-sm transition"
           >
             <option value="">Comment es-tu venu à l'église ?</option>
             <option value="invite">👤 Invité</option>
@@ -128,7 +138,7 @@ export default function AddMember() {
             placeholder="📝 Besoin de la personne"
             value={form.besoin}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+            className="w-full p-4 rounded-2xl border-2 border-pink-300 focus:border-pink-500 focus:ring-1 focus:ring-pink-200 shadow-sm transition"
           />
 
           {/* Assignée à */}
@@ -136,7 +146,7 @@ export default function AddMember() {
             name="responsable_suivi"
             value={form.responsable_suivi}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 bg-indigo-50"
+            className="w-full p-4 rounded-2xl border-2 border-indigo-300 bg-indigo-50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 shadow-sm transition"
           >
             <option value="">Assignée à</option>
             {cellules.map((c) => (
@@ -146,12 +156,12 @@ export default function AddMember() {
             ))}
           </select>
 
-          {/* Submit */}
+          {/* Bouton Ajouter */}
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition transform hover:scale-[1.02]"
+            className="w-full py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-3xl shadow-lg hover:scale-105 transition transform"
           >
-            Ajouter
+            Ajouter le membre
           </button>
         </form>
       </div>
