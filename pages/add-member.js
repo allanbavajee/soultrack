@@ -1,135 +1,159 @@
 // pages/add-member.js
 import { useState } from "react";
-import { useRouter } from "next/router";
 import { supabase } from "../lib/supabaseClient";
 
 export default function AddMember() {
-  const router = useRouter();
-  const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-    phone: "",
+  const [form, setForm] = useState({
+    nom: "",
+    prenom: "",
+    telephone: "",
     email: "",
-    besoin: "",
-    commentaire: "",
-    responsable: "",
     statut: "visiteur",
+    how_came: "",
+    besoin: "",
+    responsable_suivi: "",
   });
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+
+  const cellules = [
+    { value: "Cellule de Curepipe", responsable: "Charlotte" },
+    { value: "Cellule de Bois Rouge", responsable: "Lucie" },
+    { value: "Cellule de Bambous", responsable: "Manish" },
+    { value: "Cellule de Rose Hill", responsable: "Fabrice" },
+    { value: "Cellule de Mon Gout", responsable: "May Jane" },
+    { value: "Eglise", responsable: "Pastoral" },
+  ];
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setErrorMsg("");
-
-    try {
-      const { error } = await supabase.from("membres").insert([formData]);
-      if (error) throw error;
-      router.push("/members");
-    } catch (err) {
-      console.error(err);
-      setErrorMsg(err.message);
-    } finally {
-      setLoading(false);
+    const { error } = await supabase.from("membres").insert([form]);
+    if (error) {
+      alert("Erreur : " + error.message);
+    } else {
+      alert("Membre ajouté avec succès 🙌");
+      setForm({
+        nom: "",
+        prenom: "",
+        telephone: "",
+        email: "",
+        statut: "visiteur",
+        how_came: "",
+        besoin: "",
+        responsable_suivi: "",
+      });
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Ajouter un nouveau membre</h1>
-
-      {errorMsg && (
-        <p className="bg-red-100 text-red-700 px-3 py-2 rounded mb-3">
-          {errorMsg}
+    <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
+      {/* Logo et verset */}
+      <div className="text-center mb-6">
+        <img src="/logo.png" alt="Logo ICC" className="mx-auto w-20 h-20" />
+        <p className="mt-2 text-sm italic text-gray-600">
+          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
-      )}
+      </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 gap-4 bg-white p-6 rounded-xl shadow"
-      >
-        <input
-          type="text"
-          name="first_name"
-          placeholder="Prénom"
-          value={formData.first_name}
-          onChange={handleChange}
-          required
-          className="border p-2 rounded"
-        />
-        <input
-          type="text"
-          name="last_name"
-          placeholder="Nom"
-          value={formData.last_name}
-          onChange={handleChange}
-          required
-          className="border p-2 rounded"
-        />
-        <input
-          type="text"
-          name="phone"
-          placeholder="Téléphone"
-          value={formData.phone}
-          onChange={handleChange}
-          className="border p-2 rounded"
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          className="border p-2 rounded"
-        />
-        <input
-          type="text"
-          name="besoin"
-          placeholder="Besoin"
-          value={formData.besoin}
-          onChange={handleChange}
-          className="border p-2 rounded"
-        />
-        <textarea
-          name="commentaire"
-          placeholder="Commentaire"
-          value={formData.commentaire}
-          onChange={handleChange}
-          className="border p-2 rounded"
-        />
-        <input
-          type="text"
-          name="responsable"
-          placeholder="Responsable"
-          value={formData.responsable}
-          onChange={handleChange}
-          className="border p-2 rounded"
-        />
+      <div className="w-full max-w-md bg-white p-6 rounded-2xl shadow-lg">
+        <h1 className="text-xl font-bold text-center text-gray-800 mb-4">
+          Ajouter un nouveau membre
+        </h1>
 
-        <select
-          name="statut"
-          value={formData.statut}
-          onChange={handleChange}
-          className="border p-2 rounded"
-        >
-          <option value="visiteur">Visiteur</option>
-          <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-          <option value="a déjà mon église">A déjà mon église</option>
-        </select>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <input
+            type="text"
+            name="nom"
+            placeholder="Nom"
+            value={form.nom}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
+            required
+          />
+          <input
+            type="text"
+            name="prenom"
+            placeholder="Prénom"
+            value={form.prenom}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
+          />
+          <input
+            type="text"
+            name="telephone"
+            placeholder="Téléphone"
+            value={form.telephone}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
+          />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? "Enregistrement..." : "Ajouter"}
-        </button>
-      </form>
+          {/* Statut */}
+          <select
+            name="statut"
+            value={form.statut}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
+          >
+            <option value="visiteur">Visiteur</option>
+            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+            <option value="a déjà mon église">A déjà mon église</option>
+          </select>
+
+          {/* Comment il est venu */}
+          <select
+            name="how_came"
+            value={form.how_came}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
+          >
+            <option value="">Comment es-tu venu à l'église ?</option>
+            <option value="invite">Invité</option>
+            <option value="reseaux">Réseaux</option>
+            <option value="autre">Autre</option>
+          </select>
+
+          {/* Besoin */}
+          <textarea
+            name="besoin"
+            placeholder="Besoin de la personne"
+            value={form.besoin}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
+          />
+
+          {/* Assignée à */}
+          <select
+            name="responsable_suivi"
+            value={form.responsable_suivi}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
+          >
+            <option value="">Assignée à</option>
+            {cellules.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.value}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="submit"
+            className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700"
+          >
+            Ajouter
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
