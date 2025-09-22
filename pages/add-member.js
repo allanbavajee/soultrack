@@ -44,7 +44,7 @@ export default function AddMember() {
           <option value="inactif">Inactif</option>
         </select>
         <select name="assignee" onChange={handleChange} className="w-full p-2 border rounded">
-          <option value="">Assignée</option>
+          <option value="">Assignée a :</option>
           <option value="Curepipe">Cellule de Curepipe</option>
           <option value="Bois Rouge">Cellule de Bois Rouge</option>
           <option value="Bambous">Cellule de Bambous</option>
