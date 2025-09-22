@@ -1,58 +1,135 @@
-/* /pages/add-member.js */
-import { useState } from 'react'
-import { supabase } from '../utils/supabaseClient'
+// pages/add-member.js
+import { useState } from "react";
+import { useRouter } from "next/router";
+import { supabase } from "../lib/supabaseClient";
 
 export default function AddMember() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
-    nom: '',
-    prenom: '',
-    telephone: '',
-    email: '',
-    statut: 'nouveau',
-    how_came: '',
-    assignee: '',
-    besoins: ''
-  })
+    first_name: "",
+    last_name: "",
+    phone: "",
+    email: "",
+    besoin: "",
+    commentaire: "",
+    responsable: "",
+    statut: "visiteur",
+  });
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    const { error } = await supabase.from('membres').insert([formData])
-    if (error) alert('Erreur : ' + error.message)
-    else alert('Membre ajouté avec succès')
-  }
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg("");
+
+    try {
+      const { error } = await supabase.from("membres").insert([formData]);
+      if (error) throw error;
+      router.push("/members");
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="p-4 max-w-md mx-auto">
-      <img src="/logo.png" alt="Logo" className="mx-auto mb-4 w-24"/>
-      <h1 className="text-xl font-bold mb-4 text-center">Ajouter un nouveau membre</h1>
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input name="nom" placeholder="Nom" onChange={handleChange} className="w-full p-2 border rounded"/>
-        <input name="prenom" placeholder="Prénom" onChange={handleChange} className="w-full p-2 border rounded"/>
-        <input name="telephone" placeholder="Téléphone" onChange={handleChange} className="w-full p-2 border rounded"/>
-        <input name="email" placeholder="Email" onChange={handleChange} className="w-full p-2 border rounded"/>
-        <select name="statut" onChange={handleChange} className="w-full p-2 border rounded">
-          <option value=""></option>
+    <div className="max-w-2xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-4">Ajouter un nouveau membre</h1>
+
+      {errorMsg && (
+        <p className="bg-red-100 text-red-700 px-3 py-2 rounded mb-3">
+          {errorMsg}
+        </p>
+      )}
+
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 gap-4 bg-white p-6 rounded-xl shadow"
+      >
+        <input
+          type="text"
+          name="first_name"
+          placeholder="Prénom"
+          value={formData.first_name}
+          onChange={handleChange}
+          required
+          className="border p-2 rounded"
+        />
+        <input
+          type="text"
+          name="last_name"
+          placeholder="Nom"
+          value={formData.last_name}
+          onChange={handleChange}
+          required
+          className="border p-2 rounded"
+        />
+        <input
+          type="text"
+          name="phone"
+          placeholder="Téléphone"
+          value={formData.phone}
+          onChange={handleChange}
+          className="border p-2 rounded"
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          className="border p-2 rounded"
+        />
+        <input
+          type="text"
+          name="besoin"
+          placeholder="Besoin"
+          value={formData.besoin}
+          onChange={handleChange}
+          className="border p-2 rounded"
+        />
+        <textarea
+          name="commentaire"
+          placeholder="Commentaire"
+          value={formData.commentaire}
+          onChange={handleChange}
+          className="border p-2 rounded"
+        />
+        <input
+          type="text"
+          name="responsable"
+          placeholder="Responsable"
+          value={formData.responsable}
+          onChange={handleChange}
+          className="border p-2 rounded"
+        />
+
+        <select
+          name="statut"
+          value={formData.statut}
+          onChange={handleChange}
+          className="border p-2 rounded"
+        >
+          <option value="visiteur">Visiteur</option>
           <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
           <option value="a déjà mon église">A déjà mon église</option>
-          <option value="visiteur">visiteur</option>          
         </select>
-        <select name="assignee" onChange={handleChange} className="w-full p-2 border rounded">
-          <option value="">Assignée a :</option>
-          <option value="Curepipe">Cellule de Curepipe</option>
-          <option value="Bois Rouge">Cellule de Bois Rouge</option>
-          <option value="Bambous">Cellule de Bambous</option>
-          <option value="Rose Hill">Cellule de Rose Hill</option>
-          <option value="Mon Gout">Cellule de Mon Gout</option>
-          <option value="Eglise">Eglise</option>
-        </select>
-        <input name="how_came" placeholder="Comment est-il venu ?" onChange={handleChange} className="w-full p-2 border rounded"/>
-        <input name="besoins" placeholder="Besoins de la personne" onChange={handleChange} className="w-full p-2 border rounded"/>
-        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Ajouter</button>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          {loading ? "Enregistrement..." : "Ajouter"}
+        </button>
       </form>
     </div>
-  )
+  );
 }
