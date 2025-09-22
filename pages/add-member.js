@@ -14,15 +14,6 @@ export default function AddMember() {
     responsable_suivi: '',
   });
 
-  const cellules = [
-    'Cellule de Curepipe',
-    'Cellule de Bois Rouge',
-    'Cellule de Bambous',
-    'Cellule de Rose Hill',
-    'Cellule de Mon Gout',
-    'Eglise',
-  ];
-
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -49,19 +40,10 @@ export default function AddMember() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-white p-6 flex flex-col items-center">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <img src="/logo.png" alt="Logo ICC" className="mx-auto w-20 h-20 drop-shadow-md" />
-        <p className="mt-3 text-sm italic text-indigo-700 font-medium">
-          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
-        </p>
-      </div>
-
       <div className="w-full max-w-md bg-white p-6 rounded-2xl shadow-xl border border-indigo-100">
         <h1 className="text-2xl font-extrabold text-center text-indigo-700 mb-6">
           ➕ Ajouter un membre
         </h1>
-
         <form className="space-y-4" onSubmit={handleSubmit}>
           <input
             type="text"
@@ -96,8 +78,6 @@ export default function AddMember() {
             onChange={handleChange}
             className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
           />
-
-          {/* Statut */}
           <select
             name="statut"
             value={form.statut}
@@ -108,8 +88,6 @@ export default function AddMember() {
             <option value="veut rejoindre ICC">🙏 Veut rejoindre ICC</option>
             <option value="a déjà mon église">⛪ A déjà mon église</option>
           </select>
-
-          {/* Comment il est venu */}
           <select
             name="how_came"
             value={form.how_came}
@@ -121,8 +99,6 @@ export default function AddMember() {
             <option value="reseaux">🌐 Réseaux</option>
             <option value="autre">📌 Autre</option>
           </select>
-
-          {/* Besoin */}
           <textarea
             name="besoin"
             placeholder="📝 Besoin de la personne"
@@ -130,23 +106,14 @@ export default function AddMember() {
             onChange={handleChange}
             className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
           />
-
-          {/* Assignée à */}
-          <select
+          <input
+            type="text"
             name="responsable_suivi"
+            placeholder="Assignée à"
             value={form.responsable_suivi}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 bg-indigo-50"
-          >
-            <option value="">Assignée à</option>
-            {cellules.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-
-          {/* Submit */}
+            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+          />
           <button
             type="submit"
             className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition transform hover:scale-[1.02]"
