@@ -1,7 +1,6 @@
 // pages/add-member.js
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { UserPlus, Phone, Mail, MapPin, Users } from "lucide-react";
 
 export default function AddMember() {
   const [form, setForm] = useState({
@@ -59,12 +58,11 @@ export default function AddMember() {
       </div>
 
       <div className="w-full max-w-md bg-white p-6 rounded-2xl shadow-xl border border-indigo-100">
-        <h1 className="text-2xl font-extrabold text-center text-indigo-700 mb-6 flex items-center justify-center gap-2">
-          <UserPlus className="w-6 h-6" /> Ajouter un membre
+        <h1 className="text-2xl font-extrabold text-center text-indigo-700 mb-6">
+          ➕ Ajouter un membre
         </h1>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          {/* Nom */}
           <input
             type="text"
             name="nom"
@@ -74,8 +72,6 @@ export default function AddMember() {
             className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
             required
           />
-
-          {/* Prénom */}
           <input
             type="text"
             name="prenom"
@@ -84,32 +80,22 @@ export default function AddMember() {
             onChange={handleChange}
             className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
           />
-
-          {/* Téléphone */}
-          <div className="flex items-center gap-2">
-            <Phone className="text-gray-500 w-5 h-5" />
-            <input
-              type="text"
-              name="telephone"
-              placeholder="Téléphone"
-              value={form.telephone}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
-
-          {/* Email */}
-          <div className="flex items-center gap-2">
-            <Mail className="text-gray-500 w-5 h-5" />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
+          <input
+            type="text"
+            name="telephone"
+            placeholder="📞 Téléphone"
+            value={form.telephone}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="✉️ Email"
+            value={form.email}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+          />
 
           {/* Statut */}
           <select
@@ -146,29 +132,26 @@ export default function AddMember() {
           />
 
           {/* Assignée à */}
-          <div className="flex items-center gap-2">
-            <Users className="text-gray-500 w-5 h-5" />
-            <select
-              name="responsable_suivi"
-              value={form.responsable_suivi}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 bg-indigo-50"
-            >
-              <option value="">Assignée à</option>
-              {cellules.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            name="responsable_suivi"
+            value={form.responsable_suivi}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 bg-indigo-50"
+          >
+            <option value="">Assignée à</option>
+            {cellules.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
 
           {/* Submit */}
           <button
             type="submit"
             className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition transform hover:scale-[1.02]"
           >
-            ➕ Ajouter le membre
+            Ajouter
           </button>
         </form>
       </div>
