@@ -1,173 +1,62 @@
-// pages/add-member.js
-import { useState } from "react";
+// pages/members.js
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-export default function AddMember() {
-  const [form, setForm] = useState({
-    nom: "",
-    prenom: "",
-    telephone: "",
-    email: "",
-    statut: "visiteur",
-    how_came: "",
-    besoin: "",
-    assignee: "",
-  });
+export default function Members() {
+  const [members, setMembers] = useState([]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  useEffect(() => {
+    fetchMembers();
+  }, []);
+
+  const fetchMembers = async () => {
+    const { data, error } = await supabase.from("membres").select("*");
+    if (!error) setMembers(data);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const { error } = await supabase.from("membres").insert([form]);
-    if (error) {
-      alert("Erreur : " + error.message);
-    } else {
-      alert("✅ Membre ajouté avec succès !");
-      setForm({
-        nom: "",
-        prenom: "",
-        telephone: "",
-        email: "",
-        statut: "visiteur",
-        how_came: "",
-        besoin: "",
-        assignee: "",
-      });
+  const sendWhatsApp = (m) => {
+    const msg = `Bonjour ${m.assignee}, nous avons la joie d’accueillir ${m.nom} ${m.prenom}. 
+Téléphone: ${m.telephone}
+Email: ${m.email}
+Statut: ${m.statut}
+Comment est venu: ${m.how_came}
+Besoin: ${m.besoin}
+Merci de l’accueillir avec amour ! 🙏`;
+    const url = `https://wa.me/${m.assigneePhone}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  };
+
+  const statusColor = (statut) => {
+    switch(statut) {
+      case "veut rejoindre ICC": return "bg-blue-100 text-blue-800";
+      case "a déjà mon église": return "bg-red-100 text-red-800";
+      case "visiteur": return "bg-green-100 text-green-800";
+      default: return "bg-gray-100 text-gray-800";
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-center mb-2">Ajouter un membre</h1>
-        <p className="text-center text-gray-500 mb-6 text-sm">
-          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Nom */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Nom</label>
-            <input
-              type="text"
-              name="nom"
-              value={form.nom}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              placeholder="Nom"
-              required
-            />
-          </div>
-
-          {/* Prénom */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Prénom</label>
-            <input
-              type="text"
-              name="prenom"
-              value={form.prenom}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              placeholder="Prénom"
-            />
-          </div>
-
-          {/* Téléphone */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Téléphone</label>
-            <input
-              type="tel"
-              name="telephone"
-              value={form.telephone}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              placeholder="Téléphone"
-            />
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              placeholder="Email"
-            />
-          </div>
-
-          {/* Statut */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Statut</label>
-            <select
-              name="statut"
-              value={form.statut}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            >
-              <option value="visiteur">Visiteur</option>
-              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-              <option value="a déjà mon église">A déjà mon église</option>
-            </select>
-          </div>
-
-          {/* Comment il est venu */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Comment il est venu</label>
-            <input
-              type="text"
-              name="how_came"
-              value={form.how_came}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              placeholder="Invité, réseaux, autre..."
-            />
-          </div>
-
-          {/* Besoin */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Besoin de la personne</label>
-            <textarea
-              name="besoin"
-              value={form.besoin}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              rows="3"
-              placeholder="Décrire le besoin..."
-            />
-          </div>
-
-          {/* Assignée à */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Assignée à</label>
-            <select
-              name="assignee"
-              value={form.assignee}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="Cellule de Curepipe">Cellule de Curepipe</option>
-              <option value="Cellule de Bois Rouge">Cellule de Bois Rouge</option>
-              <option value="Cellule de Bambous">Cellule de Bambous</option>
-              <option value="Cellule de Rose Hill">Cellule de Rose Hill</option>
-              <option value="Cellule de Mon Gout">Cellule de Mon Gout</option>
-              <option value="Église">Église</option>
-            </select>
-          </div>
-
-          {/* Bouton */}
-          <button
-            type="submit"
-            className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-xl hover:bg-indigo-700 transition"
-          >
-            ➕ Ajouter
-          </button>
-        </form>
+    <div className="min-h-screen bg-gray-100 flex justify-center p-4">
+      <div className="w-full max-w-3xl">
+        <h1 className="text-3xl font-bold mb-6 text-center">Liste des membres</h1>
+        <div className="space-y-4">
+          {members.map((m) => (
+            <div key={m.id} className={`flex justify-between items-center p-4 rounded-xl ${statusColor(m.statut)}`}>
+              <div>
+                <p className="font-semibold">{m.nom} {m.prenom}</p>
+                <p className="text-sm">Assignée à : {m.assignee}</p>
+              </div>
+              {m.statut === "veut rejoindre ICC" && (
+                <button
+                  onClick={() => sendWhatsApp(m)}
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+                >
+                  WhatsApp
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
