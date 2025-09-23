@@ -1,5 +1,4 @@
-// pages/list-members.js/
-
+// pages/list-members.js
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -56,7 +55,7 @@ function MemberCard({ member, fetchMembers }) {
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState(null);
 
-  // Récupère les cellules correspondantes à la ville du membre
+  // Récupère les cellules correspondant à la ville du membre
   useEffect(() => {
     async function fetchCellules() {
       if (!member.ville) return;
@@ -107,36 +106,6 @@ Responsable: ${selectedCellule.responsable}`;
 
       <p className="text-sm text-gray-600">📱 {member.telephone}</p>
 
-      {cellules.length > 0 && (
-        <div className="mt-2">
-          <label className="block mb-1 font-semibold">Choisir une cellule :</label>
-          <select
-            className="w-full p-2 border rounded-lg"
-            value={selectedCellule?.cellule || ""}
-            onChange={(e) => {
-              const cellule = cellules.find(c => c.cellule === e.target.value);
-              setSelectedCellule(cellule);
-            }}
-          >
-            <option value="">-- Sélectionner --</option>
-            {cellules.map(c => (
-              <option key={c.cellule} value={c.cellule}>
-                {c.cellule} ({c.responsable})
-              </option>
-            ))}
-          </select>
-
-          {selectedCellule && (
-            <button
-              onClick={handleWhatsApp}
-              className="mt-2 w-full py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600"
-            >
-              📤 Envoyer sur WhatsApp
-            </button>
-          )}
-        </div>
-      )}
-
       <details className="mt-2">
         <summary className="cursor-pointer text-indigo-500 text-sm">Voir détails</summary>
         <div className="mt-2 text-sm text-gray-700 space-y-1">
@@ -144,9 +113,39 @@ Responsable: ${selectedCellule.responsable}`;
           <p>Besoin : {member.besoin || "—"}</p>
           <p>Ville : {member.ville || "—"}</p>
           <p>Comment venu : {member.how_came || "—"}</p>
+
+          {/* Menu déroulant + WhatsApp pour visiteur ou veut rejoindre ICC */}
+          {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && cellules.length > 0 && (
+            <div className="mt-2">
+              <label className="block mb-1 font-semibold">Choisir une cellule :</label>
+              <select
+                className="w-full p-2 border rounded-lg"
+                value={selectedCellule?.cellule || ""}
+                onChange={(e) => {
+                  const cellule = cellules.find(c => c.cellule === e.target.value);
+                  setSelectedCellule(cellule);
+                }}
+              >
+                <option value="">-- Sélectionner --</option>
+                {cellules.map(c => (
+                  <option key={c.cellule} value={c.cellule}>
+                    {c.cellule} ({c.responsable})
+                  </option>
+                ))}
+              </select>
+
+              {selectedCellule && (
+                <button
+                  onClick={handleWhatsApp}
+                  className="mt-2 w-full py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600"
+                >
+                  📤 Envoyer sur WhatsApp
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </details>
     </div>
   );
 }
-
