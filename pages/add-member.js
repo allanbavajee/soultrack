@@ -110,7 +110,7 @@ export default function AddMember() {
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
-              <option value="nouveau">Nouveau</option>
+              <option value="">-- Sélectionner --</option>
               <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
               <option value="a déjà mon église">A déjà mon église</option>
               <option value="visiteur">Visiteur</option>
