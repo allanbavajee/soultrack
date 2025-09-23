@@ -12,9 +12,11 @@ export default function ListMembers() {
 
   async function fetchMembers() {
     let query = supabase.from("membres").select("*").order("created_at", { ascending: false });
+
     if (filter !== "all") {
       query = query.eq("statut", filter);
     }
+
     const { data, error } = await query;
     if (error) console.error(error);
     else setMembers(data);
@@ -62,14 +64,15 @@ function MemberCard({ member, fetchMembers }) {
       const { data, error } = await supabase
         .from("cellules")
         .select("cellule, responsable, telephone")
-        .eq("ville", member.ville);
+        .eq("ville", member.ville); // ✅ corrigé ici
+
       if (!error && data) setCellules(data);
     }
     fetchCellules();
   }, [member.ville]);
 
   // Fonction pour envoyer le message WhatsApp
-  function handleWhatsApp() {
+  async function handleWhatsApp() {
     if (!selectedCellule) return;
 
     const message = `Nouveau venu à suivre:\n
@@ -84,14 +87,14 @@ Responsable: ${selectedCellule.responsable}`;
     const url = `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
 
-    // Mise à jour du statut en "ancien"
-    supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
+    // ✅ Mettre à jour le statut en "ancien"
+    await supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
     fetchMembers();
   }
 
   // Couleur de la carte selon statut ou star
   const cardStyle =
-    member.star === "OUI"
+    member.star?.toLowerCase() === "oui"
       ? "bg-green-100 border-green-400"
       : member.statut === "ancien"
       ? "bg-white border-gray-300"
