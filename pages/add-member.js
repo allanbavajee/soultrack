@@ -1,5 +1,5 @@
 // pages/add-member.js
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 export default function AddMember() {
@@ -31,7 +31,7 @@ export default function AddMember() {
       besoin: "",
       assignee: "",
     });
-    setSuccessMessage(""); // reset message si besoin
+    setSuccessMessage(""); // reset
   };
 
   const handleSubmit = async (e) => {
@@ -46,6 +46,14 @@ export default function AddMember() {
       alert(err.message);
     }
   };
+
+  // Auto-disparition du message après 3 secondes
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
@@ -172,29 +180,29 @@ export default function AddMember() {
             </select>
           </div>
 
-          {/* Message de succès juste au-dessus des boutons */}
-          {successMessage && (
-            <div className="mt-4 p-3 rounded-xl bg-green-100 text-green-700 text-center font-medium">
-              {successMessage}
-            </div>
-          )}
-
           {/* Boutons */}
-          <div className="flex justify-between mt-4">
+          <div className="flex justify-between mt-6 gap-4">
             <button
               type="button"
               onClick={handleCancel}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="w-1/2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="w-1/2 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
             >
               Ajouter
             </button>
           </div>
+
+          {/* Message de succès SOUS les boutons */}
+          {successMessage && (
+            <div className="mt-4 p-3 rounded-xl bg-green-100 text-green-700 text-center font-medium">
+              {successMessage}
+            </div>
+          )}
         </form>
       </div>
     </div>
