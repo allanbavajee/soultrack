@@ -113,6 +113,18 @@ export default function AddMember() {
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
+          {/* Ville*/}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Ville</label>
+            <input
+              type="ville"
+              name="ville"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+          </div>
+
 
           {/* Statut */}
           <div>
