@@ -20,7 +20,7 @@ export default function AddMember() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleCancel = () => {
+  const resetForm = () => {
     setFormData({
       nom: "",
       prenom: "",
@@ -31,7 +31,10 @@ export default function AddMember() {
       besoin: "",
       assignee: "",
     });
-    setSuccessMessage(""); // reset
+  };
+
+  const handleCancel = () => {
+    resetForm();
   };
 
   const handleSubmit = async (e) => {
@@ -41,7 +44,7 @@ export default function AddMember() {
       if (error) throw error;
 
       setSuccessMessage("✅ Membre ajouté avec succès !");
-      handleCancel(); // reset form après ajout
+      resetForm(); // on garde le message
     } catch (err) {
       alert(err.message);
     }
@@ -185,13 +188,13 @@ export default function AddMember() {
             <button
               type="button"
               onClick={handleCancel}
-              className="w-1/2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="flex-1 py-4 text-lg bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="w-1/2 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="flex-1 py-4 text-lg bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
             >
               Ajouter
             </button>
@@ -199,7 +202,7 @@ export default function AddMember() {
 
           {/* Message de succès SOUS les boutons */}
           {successMessage && (
-            <div className="mt-4 p-3 rounded-xl bg-green-100 text-green-700 text-center font-medium">
+            <div className="mt-4 p-4 rounded-xl bg-green-100 text-green-700 text-center font-semibold">
               {successMessage}
             </div>
           )}
