@@ -1,9 +1,12 @@
-// 📌 Fichier : /pages/list-members.js
-// ✅ Corrigé pour n'utiliser QUE le composant /components/MemberCard.js
+/**
+ * Description : Page Liste des Membres
+ * Affiche tous les membres de l'église avec filtres par statut
+ * et possibilité d'envoyer les infos WhatsApp pour certains statuts.
+ */
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import MemberCard from "../components/MemberCard"; // ✅ On importe le composant séparé
+import MemberCard from "../components/MemberCard";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
