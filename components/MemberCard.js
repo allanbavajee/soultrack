@@ -1,6 +1,6 @@
 // 📌 Fichier : /components/MemberCard.js
-// Description : Composant pour afficher un membre avec son statut, ses infos
-// et un menu déroulant pour choisir une cellule + bouton WhatsApp pour envoyer les infos.
+// ✅ Corrigé : utilisation de `member.ville` (minuscule partout)
+// ✅ Ajout d’un fallback pour "aucune cellule trouvée"
 
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
@@ -13,22 +13,22 @@ export default function MemberCard({ member, fetchMembers }) {
   // Charger les cellules par ville du membre
   useEffect(() => {
     async function fetchCellules() {
-      if (!member.Ville) return;
+      if (!member.ville) return; // ✅ minuscule
       const { data, error } = await supabase
         .from("cellules")
         .select("cellule, responsable, telephone")
-        .eq("ville", member.Ville);
+        .eq("ville", member.ville); // ✅ minuscule
 
       if (!error && data) setCellules(data);
     }
     fetchCellules();
-  }, [member.Ville]);
+  }, [member.ville]); // ✅ minuscule
 
   // Envoi WhatsApp
   const handleWhatsApp = async () => {
     if (!selectedCellule) return;
 
-    const message = `👋 Nouveau contact à suivre :\n\nNom: ${member.prenom} ${member.nom}\n📱 Tel: ${member.telephone}\n📧 Email: ${member.email || "—"}\n📍 Ville: ${member.Ville || "—"}\nBesoin: ${member.besoin || "—"}\n\nCellule: ${selectedCellule.cellule}\nResponsable: ${selectedCellule.responsable}`;
+    const message = `👋 Nouveau contact à suivre :\n\nNom: ${member.prenom} ${member.nom}\n📱 Tel: ${member.telephone}\n📧 Email: ${member.email || "—"}\n📍 Ville: ${member.ville || "—"}\nBesoin: ${member.besoin || "—"}\n\nCellule: ${selectedCellule.cellule}\nResponsable: ${selectedCellule.responsable}`;
 
     window.open(
       `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(message)}`,
@@ -71,7 +71,7 @@ export default function MemberCard({ member, fetchMembers }) {
         <div className="mt-3 text-sm text-gray-700 space-y-1">
           <p>Email : {member.email || "—"}</p>
           <p>Besoin : {member.besoin || "—"}</p>
-          <p>Ville : {member.Ville || "—"}</p>
+          <p>Ville : {member.ville || "—"}</p> {/* ✅ minuscule */}
           <p>Comment venu : {member.how_came || "—"}</p>
 
           {(member.statut === "visiteur" ||
