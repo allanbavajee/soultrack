@@ -8,11 +8,13 @@ export default function AddMember() {
     prenom: "",
     telephone: "",
     email: "",
-    statut: "nouveau",
+    statut: "visiteur",
     how_came: "",
     besoin: "",
     assignee: "",
   });
+
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -20,157 +22,137 @@ export default function AddMember() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const { data, error } = await supabase.from("membres").insert([formData]);
-      if (error) throw error;
-      alert("Membre ajouté avec succès !");
+    const { error } = await supabase.from("membres").insert([formData]);
+    if (error) {
+      console.error(error);
+    } else {
+      setSuccessMessage("✅ Membre ajouté avec succès !");
       setFormData({
         nom: "",
         prenom: "",
         telephone: "",
         email: "",
-        statut: "nouveau",
+        statut: "visiteur",
         how_came: "",
         besoin: "",
         assignee: "",
       });
-    } catch (err) {
-      alert(err.message);
     }
   };
 
+  const handleCancel = () => {
+    setFormData({
+      nom: "",
+      prenom: "",
+      telephone: "",
+      email: "",
+      statut: "visiteur",
+      how_came: "",
+      besoin: "",
+      assignee: "",
+    });
+    setSuccessMessage("");
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
-        <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-2">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8">
+        <h1 className="text-2xl font-bold text-center text-gray-800 mb-2">
           Ajouter un nouveau membre
         </h1>
-        <p className="text-center text-gray-500 italic mb-6">
+        <p className="text-center text-sm text-gray-500 mb-6">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Nom */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Nom</label>
-            <input
-              type="text"
-              name="nom"
-              value={formData.nom}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              required
-            />
+        {successMessage && (
+          <div className="mb-4 p-3 text-green-800 bg-green-100 border border-green-300 rounded-lg text-sm">
+            {successMessage}
           </div>
+        )}
 
-          {/* Prénom */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Prénom</label>
-            <input
-              type="text"
-              name="prenom"
-              value={formData.prenom}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              required
-            />
-          </div>
-
-          {/* Téléphone */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
-            <input
-              type="text"
-              name="telephone"
-              value={formData.telephone}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              required
-            />
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
-
-          {/* Statut */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Statut</label>
-            <select
-              name="statut"
-              value={formData.statut}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-              <option value="a déjà mon église">A déjà mon église</option>
-              <option value="visiteur">Visiteur</option>
-            </select>
-          </div>
-
-          {/* Comment est venu */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
-            <select
-              name="how_came"
-              value={formData.how_came}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="invité">Invité</option>
-              <option value="réseaux">Réseaux</option>
-              <option value="autre">Autre</option>
-            </select>
-          </div>
-
-          {/* Besoin */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Besoin de la personne</label>
-            <textarea
-              name="besoin"
-              value={formData.besoin}
-              onChange={handleChange}
-              rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
-
-          {/* Assignée à */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Assignée à</label>
-            <select
-              name="assignee"
-              value={formData.assignee}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
-              <option value="">-- Sélectionner une cellule --</option>
-              <option value="Curepipe">Cellule de Curepipe</option>
-              <option value="Bois Rouge">Cellule de Bois Rouge</option>
-              <option value="Bambous">Cellule de Bambous</option>
-              <option value="Mon Gout">Cellule de Mon Gout</option>
-              <option value="Rose Hill">Cellule de Rose Hill</option>
-              <option value="Eglise">Eglise</option>
-            </select>
-          </div>
-
-          {/* Bouton Ajouter */}
-          <button
-            type="submit"
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            name="nom"
+            placeholder="Nom"
+            value={formData.nom}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+          />
+          <input
+            name="prenom"
+            placeholder="Prénom"
+            value={formData.prenom}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+          />
+          <input
+            name="telephone"
+            placeholder="Téléphone"
+            value={formData.telephone}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+          />
+          <input
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+          />
+          <select
+            name="statut"
+            value={formData.statut}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
           >
-            Ajouter
-          </button>
+            <option value="visiteur">Visiteur</option>
+            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+            <option value="a déjà mon église">A déjà mon église</option>
+          </select>
+          <textarea
+            name="how_came"
+            placeholder="Comment il est venu"
+            value={formData.how_came}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+          />
+          <textarea
+            name="besoin"
+            placeholder="Besoin de la personne"
+            value={formData.besoin}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+          />
+          <select
+            name="assignee"
+            value={formData.assignee}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+          >
+            <option value="">-- Assignée --</option>
+            <option value="Cellule de Curepipe">Cellule de Curepipe</option>
+            <option value="Cellule de Bois Rouge">Cellule de Bois Rouge</option>
+            <option value="Cellule de Bambous">Cellule de Bambous</option>
+            <option value="Cellule de Rose Hill">Cellule de Rose Hill</option>
+            <option value="Cellule de Mon Gout">Cellule de Mon Gout</option>
+            <option value="Église">Église</option>
+          </select>
+
+          <div className="flex justify-between gap-3">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            >
+              Ajouter
+            </button>
+          </div>
         </form>
       </div>
     </div>
