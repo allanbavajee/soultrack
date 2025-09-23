@@ -6,7 +6,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex flex-col items-center justify-center p-6">
       {/* Titre principal */}
       <h1 className="text-4xl font-extrabold text-indigo-700 mb-2 text-center">
-        🙏 SoulTrack Dashboard
+        SoulTrack Dashboard
       </h1>
       <p className="text-gray-600 text-lg mb-8 text-center max-w-2xl">
         Bienvenue sur votre plateforme de suivi des membres de l’église.  
