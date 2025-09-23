@@ -179,6 +179,7 @@ export default function AddMember() {
                 prenom: "",
                 telephone: "",
                 email: "",
+                ville: "",
                 statut: "nouveau",
                 how_came: "",
                 besoin: "",
