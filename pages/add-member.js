@@ -181,14 +181,14 @@ export default function AddMember() {
             >
               Ajouter
             </button>
-          </div>
-           {/* Message de succès */}
+          </div>              
+        </form>
+         {/* Message de succès */}
           {success && (
             <div className="text-green-600 font-semibold text-center">
               ✅ Membre ajouté avec succès !
             </div>
-          )}     
-        </form>
+          )}       
       </div>
     </div>
   );
