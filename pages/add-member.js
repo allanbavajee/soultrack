@@ -13,35 +13,11 @@ export default function AddMember() {
     besoin: "",
     assignee: "",
   });
+
   const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const { error } = await supabase.from("membres").insert([formData]);
-      if (error) throw error;
-
-      setSuccessMessage("✅ Membre ajouté avec succès !");
-      setFormData({
-        nom: "",
-        prenom: "",
-        telephone: "",
-        email: "",
-        statut: "nouveau",
-        how_came: "",
-        besoin: "",
-        assignee: "",
-      });
-
-      // Effacer le message après 3 secondes
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (err) {
-      alert(err.message);
-    }
   };
 
   const handleCancel = () => {
@@ -55,24 +31,31 @@ export default function AddMember() {
       besoin: "",
       assignee: "",
     });
-    setSuccessMessage(""); // au cas où il y avait un message affiché
+    setSuccessMessage(""); // reset message si besoin
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase.from("membres").insert([formData]);
+      if (error) throw error;
+
+      setSuccessMessage("✅ Membre ajouté avec succès !");
+      handleCancel(); // reset form après ajout
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
         <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-2">
-          Ajouter un nouveau membre
+          Ajouter un membre
         </h1>
         <p className="text-center text-gray-500 italic mb-6">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
-
-        {successMessage && (
-          <div className="mb-4 p-3 text-green-700 bg-green-100 rounded-lg text-center font-medium">
-            {successMessage}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Nom */}
@@ -189,20 +172,27 @@ export default function AddMember() {
             </select>
           </div>
 
+          {/* Message de succès juste au-dessus des boutons */}
+          {successMessage && (
+            <div className="mt-4 p-3 rounded-xl bg-green-100 text-green-700 text-center font-medium">
+              {successMessage}
+            </div>
+          )}
+
           {/* Boutons */}
-          <div className="flex space-x-3">
-            <button
-              type="submit"
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
-            >
-              Ajouter
-            </button>
+          <div className="flex justify-between mt-4">
             <button
               type="button"
               onClick={handleCancel}
-              className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
             >
               Annuler
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+            >
+              Ajouter
             </button>
           </div>
         </form>
