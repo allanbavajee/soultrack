@@ -1,4 +1,4 @@
-/* /pages/list-members.js */
+// pages/list-members.js
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -10,13 +10,11 @@ export default function ListMembers() {
     fetchMembers();
   }, [filter]);
 
-  // Récupère les membres selon le filtre
   async function fetchMembers() {
     let query = supabase.from("membres").select("*").order("created_at", { ascending: false });
     if (filter !== "all") {
       query = query.eq("statut", filter);
     }
-
     const { data, error } = await query;
     if (error) console.error(error);
     else setMembers(data);
@@ -42,65 +40,56 @@ export default function ListMembers() {
         </select>
       </div>
 
-      {/* Cartes des membres */}
+      {/* Liste des cartes */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {members.map((member) => (
-          <MemberCard key={member.id} member={member} onStatusChange={fetchMembers} />
+          <MemberCard key={member.id} member={member} fetchMembers={fetchMembers} />
         ))}
       </div>
     </div>
   );
 }
 
-function MemberCard({ member, onStatusChange }) {
-  const [cellule, setCellule] = useState(null);
+// Composant pour afficher chaque membre
+function MemberCard({ member, fetchMembers }) {
+  const [cellules, setCellules] = useState([]);
+  const [selectedCellule, setSelectedCellule] = useState(null);
 
-  // Récupère la cellule correspondante à la ville du membre
+  // Récupère les cellules correspondantes à la ville du membre
   useEffect(() => {
-    fetchCellule();
+    async function fetchCellules() {
+      if (!member.ville) return;
+      const { data, error } = await supabase
+        .from("cellules")
+        .select("cellule, responsable, telephone")
+        .eq("ville", member.ville);
+      if (!error && data) setCellules(data);
+    }
+    fetchCellules();
   }, [member.ville]);
 
-  async function fetchCellule() {
-    if (!member.ville) return;
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("cellule, responsable, telephone")
-      .eq("ville", member.ville)
-      .single();
+  // Fonction pour envoyer le message WhatsApp
+  function handleWhatsApp() {
+    if (!selectedCellule) return;
 
-    if (!error && data) setCellule(data);
-  }
+    const message = `Nouveau venu à suivre:\n
+Nom: ${member.prenom} ${member.nom}\n
+Téléphone: ${member.telephone}\n
+Email: ${member.email || "—"}\n
+Besoin: ${member.besoin || "—"}\n
+Ville: ${member.ville}\n
+Cellule: ${selectedCellule.cellule}\n
+Responsable: ${selectedCellule.responsable}`;
 
-  // Fonction pour envoyer le contact au responsable
-  async function handleEnvoyer() {
-    console.log("📤 Envoi au responsable :", {
-      nom: member.nom,
-      prenom: member.prenom,
-      telephone: member.telephone,
-      email: member.email,
-      besoin: member.besoin,
-      ville: member.ville,
-      cellule: cellule?.cellule,
-      responsable: cellule?.responsable,
-      telephone_responsable: cellule?.telephone,
-    });
+    const url = `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
 
     // Mise à jour du statut en "ancien"
-    const { error } = await supabase
-      .from("membres")
-      .update({ statut: "ancien" })
-      .eq("id", member.id);
-
-    if (error) {
-      alert("❌ Erreur lors de la mise à jour");
-      console.error(error);
-    } else {
-      alert("✅ Contact envoyé et statut mis à jour !");
-      onStatusChange(); // rafraîchit la liste
-    }
+    supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
+    fetchMembers();
   }
 
-  // Couleur selon statut ou star
+  // Couleur de la carte selon statut ou star
   const cardStyle =
     member.star === "OUI"
       ? "bg-green-100 border-green-400"
@@ -111,14 +100,41 @@ function MemberCard({ member, onStatusChange }) {
   return (
     <div className={`p-4 rounded-xl border shadow ${cardStyle}`}>
       <div className="flex justify-between items-center">
-        <h2 className="font-bold text-lg">
-          {member.prenom} {member.nom}
-        </h2>
+        <h2 className="font-bold text-lg">{member.prenom} {member.nom}</h2>
         <span className="text-sm font-semibold text-orange-600">{member.statut}</span>
       </div>
 
       <p className="text-sm text-gray-600">📱 {member.telephone}</p>
-      {cellule && <p className="text-sm text-indigo-700 font-semibold">📍 Cellule : {cellule.cellule}</p>}
+
+      {cellules.length > 0 && (
+        <div className="mt-2">
+          <label className="block mb-1 font-semibold">Choisir une cellule :</label>
+          <select
+            className="w-full p-2 border rounded-lg"
+            value={selectedCellule?.cellule || ""}
+            onChange={(e) => {
+              const cellule = cellules.find(c => c.cellule === e.target.value);
+              setSelectedCellule(cellule);
+            }}
+          >
+            <option value="">-- Sélectionner --</option>
+            {cellules.map(c => (
+              <option key={c.cellule} value={c.cellule}>
+                {c.cellule} ({c.responsable})
+              </option>
+            ))}
+          </select>
+
+          {selectedCellule && (
+            <button
+              onClick={handleWhatsApp}
+              className="mt-2 w-full py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600"
+            >
+              📤 Envoyer sur WhatsApp
+            </button>
+          )}
+        </div>
+      )}
 
       <details className="mt-2">
         <summary className="cursor-pointer text-indigo-500 text-sm">Voir détails</summary>
@@ -127,19 +143,8 @@ function MemberCard({ member, onStatusChange }) {
           <p>Besoin : {member.besoin || "—"}</p>
           <p>Ville : {member.ville || "—"}</p>
           <p>Comment venu : {member.how_came || "—"}</p>
-
-          {/* Bouton envoyer seulement pour visiteur ou veut rejoindre ICC */}
-          {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && cellule && (
-            <button
-              onClick={handleEnvoyer}
-              className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
-            >
-              📤 Envoyer au responsable
-            </button>
-          )}
         </div>
       </details>
     </div>
   );
 }
-
