@@ -29,7 +29,7 @@ export default function Home() {
 
         {/* Liste des membres */}
         <Link
-          href="/new-members"
+          href="/list-members"
           className="bg-white p-8 rounded-3xl shadow-lg flex flex-col items-center hover:shadow-2xl transition-all duration-200 border-t-4 border-blue-400"
         >
           <div className="text-5xl mb-4">👥</div>
