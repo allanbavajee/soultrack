@@ -10,9 +10,9 @@ export default function ListMembers() {
     fetchMembers();
   }, [filter]);
 
+  // Récupère les membres selon le filtre
   async function fetchMembers() {
     let query = supabase.from("membres").select("*").order("created_at", { ascending: false });
-
     if (filter !== "all") {
       query = query.eq("statut", filter);
     }
@@ -28,7 +28,7 @@ export default function ListMembers() {
 
       {/* Filtre par statut */}
       <div className="mb-6">
-        <label className="mr-2 font-semibold">Filtrer par statut:</label>
+        <label className="mr-2 font-semibold">Filtrer par statut :</label>
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
@@ -42,7 +42,7 @@ export default function ListMembers() {
         </select>
       </div>
 
-      {/* Liste des cartes */}
+      {/* Cartes des membres */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {members.map((member) => (
           <MemberCard key={member.id} member={member} onStatusChange={fetchMembers} />
@@ -55,6 +55,7 @@ export default function ListMembers() {
 function MemberCard({ member, onStatusChange }) {
   const [cellule, setCellule] = useState(null);
 
+  // Récupère la cellule correspondante à la ville du membre
   useEffect(() => {
     fetchCellule();
   }, [member.ville]);
@@ -63,23 +64,25 @@ function MemberCard({ member, onStatusChange }) {
     if (!member.ville) return;
     const { data, error } = await supabase
       .from("cellules")
-      .select("cellule")
+      .select("cellule, responsable, telephone")
       .eq("ville", member.ville)
       .single();
 
-    if (!error && data) setCellule(data.cellule);
+    if (!error && data) setCellule(data);
   }
 
+  // Fonction pour envoyer le contact au responsable
   async function handleEnvoyer() {
-    // Pour l’instant → console log
-    console.log("📤 Envoi au responsable:", {
+    console.log("📤 Envoi au responsable :", {
       nom: member.nom,
       prenom: member.prenom,
       telephone: member.telephone,
       email: member.email,
       besoin: member.besoin,
       ville: member.ville,
-      cellule,
+      cellule: cellule?.cellule,
+      responsable: cellule?.responsable,
+      telephone_responsable: cellule?.telephone,
     });
 
     // Mise à jour du statut en "ancien"
@@ -93,7 +96,7 @@ function MemberCard({ member, onStatusChange }) {
       console.error(error);
     } else {
       alert("✅ Contact envoyé et statut mis à jour !");
-      onStatusChange(); // Refresh liste
+      onStatusChange(); // rafraîchit la liste
     }
   }
 
@@ -115,18 +118,18 @@ function MemberCard({ member, onStatusChange }) {
       </div>
 
       <p className="text-sm text-gray-600">📱 {member.telephone}</p>
-      {cellule && <p className="text-sm text-indigo-700 font-semibold">📍 Cellule : {cellule}</p>}
+      {cellule && <p className="text-sm text-indigo-700 font-semibold">📍 Cellule : {cellule.cellule}</p>}
 
       <details className="mt-2">
         <summary className="cursor-pointer text-indigo-500 text-sm">Voir détails</summary>
         <div className="mt-2 text-sm text-gray-700 space-y-1">
-          <p>Email: {member.email || "—"}</p>
-          <p>Besoin: {member.besoin || "—"}</p>
-          <p>Ville: {member.ville || "—"}</p>
-          <p>Comment venu: {member.how_came || "—"}</p>
+          <p>Email : {member.email || "—"}</p>
+          <p>Besoin : {member.besoin || "—"}</p>
+          <p>Ville : {member.ville || "—"}</p>
+          <p>Comment venu : {member.how_came || "—"}</p>
 
-          {/* Bouton envoyer seulement si statut = visiteur ou veut rejoindre ICC */}
-          {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
+          {/* Bouton envoyer seulement pour visiteur ou veut rejoindre ICC */}
+          {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && cellule && (
             <button
               onClick={handleEnvoyer}
               className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
@@ -139,3 +142,4 @@ function MemberCard({ member, onStatusChange }) {
     </div>
   );
 }
+
