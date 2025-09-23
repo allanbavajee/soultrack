@@ -119,7 +119,7 @@ export default function AddMember() {
             <input
               type="ville"
               name="ville"
-              value={formData.email}
+              value={formData.ville}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
