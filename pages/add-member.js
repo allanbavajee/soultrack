@@ -158,13 +158,6 @@ export default function AddMember() {
             />
           </div>
 
-          {/* Message de succès */}
-          {success && (
-            <div className="text-green-600 font-semibold text-center">
-              ✅ Membre ajouté avec succès !
-            </div>
-          )}
-
           {/* Boutons */}
           <div className="flex justify-between mt-4 gap-4">
             <button
@@ -189,6 +182,12 @@ export default function AddMember() {
               Ajouter
             </button>
           </div>
+           {/* Message de succès */}
+          {success && (
+            <div className="text-green-600 font-semibold text-center">
+              ✅ Membre ajouté avec succès !
+            </div>
+          )}     
         </form>
       </div>
     </div>
