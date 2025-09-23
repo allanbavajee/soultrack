@@ -1,102 +1,141 @@
 /* /pages/list-members.js */
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     fetchMembers();
-  }, []);
+  }, [filter]);
 
-  const fetchMembers = async () => {
-    const { data, error } = await supabase
-      .from("membres")
-      .select("*")
-      .order("id", { ascending: false });
+  async function fetchMembers() {
+    let query = supabase.from("membres").select("*").order("created_at", { ascending: false });
+
+    if (filter !== "all") {
+      query = query.eq("statut", filter);
+    }
+
+    const { data, error } = await query;
     if (error) console.error(error);
     else setMembers(data);
-  };
-
-  const getCardColor = (member) => {
-    if (member.star?.toLowerCase() === "oui") return "bg-purple-100"; // membre STAR
-    return "bg-white"; // membre normal
-  };
-
-  const getStatusColor = (statut) => {
-    switch (statut) {
-      case "veut rejoindre ICC":
-        return "bg-green-500";
-      case "visiteur":
-        return "bg-yellow-400";
-      case "a déjà mon église":
-        return "bg-blue-400";
-      case "membre de l'église":
-        return "bg-black text-white";
-      default:
-        return "bg-orange-400";
-    }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-indigo-50 p-6">
-      <h1 className="text-3xl font-extrabold text-indigo-700 mb-6 text-center">
-        👥 Liste des membres
-      </h1>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <h1 className="text-3xl font-bold mb-4">📋 Liste des membres</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Filtre par statut */}
+      <div className="mb-6">
+        <label className="mr-2 font-semibold">Filtrer par statut:</label>
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-400"
+        >
+          <option value="all">Tous</option>
+          <option value="visiteur">Visiteur</option>
+          <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+          <option value="a déjà mon église">A déjà mon église</option>
+          <option value="ancien">Ancien</option>
+        </select>
+      </div>
+
+      {/* Liste des cartes */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {members.map((member) => (
-          <div
-            key={member.id}
-            className={`${getCardColor(member)} p-6 rounded-3xl shadow-lg relative flex flex-col justify-between`}
-          >
-            {/* Statut et Détails en haut à droite */}
-            <div className="absolute top-4 right-4 flex items-center gap-2">
-              <span
-                className={`${getStatusColor(member.statut)} text-white px-3 py-1 rounded-full text-sm font-semibold`}
-              >
-                {member.statut || "N/A"}
-              </span>
-              <Link
-                href={`/members/${member.id}`}
-                className="py-1 px-3 bg-orange-200 hover:bg-orange-300 text-orange-900 font-semibold rounded-full text-sm transition-all duration-200"
-              >
-                Détails
-              </Link>
-            </div>
-
-            {/* Contenu principal */}
-            <div>
-              <h2 className="text-xl font-bold text-gray-800 mb-1">
-                {member.nom} {member.prenom}
-              </h2>
-              <p className="text-gray-500 mb-2">
-                Cellule : {member.assignee || "Non assigné"}
-              </p>
-              {member.besoin && (
-                <p className="mt-2 text-gray-600 text-sm line-clamp-2">
-                  {member.besoin}
-                </p>
-              )}
-            </div>
-
-            {/* Bouton WhatsApp si veut rejoindre ICC */}
-            {member.statut === "veut rejoindre ICC" && (
-              <div className="mt-4 flex justify-end">
-                <a
-                  href={`https://wa.me/${member.telephone}?text=Bonjour ${member.prenom}, voici vos informations...`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="py-1 px-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full text-sm transition-all duration-200"
-                >
-                  WhatsApp
-                </a>
-              </div>
-            )}
-          </div>
+          <MemberCard key={member.id} member={member} onStatusChange={fetchMembers} />
         ))}
       </div>
+    </div>
+  );
+}
+
+function MemberCard({ member, onStatusChange }) {
+  const [cellule, setCellule] = useState(null);
+
+  useEffect(() => {
+    fetchCellule();
+  }, [member.ville]);
+
+  async function fetchCellule() {
+    if (!member.ville) return;
+    const { data, error } = await supabase
+      .from("cellules")
+      .select("cellule")
+      .eq("ville", member.ville)
+      .single();
+
+    if (!error && data) setCellule(data.cellule);
+  }
+
+  async function handleEnvoyer() {
+    // Pour l’instant → console log
+    console.log("📤 Envoi au responsable:", {
+      nom: member.nom,
+      prenom: member.prenom,
+      telephone: member.telephone,
+      email: member.email,
+      besoin: member.besoin,
+      ville: member.ville,
+      cellule,
+    });
+
+    // Mise à jour du statut en "ancien"
+    const { error } = await supabase
+      .from("membres")
+      .update({ statut: "ancien" })
+      .eq("id", member.id);
+
+    if (error) {
+      alert("❌ Erreur lors de la mise à jour");
+      console.error(error);
+    } else {
+      alert("✅ Contact envoyé et statut mis à jour !");
+      onStatusChange(); // Refresh liste
+    }
+  }
+
+  // Couleur selon statut ou star
+  const cardStyle =
+    member.star === "OUI"
+      ? "bg-green-100 border-green-400"
+      : member.statut === "ancien"
+      ? "bg-white border-gray-300"
+      : "bg-orange-100 border-orange-400";
+
+  return (
+    <div className={`p-4 rounded-xl border shadow ${cardStyle}`}>
+      <div className="flex justify-between items-center">
+        <h2 className="font-bold text-lg">
+          {member.prenom} {member.nom}
+        </h2>
+        <span className="text-sm font-semibold text-orange-600">{member.statut}</span>
+      </div>
+
+      <p className="text-sm text-gray-600">📱 {member.telephone}</p>
+      {cellule && <p className="text-sm text-indigo-700 font-semibold">📍 Cellule : {cellule}</p>}
+
+      <details className="mt-2">
+        <summary className="cursor-pointer text-indigo-500 text-sm">Voir détails</summary>
+        <div className="mt-2 text-sm text-gray-700 space-y-1">
+          <p>Email: {member.email || "—"}</p>
+          <p>Besoin: {member.besoin || "—"}</p>
+          <p>Ville: {member.ville || "—"}</p>
+          <p>Comment venu: {member.how_came || "—"}</p>
+
+          {/* Bouton envoyer seulement si statut = visiteur ou veut rejoindre ICC */}
+          {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
+            <button
+              onClick={handleEnvoyer}
+              className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
+            >
+              📤 Envoyer au responsable
+            </button>
+          )}
+        </div>
+      </details>
     </div>
   );
 }
