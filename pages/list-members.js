@@ -1,4 +1,5 @@
-// pages/list-members.js
+// pages/list-members.js/
+
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -148,3 +149,4 @@ Responsable: ${selectedCellule.responsable}`;
     </div>
   );
 }
+
