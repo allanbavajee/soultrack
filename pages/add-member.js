@@ -11,6 +11,7 @@ export default function AddMember() {
     prenom: "",
     telephone: "",
     email: "",
+    ville: "",
     statut: "nouveau",
     how_came: "",
     besoin: "",
@@ -28,12 +29,13 @@ export default function AddMember() {
       const { data, error } = await supabase.from("membres").insert([formData]);
       if (error) throw error;
       setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000); // message disparait après 3s
+      setTimeout(() => setSuccess(false), 3000); // message disparaît après 3s
       setFormData({
         nom: "",
         prenom: "",
         telephone: "",
         email: "",
+        ville: "",
         statut: "nouveau",
         how_came: "",
         besoin: "",
@@ -113,18 +115,18 @@ export default function AddMember() {
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
-          {/* Ville*/}
+
+          {/* Ville */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Ville</label>
             <input
-              type="ville"
+              type="text"
               name="ville"
               value={formData.ville}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
-
 
           {/* Statut */}
           <div>
@@ -142,7 +144,7 @@ export default function AddMember() {
             </select>
           </div>
 
-          {/* Comment est venu */}
+          {/* Comment est-il venu ? */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
             <select
@@ -172,6 +174,7 @@ export default function AddMember() {
 
           {/* Boutons */}
           <div className="flex justify-between mt-4 gap-4">
+            {/* Annuler */}
             <button
               type="button"
               onClick={() => setFormData({
@@ -188,22 +191,24 @@ export default function AddMember() {
             >
               Annuler
             </button>
+
+            {/* Ajouter */}
             <button
               type="submit"
               className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
             >
               Ajouter
             </button>
-          </div>              
+          </div>
         </form>
-         {/* Message de succès */}
-          {success && (
-            <div className="text-green-600 font-semibold text-center">
-              ✅ Membre ajouté avec succès !
-            </div>
-          )}       
+
+        {/* Message de succès */}
+        {success && (
+          <div className="text-green-600 font-semibold text-center mt-3">
+            ✅ Membre ajouté avec succès !
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
