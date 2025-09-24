@@ -8,7 +8,7 @@ export default function MemberCard({ member, fetchMembers }) {
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Charger toutes les cellules (peu importe la ville du membre)
+  // Charger toutes les cellules
   useEffect(() => {
     async function fetchCellules() {
       const { data, error } = await supabase
@@ -24,26 +24,30 @@ export default function MemberCard({ member, fetchMembers }) {
   const handleWhatsApp = async () => {
     if (!selectedCellule) return;
 
-    // Extraire uniquement le prénom du responsable
+    // Prénom du responsable uniquement
     const prenomResponsable = selectedCellule.responsable.split(" ")[0];
 
-    const message = `Bonjour ${prenomResponsable} 👋,
+    const message = `
+Salut ${prenomResponsable} 👋,
 
-Dieu nous a envoyé une nouvelle âme à suivre :
-Nom : ${member.prenom} ${member.nom}
-Téléphone : ${member.telephone}
-Email : ${member.email || "—"}
-Ville : ${member.ville || "—"}
-Besoin : ${member.besoin || "—"}
+Dieu nous a envoyé une nouvelle âme à suivre 😊
 
-Merci pour ton cœur et ton amour ✨`;
+Voici ses infos pour que tu puisses la contacter :
+- Prénom : ${member.prenom}
+- Nom : ${member.nom}
+- Téléphone : ${member.telephone}
+- Email : ${member.email || "—"}
+- Ville : ${member.ville || "—"}
+- Besoin : ${member.besoin || "—"}
 
-    window.open(
-      `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(message)}`,
-      "_blank"
-    );
+Merci pour ton cœur et ton amour ❤️🙏
+`;
 
-    // Mise à jour du statut du membre en "ancien"
+    const encodedMessage = encodeURIComponent(message);
+
+    window.open(`https://wa.me/${selectedCellule.telephone}?text=${encodedMessage}`, "_blank");
+
+    // Mise à jour du statut en "ancien"
     await supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
     fetchMembers();
   };
