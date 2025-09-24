@@ -1,8 +1,4 @@
-/* components/MemberCard.js*/
-/*Description : Composant pour afficher chaque membre avec ses informations,
-couleur selon statut/star, menu déroulant pour choisir une cellule et bouton WhatsApp
-qui envoie un message personnalisé depuis la table `message_templates`.
-*/
+// components/MemberCard.js
 
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
@@ -11,7 +7,6 @@ export default function MemberCard({ member, fetchMembers }) {
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [template, setTemplate] = useState("");
 
   // Charger toutes les cellules
   useEffect(() => {
@@ -25,47 +20,33 @@ export default function MemberCard({ member, fetchMembers }) {
     fetchCellules();
   }, []);
 
-  // Charger le template de message
-  useEffect(() => {
-    async function fetchTemplate() {
-      const { data, error } = await supabase
-        .from("message_templates")
-        .select("contenu")
-        .eq("nom_message", "nouveau_membre")
-        .single();
-
-      if (!error && data) setTemplate(data.contenu);
-    }
-    fetchTemplate();
-  }, []);
-
-  // Envoyer WhatsApp et mettre à jour le statut en "ancien"
+  // Envoyer WhatsApp et mettre à jour le statut
   const handleWhatsApp = async () => {
     if (!selectedCellule) return;
 
-    // Remplacer les placeholders par les infos du membre et du responsable
-    const messagePersonnalise = template
-      .replace("{prenom_responsable}", selectedCellule.responsable)
-      .replace("{prenom_membre}", member.prenom || "—")
-      .replace("{nom_membre}", member.nom || "—")
-      .replace("{telephone_membre}", member.telephone || "—")
-      .replace("{email_membre}", member.email || "—")
-      .replace("{ville_membre}", member.ville || "—")
-      .replace("{besoin_membre}", member.besoin || "—");
+    // Nettoyer le numéro pour WhatsApp (sans espaces ni caractères spéciaux)
+    const tel = selectedCellule.telephone.replace(/\D/g, "");
 
-    window.open(
-      `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(
-        messagePersonnalise
-      )}`,
-      "_blank"
-    );
+    const message = `Bonjour ${selectedCellule.responsable} 👋,
 
-    // Mise à jour du statut du membre en "ancien"
+Dieu nous a envoyé une nouvelle âme à suivre :
+Nom : ${member.prenom} ${member.nom}
+Téléphone : ${member.telephone}
+Email : ${member.email || "—"}
+Ville : ${member.ville || "—"}
+Besoin : ${member.besoin || "—"}
+
+Merci pour ton cœur et ton amour. 💛`;
+
+    const url = `https://wa.me/${tel}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
+
+    // Mise à jour du statut en "ancien"
     await supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
     fetchMembers();
   };
 
-  // Couleur de la carte selon statut ou star
+  // Couleur de la carte selon statut/star
   const cardStyle =
     member.star?.toLowerCase() === "oui"
       ? "bg-green-100 border-green-400"
@@ -97,7 +78,7 @@ export default function MemberCard({ member, fetchMembers }) {
           <p>Ville : {member.ville || "—"}</p>
           <p>Comment venu : {member.how_came || "—"}</p>
 
-          {/* Menu déroulant + WhatsApp pour visiteur ou veut rejoindre ICC */}
+          {/* Menu déroulant + WhatsApp pour statuts "visiteur" ou "veut rejoindre ICC" */}
           {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
             <div className="mt-3">
               <label className="block mb-1 font-semibold">Choisir une cellule :</label>
