@@ -8,7 +8,7 @@ export default function MemberCard({ member, fetchMembers }) {
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Charger toutes les cellules
+  // Charger toutes les cellules (peu importe la ville du membre)
   useEffect(() => {
     async function fetchCellules() {
       const { data, error } = await supabase
@@ -20,14 +20,14 @@ export default function MemberCard({ member, fetchMembers }) {
     fetchCellules();
   }, []);
 
-  // Envoyer WhatsApp et mettre à jour le statut
+  // Envoyer WhatsApp et mettre à jour le statut en "ancien"
   const handleWhatsApp = async () => {
     if (!selectedCellule) return;
 
-    // Nettoyer le numéro pour WhatsApp (sans espaces ni caractères spéciaux)
-    const tel = selectedCellule.telephone.replace(/\D/g, "");
+    // Extraire uniquement le prénom du responsable
+    const prenomResponsable = selectedCellule.responsable.split(" ")[0];
 
-    const message = `Bonjour ${selectedCellule.responsable} 👋,
+    const message = `Bonjour ${prenomResponsable} 👋,
 
 Dieu nous a envoyé une nouvelle âme à suivre :
 Nom : ${member.prenom} ${member.nom}
@@ -36,17 +36,19 @@ Email : ${member.email || "—"}
 Ville : ${member.ville || "—"}
 Besoin : ${member.besoin || "—"}
 
-Merci pour ton cœur et ton amour. 💛`;
+Merci pour ton cœur et ton amour ✨`;
 
-    const url = `https://wa.me/${tel}?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank");
+    window.open(
+      `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(message)}`,
+      "_blank"
+    );
 
-    // Mise à jour du statut en "ancien"
+    // Mise à jour du statut du membre en "ancien"
     await supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
     fetchMembers();
   };
 
-  // Couleur de la carte selon statut/star
+  // Couleur de la carte selon statut ou star
   const cardStyle =
     member.star?.toLowerCase() === "oui"
       ? "bg-green-100 border-green-400"
@@ -78,7 +80,7 @@ Merci pour ton cœur et ton amour. 💛`;
           <p>Ville : {member.ville || "—"}</p>
           <p>Comment venu : {member.how_came || "—"}</p>
 
-          {/* Menu déroulant + WhatsApp pour statuts "visiteur" ou "veut rejoindre ICC" */}
+          {/* Menu déroulant + WhatsApp pour les statuts visiteur ou veut rejoindre ICC */}
           {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
             <div className="mt-3">
               <label className="block mb-1 font-semibold">Choisir une cellule :</label>
