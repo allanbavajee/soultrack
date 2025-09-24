@@ -1,5 +1,4 @@
 // components/MemberCard.js
-
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -8,53 +7,51 @@ export default function MemberCard({ member, fetchMembers }) {
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Charger toutes les cellules (pas seulement la ville du membre)
+  // Charger toutes les cellules
   useEffect(() => {
     async function fetchCellules() {
       const { data, error } = await supabase
         .from("cellules")
         .select("cellule, responsable, telephone");
-
       if (!error && data) setCellules(data);
     }
     fetchCellules();
   }, []);
 
-  // Envoyer WhatsApp et mettre à jour le statut en "ancien"
+  // Extraire le prénom du responsable
+  const getPrenomResponsable = (nomComplet) => {
+    if (!nomComplet) return "";
+    return nomComplet.split(" ")[0];
+  };
+
+  // Envoyer WhatsApp et mettre à jour le statut
   const handleWhatsApp = async () => {
     if (!selectedCellule) return;
 
-    // Extraire le prénom du responsable
-    const prenomResponsable = selectedCellule.responsable.split(" ")[0];
+    const prenomResp = getPrenomResponsable(selectedCellule.responsable);
+    const message = `👋 Bonjour ${prenomResp} 🌟
 
-    // Message chaleureux et personnalisé
-    const message = `
-🌟 Bonjour ${prenomResponsable} 👋
+Dieu nous a envoyé une nouvelle âme à suivre 🙏
 
-Dieu nous a envoyé une nouvelle âme à suivre 🙏💛
-
-Voici ses infos pour que tu puisses la contacter et l'accueillir avec amour :
-- Prénom : ${member.prenom}
-- Nom : ${member.nom}
-- Téléphone : ${member.telephone}
+Voici ses infos pour que tu puisses la contacter :
+- Prénom : ${member.prenom || "—"}
+- Nom : ${member.nom || "—"}
+- Téléphone : ${member.telephone || "—"}
 - Email : ${member.email || "—"}
 - Ville : ${member.ville || "—"}
 - Besoin : ${member.besoin || "—"}
 
-Merci pour ton cœur généreux et ton amour ❤️✨
-Que Dieu te bénisse dans ce beau service ! 🙌
-`;
+Merci pour ton cœur ❤️ et ton amour 💛`;
 
-    // Encodage pour WhatsApp
-    const url = `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank");
+    window.open(
+      `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(message)}`,
+      "_blank"
+    );
 
-    // Mise à jour du statut du membre en "ancien"
     await supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
     fetchMembers();
   };
 
-  // Couleur de la carte selon statut ou star
   const cardStyle =
     member.star?.toLowerCase() === "oui"
       ? "bg-green-100 border-green-400"
@@ -71,7 +68,6 @@ Que Dieu te bénisse dans ce beau service ! 🙌
 
       <p className="text-sm text-gray-600">📱 {member.telephone}</p>
 
-      {/* Bouton pour afficher les détails */}
       <button
         onClick={() => setShowDetails(!showDetails)}
         className="mt-2 text-sm text-indigo-500 underline"
@@ -86,7 +82,6 @@ Que Dieu te bénisse dans ce beau service ! 🙌
           <p>Ville : {member.ville || "—"}</p>
           <p>Comment venu : {member.how_came || "—"}</p>
 
-          {/* Menu déroulant + WhatsApp pour les statuts visiteur ou veut rejoindre ICC */}
           {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
             <div className="mt-3">
               <label className="block mb-1 font-semibold">Choisir une cellule :</label>
@@ -94,13 +89,13 @@ Que Dieu te bénisse dans ce beau service ! 🙌
                 className="w-full p-2 border rounded-lg"
                 value={selectedCellule?.cellule || ""}
                 onChange={(e) => {
-                  const cellule = cellules.find((c) => c.cellule === e.target.value);
+                  const cellule = cellules.find(c => c.cellule === e.target.value);
                   setSelectedCellule(cellule);
                 }}
               >
                 <option value="">-- Sélectionner --</option>
                 {cellules.length > 0 ? (
-                  cellules.map((c) => (
+                  cellules.map(c => (
                     <option key={c.cellule} value={c.cellule}>
                       {c.cellule} ({c.responsable})
                     </option>
