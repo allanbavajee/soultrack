@@ -8,7 +8,7 @@ export default function MemberCard({ member, fetchMembers }) {
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Charger toutes les cellules
+  // Charger toutes les cellules (pas seulement la ville du membre)
   useEffect(() => {
     async function fetchCellules() {
       const { data, error } = await supabase
@@ -20,18 +20,20 @@ export default function MemberCard({ member, fetchMembers }) {
     fetchCellules();
   }, []);
 
+  // Envoyer WhatsApp et mettre à jour le statut en "ancien"
   const handleWhatsApp = async () => {
-  if (!selectedCellule) return;
+    if (!selectedCellule) return;
 
-  // Prénom du responsable seulement
-  const prenomResponsable = selectedCellule.responsable.split(" ")[0];
+    // Extraire le prénom du responsable
+    const prenomResponsable = selectedCellule.responsable.split(" ")[0];
 
-  // Message chaleureux avec vrais emojis et sauts de ligne
-  const message = `Salut ${prenomResponsable} 👋
+    // Message chaleureux et personnalisé
+    const message = `
+🌟 Bonjour ${prenomResponsable} 👋
 
-Dieu nous a envoyé une nouvelle âme à suivre 😊
+Dieu nous a envoyé une nouvelle âme à suivre 🙏💛
 
-Voici ses infos pour que tu puisses la contacter :
+Voici ses infos pour que tu puisses la contacter et l'accueillir avec amour :
 - Prénom : ${member.prenom}
 - Nom : ${member.nom}
 - Téléphone : ${member.telephone}
@@ -39,15 +41,18 @@ Voici ses infos pour que tu puisses la contacter :
 - Ville : ${member.ville || "—"}
 - Besoin : ${member.besoin || "—"}
 
-Merci pour ton cœur et ton amour ❤️🙏`;
+Merci pour ton cœur généreux et ton amour ❤️✨
+Que Dieu te bénisse dans ce beau service ! 🙌
+`;
 
-  // Envoi WhatsApp sans encodeURIComponent pour conserver les emojis
-  window.open(`https://wa.me/${selectedCellule.telephone}?text=${message}`, "_blank");
+    // Encodage pour WhatsApp
+    const url = `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
 
-  // Mise à jour du statut
-  await supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
-  fetchMembers();
-};
+    // Mise à jour du statut du membre en "ancien"
+    await supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
+    fetchMembers();
+  };
 
   // Couleur de la carte selon statut ou star
   const cardStyle =
