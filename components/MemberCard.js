@@ -41,7 +41,7 @@ Voici ses infos pour que tu puisses la contacter :
 - Ville : ${member.ville || "—"}
 - Besoin : ${member.besoin || "—"}
 
-Merci pour ton cœur ❤️ et ton amour 💛`;
+Merci pour ton cœur et ta diligence ❤️`;
 
     window.open(
       `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(message)}`,
