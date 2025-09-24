@@ -1,9 +1,8 @@
-// Description : Composant pour afficher chaque membre avec ses informations,
-// couleur selon statut/star, et menu déroulant + bouton WhatsApp pour envoyer
-// les détails à la cellule correspondante.
-//
-// ⚡ Correction : le menu déroulant affiche maintenant TOUTES les cellules,
-// pas seulement celles de la même ville que le membre.
+/* components/MemberCard.js*/
+/*Description : Composant pour afficher chaque membre avec ses informations,
+couleur selon statut/star, menu déroulant pour choisir une cellule et bouton WhatsApp
+qui envoie un message personnalisé depuis la table `message_templates`.
+*/
 
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
@@ -12,8 +11,9 @@ export default function MemberCard({ member, fetchMembers }) {
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [template, setTemplate] = useState("");
 
-  // Charger toutes les cellules (peu importe la ville du membre)
+  // Charger toutes les cellules
   useEffect(() => {
     async function fetchCellules() {
       const { data, error } = await supabase
@@ -25,14 +25,38 @@ export default function MemberCard({ member, fetchMembers }) {
     fetchCellules();
   }, []);
 
+  // Charger le template de message
+  useEffect(() => {
+    async function fetchTemplate() {
+      const { data, error } = await supabase
+        .from("message_templates")
+        .select("contenu")
+        .eq("nom_message", "nouveau_membre")
+        .single();
+
+      if (!error && data) setTemplate(data.contenu);
+    }
+    fetchTemplate();
+  }, []);
+
   // Envoyer WhatsApp et mettre à jour le statut en "ancien"
   const handleWhatsApp = async () => {
     if (!selectedCellule) return;
 
-    const message = `👋 Nouveau contact à suivre :\n\nNom: ${member.prenom} ${member.nom}\n📱 Tel: ${member.telephone}\n📧 Email: ${member.email || "—"}\n📍 Ville: ${member.ville || "—"}\nBesoin: ${member.besoin || "—"}\n\nCellule: ${selectedCellule.cellule}\nResponsable: ${selectedCellule.responsable}`;
+    // Remplacer les placeholders par les infos du membre et du responsable
+    const messagePersonnalise = template
+      .replace("{prenom_responsable}", selectedCellule.responsable)
+      .replace("{prenom_membre}", member.prenom || "—")
+      .replace("{nom_membre}", member.nom || "—")
+      .replace("{telephone_membre}", member.telephone || "—")
+      .replace("{email_membre}", member.email || "—")
+      .replace("{ville_membre}", member.ville || "—")
+      .replace("{besoin_membre}", member.besoin || "—");
 
     window.open(
-      `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(message)}`,
+      `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(
+        messagePersonnalise
+      )}`,
       "_blank"
     );
 
@@ -52,9 +76,7 @@ export default function MemberCard({ member, fetchMembers }) {
   return (
     <div className={`p-4 rounded-xl border shadow mb-3 ${cardStyle}`}>
       <div className="flex justify-between items-center">
-        <h2 className="font-bold text-lg">
-          {member.prenom} {member.nom}
-        </h2>
+        <h2 className="font-bold text-lg">{member.prenom} {member.nom}</h2>
         <span className="text-sm font-semibold text-orange-600">{member.statut}</span>
       </div>
 
@@ -75,7 +97,7 @@ export default function MemberCard({ member, fetchMembers }) {
           <p>Ville : {member.ville || "—"}</p>
           <p>Comment venu : {member.how_came || "—"}</p>
 
-          {/* Menu déroulant + WhatsApp pour les statuts visiteur ou veut rejoindre ICC */}
+          {/* Menu déroulant + WhatsApp pour visiteur ou veut rejoindre ICC */}
           {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
             <div className="mt-3">
               <label className="block mb-1 font-semibold">Choisir une cellule :</label>
