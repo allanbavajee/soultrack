@@ -29,11 +29,12 @@ export default function MemberCard({ member, fetchMembers }) {
     if (!selectedCellule) return;
 
     const prenomResp = getPrenomResponsable(selectedCellule.responsable);
-    const message = `Bonjour ${prenomResp} 👋 
+    const message = `Bonjour ${prenomResp} 👋, 
 
 Dieu nous a envoyé une nouvelle âme à suivre 🙏
 
 Voici ses infos pour que tu puisses la contacter :
+
 - Prénom : ${member.prenom || "—"}
 - Nom : ${member.nom || "—"}
 - Téléphone : ${member.telephone || "—"}
