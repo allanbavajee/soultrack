@@ -1,6 +1,9 @@
-// Description : Composant pour afficher chaque membre avec ses informations, 
+// Description : Composant pour afficher chaque membre avec ses informations,
 // couleur selon statut/star, et menu déroulant + bouton WhatsApp pour envoyer
 // les détails à la cellule correspondante.
+//
+// ⚡ Correction : le menu déroulant affiche maintenant TOUTES les cellules,
+// pas seulement celles de la même ville que le membre.
 
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
@@ -10,19 +13,17 @@ export default function MemberCard({ member, fetchMembers }) {
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Charger les cellules correspondant à la ville du membre
+  // Charger toutes les cellules (peu importe la ville du membre)
   useEffect(() => {
     async function fetchCellules() {
-      if (!member.ville) return;
       const { data, error } = await supabase
         .from("cellules")
-        .select("cellule, responsable, telephone")
-        .eq("ville", member.ville);
+        .select("cellule, responsable, telephone");
 
       if (!error && data) setCellules(data);
     }
     fetchCellules();
-  }, [member.ville]);
+  }, []);
 
   // Envoyer WhatsApp et mettre à jour le statut en "ancien"
   const handleWhatsApp = async () => {
@@ -51,7 +52,9 @@ export default function MemberCard({ member, fetchMembers }) {
   return (
     <div className={`p-4 rounded-xl border shadow mb-3 ${cardStyle}`}>
       <div className="flex justify-between items-center">
-        <h2 className="font-bold text-lg">{member.prenom} {member.nom}</h2>
+        <h2 className="font-bold text-lg">
+          {member.prenom} {member.nom}
+        </h2>
         <span className="text-sm font-semibold text-orange-600">{member.statut}</span>
       </div>
 
