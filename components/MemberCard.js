@@ -1,4 +1,5 @@
-// components/MemberCard.js
+/*components/MemberCard.js*/
+
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -13,46 +14,45 @@ export default function MemberCard({ member, fetchMembers }) {
       const { data, error } = await supabase
         .from("cellules")
         .select("cellule, responsable, telephone");
+
       if (!error && data) setCellules(data);
     }
     fetchCellules();
   }, []);
 
-  // Extraire le prénom du responsable
-  const getPrenomResponsable = (nomComplet) => {
-    if (!nomComplet) return "";
-    return nomComplet.split(" ")[0];
-  };
-
   // Envoyer WhatsApp et mettre à jour le statut
   const handleWhatsApp = async () => {
     if (!selectedCellule) return;
 
-    const prenomResp = getPrenomResponsable(selectedCellule.responsable);
-    const message = `Bonjour ${prenomResp} 👋, 
+    // ✅ Construire le message WhatsApp personnalisé
+    const prenomResponsable = selectedCellule.responsable.split(" ")[0]; // seulement le prénom
+    const message = 
+`👋 Salut ${prenomResponsable},
 
-Dieu nous a envoyé une nouvelle âme à suivre 🙏
+🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
+Voici ses infos pour que tu puisses la contacter :  
 
-Voici ses infos pour que tu puisses la contacter :
+- 👤 Nom : ${member.prenom} ${member.nom}  
+- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
+- 📧 Email : ${member.email || "—"}  
+- 🏙️ Ville : ${member.ville || "—"}  
+- 🙏 Besoin : ${member.besoin || "—"}  
+- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}  
 
-- Prénom : ${member.prenom || "—"}
-- Nom : ${member.nom || "—"}
-- Téléphone : ${member.telephone || "—"}
-- Email : ${member.email || "—"}
-- Ville : ${member.ville || "—"}
-- Besoin : ${member.besoin || "—"}
+Merci pour ton cœur ❤️ et ton amour ✨`;
 
-Merci pour ton cœur et ta diligence ❤️`;
-
+    // ✅ Ouvrir WhatsApp avec le message
     window.open(
       `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(message)}`,
       "_blank"
     );
 
+    // ✅ Mise à jour du statut
     await supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
     fetchMembers();
   };
 
+  // Style de la carte
   const cardStyle =
     member.star?.toLowerCase() === "oui"
       ? "bg-green-100 border-green-400"
@@ -63,12 +63,15 @@ Merci pour ton cœur et ta diligence ❤️`;
   return (
     <div className={`p-4 rounded-xl border shadow mb-3 ${cardStyle}`}>
       <div className="flex justify-between items-center">
-        <h2 className="font-bold text-lg">{member.prenom} {member.nom}</h2>
+        <h2 className="font-bold text-lg">
+          {member.prenom} {member.nom}
+        </h2>
         <span className="text-sm font-semibold text-orange-600">{member.statut}</span>
       </div>
 
       <p className="text-sm text-gray-600">📱 {member.telephone}</p>
 
+      {/* Bouton pour afficher les détails */}
       <button
         onClick={() => setShowDetails(!showDetails)}
         className="mt-2 text-sm text-indigo-500 underline"
@@ -81,8 +84,11 @@ Merci pour ton cœur et ta diligence ❤️`;
           <p>Email : {member.email || "—"}</p>
           <p>Besoin : {member.besoin || "—"}</p>
           <p>Ville : {member.ville || "—"}</p>
+          <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+          <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
           <p>Comment venu : {member.how_came || "—"}</p>
 
+          {/* Menu déroulant + WhatsApp */}
           {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
             <div className="mt-3">
               <label className="block mb-1 font-semibold">Choisir une cellule :</label>
@@ -90,13 +96,13 @@ Merci pour ton cœur et ta diligence ❤️`;
                 className="w-full p-2 border rounded-lg"
                 value={selectedCellule?.cellule || ""}
                 onChange={(e) => {
-                  const cellule = cellules.find(c => c.cellule === e.target.value);
+                  const cellule = cellules.find((c) => c.cellule === e.target.value);
                   setSelectedCellule(cellule);
                 }}
               >
                 <option value="">-- Sélectionner --</option>
                 {cellules.length > 0 ? (
-                  cellules.map(c => (
+                  cellules.map((c) => (
                     <option key={c.cellule} value={c.cellule}>
                       {c.cellule} ({c.responsable})
                     </option>
