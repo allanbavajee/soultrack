@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabaseClient";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("");
 
   useEffect(() => {
     fetchMembers();
@@ -22,7 +22,7 @@ export default function ListMembers() {
   };
 
   const filteredMembers = members.filter((m) => {
-    if (filter === "all") return true;
+    if (!filter) return true;
     if (filter === "star") return m.star === true;
     return m.statut === filter;
   });
@@ -31,7 +31,9 @@ export default function ListMembers() {
     if (member.star) return "#FBC02D"; // jaune pour star
     if (member.statut === "a déjà mon église") return "#4285F4"; // bleu
     if (member.statut === "evangelisé") return "#9C27B0"; // violet
-    return "#34A853"; // vert pour veut rejoindre ICC / visiteur
+    if (member.statut === "actif") return "#34A853"; // vert
+    if (member.statut === "ancien") return "#EA4335"; // rouge
+    return "#34A853"; // par défaut pour veut rejoindre ICC / visiteur
   };
 
   return (
@@ -47,22 +49,14 @@ export default function ListMembers() {
           onChange={(e) => setFilter(e.target.value)}
           className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
         >
-          <option value="all">Tous ({members.length})</option>
-          <option value="veut rejoindre ICC">
-            Veut rejoindre ICC ({members.filter(m => m.statut === "veut rejoindre ICC").length})
-          </option>
-          <option value="visiteur">
-            Visiteur ({members.filter(m => m.statut === "visiteur").length})
-          </option>
-          <option value="a déjà mon église">
-            A déjà mon église ({members.filter(m => m.statut === "a déjà mon église").length})
-          </option>
-          <option value="evangelisé">
-            Evangelisé ({members.filter(m => m.statut === "evangelisé").length})
-          </option>
-          <option value="star">
-            ⭐ Star ({members.filter(m => m.star).length})
-          </option>
+          <option value="">-- Filtrer par statut --</option>
+          <option value="actif">Actif</option>
+          <option value="ancien">Ancien</option>
+          <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+          <option value="visiteur">Visiteur</option>
+          <option value="a déjà mon église">A déjà mon église</option>
+          <option value="evangelisé">Evangelisé</option>
+          <option value="star">⭐ Star</option>
         </select>
       </div>
 
@@ -99,6 +93,8 @@ export default function ListMembers() {
                 <option value="visiteur">Visiteur</option>
                 <option value="a déjà mon église">A déjà mon église</option>
                 <option value="evangelisé">Evangelisé</option>
+                <option value="actif">Actif</option>
+                <option value="ancien">Ancien</option>
               </select>
             </div>
           </div>
