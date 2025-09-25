@@ -9,14 +9,14 @@ export default function Home() {
 
       {/* Logos */}
       <div className="flex gap-6 items-center mb-4">
-        <Image src="/image/icc.logo.jpg" alt="icc" width={90} height={90} />
+        <Image src="/image/icc.logo.jpg" alt="ICC" width={90} height={90} />
         <Image src="/image/soul.logo.png" alt="SoulTrack" width={90} height={90} />
       </div>
 
       {/* Slogan */}
       <h2 className="text-2xl md:text-3xl font-handwriting text-center text-gray-800 mb-8">
         Tu es précieux, tu es attendu, tu es aimé
-      </h2>
+      </h2
 
       {/* Cartes colorées */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
