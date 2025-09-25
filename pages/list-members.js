@@ -4,103 +4,127 @@ import { supabase } from "../lib/supabaseClient";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     fetchMembers();
   }, []);
 
   const fetchMembers = async () => {
-    setLoading(true);
     const { data, error } = await supabase.from("membres").select("*");
-    if (error) {
-      console.error("Erreur lors du chargement :", error);
-    } else {
-      setMembers(data);
-    }
-    setLoading(false);
+    if (!error && data) setMembers(data);
   };
 
-  const handleStatusChange = async (id, newStatus) => {
-    const { error } = await supabase
-      .from("membres")
-      .update({ statut: newStatus })
-      .eq("id", id);
-
-    if (error) {
-      console.error("Erreur de mise à jour :", error);
-      alert("Impossible de mettre à jour le statut !");
-    } else {
-      setMembers((prev) =>
-        prev.map((m) =>
-          m.id === id ? { ...m, statut: newStatus } : m
-        )
-      );
-    }
+  const handleChangeStatus = (id, newStatus) => {
+    // Met à jour localement le statut
+    setMembers((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
+    );
   };
 
-  const getStatusColor = (member) => {
-    if (member.star === true) return "bg-yellow-400 text-black"; // ⭐ seulement si true
-    switch (member.statut) {
-      case "actif":
-        return "bg-green-500 text-white";
-      case "ancien":
-        return "bg-gray-500 text-white";
-      case "veut rejoindre ICC":
-        return "bg-blue-500 text-white";
-      case "visiteur":
-        return "bg-purple-500 text-white";
-      case "evangelise":
-        return "bg-pink-500 text-white";
-      default:
-        return "bg-gray-300 text-black";
-    }
-  };
-
-  if (loading) return <p className="text-center">Chargement...</p>;
+  // Filtrer les membres
+  const filteredMembers =
+    filter === "all" ? members : members.filter((m) => m.statut === filter);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-3xl font-bold text-center mb-6">Liste des membres</h1>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <h1 className="text-3xl font-bold text-gray-800 mb-4 text-center">
+        Liste des membres
+      </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {members.map((member) => (
+      {/* Filtre */}
+      <div className="flex flex-wrap justify-center gap-4 mb-4">
+        <button
+          onClick={() => setFilter("all")}
+          className={`px-4 py-2 rounded ${
+            filter === "all" ? "bg-indigo-500 text-white" : "bg-white"
+          } border`}
+        >
+          Tous ({members.length})
+        </button>
+        <button
+          onClick={() => setFilter("veut rejoindre ICC")}
+          className={`px-4 py-2 rounded ${
+            filter === "veut rejoindre ICC" ? "bg-green-500 text-white" : "bg-white"
+          } border`}
+        >
+          Veut rejoindre ICC ({members.filter(m => m.statut === "veut rejoindre ICC").length})
+        </button>
+        <button
+          onClick={() => setFilter("visiteur")}
+          className={`px-4 py-2 rounded ${
+            filter === "visiteur" ? "bg-green-500 text-white" : "bg-white"
+          } border`}
+        >
+          Visiteur ({members.filter(m => m.statut === "visiteur").length})
+        </button>
+        <button
+          onClick={() => setFilter("a déjà mon église")}
+          className={`px-4 py-2 rounded ${
+            filter === "a déjà mon église" ? "bg-blue-500 text-white" : "bg-white"
+          } border`}
+        >
+          A déjà mon église ({members.filter(m => m.statut === "a déjà mon église").length})
+        </button>
+        <button
+          onClick={() => setFilter("evangelisé")}
+          className={`px-4 py-2 rounded ${
+            filter === "evangelisé" ? "bg-purple-500 text-white" : "bg-white"
+          } border`}
+        >
+          Evangelisé ({members.filter(m => m.statut === "evangelisé").length})
+        </button>
+        <button
+          onClick={() => setFilter("star")}
+          className={`px-4 py-2 rounded ${
+            filter === "star" ? "bg-yellow-400 text-white" : "bg-white"
+          } border`}
+        >
+          ⭐ Star ({members.filter(m => m.star).length})
+        </button>
+      </div>
+
+      {/* Compteur */}
+      <p className="text-center text-gray-700 mb-6">
+        Total membres : {members.length} | Affichés : {filteredMembers.length}
+      </p>
+
+      {/* Liste des membres */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {filteredMembers.map((member) => (
           <div
             key={member.id}
-            className="p-4 bg-white shadow-lg rounded-xl flex flex-col justify-between"
+            className="p-4 rounded-lg shadow-md bg-white flex justify-between items-center"
+            style={{
+              borderTopWidth: "4px",
+              borderTopColor: member.star
+                ? "#FBC02D" // jaune
+                : member.statut === "a déjà mon église"
+                ? "#4285F4" // bleu
+                : member.statut === "evangelisé"
+                ? "#9C27B0" // violet
+                : "#34A853", // vert pour veut rejoindre ICC / visiteur
+            }}
           >
             <div>
-              <h2 className="text-xl font-semibold">
-                {member.prenom} {member.nom}
-              </h2>
-              <p className="text-gray-600">📞 {member.telephone}</p>
-              <p className="text-gray-600">📍 {member.ville}</p>
+              <h3 className="font-bold text-lg text-gray-800">
+                {member.prenom} {member.nom} {member.star && "⭐"}
+              </h3>
+              <p className="text-sm text-gray-600">📱 {member.telephone}</p>
+              <p className="text-sm text-gray-500">Statut : {member.statut}</p>
             </div>
 
-            <div className="mt-3 flex items-center justify-between">
-              {/* Badge statut */}
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-bold ${getStatusColor(
-                  member
-                )}`}
-              >
-                {member.star === true ? "⭐" : member.statut || "—"}
-              </span>
-
-              {/* Sélecteur statut */}
-              <select
-                value={member.statut || ""}
-                onChange={(e) => handleStatusChange(member.id, e.target.value)}
-                className="ml-2 px-2 py-1 border rounded-md text-sm"
-              >
-                <option value="">—</option>
-                <option value="actif">Actif</option>
-                <option value="ancien">Ancien</option>
-                <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                <option value="visiteur">Visiteur</option>
-                <option value="evangelise">Évangélisé</option>
-              </select>
-            </div>
+            {/* Menu déroulant pour changer le statut */}
+            <select
+              value={member.statut}
+              onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+              className="border rounded px-2 py-1"
+            >
+              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+              <option value="visiteur">Visiteur</option>
+              <option value="a déjà mon église">A déjà mon église</option>
+              <option value="evangelisé">Evangelisé</option>
+            </select>
           </div>
         ))}
       </div>
