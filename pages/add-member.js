@@ -15,12 +15,18 @@ export default function AddMember() {
     statut: "nouveau",
     how_came: "",
     besoin: "",
+    is_whatsapp: false,
+    infos_supplementaires: "",
   });
 
   const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -29,7 +35,9 @@ export default function AddMember() {
       const { data, error } = await supabase.from("membres").insert([formData]);
       if (error) throw error;
       setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000); // message disparaît après 3s
+      setTimeout(() => setSuccess(false), 3000);
+
+      // Reset du formulaire
       setFormData({
         nom: "",
         prenom: "",
@@ -39,6 +47,8 @@ export default function AddMember() {
         statut: "nouveau",
         how_came: "",
         besoin: "",
+        is_whatsapp: false,
+        infos_supplementaires: "",
       });
     } catch (err) {
       alert(err.message);
@@ -102,6 +112,17 @@ export default function AddMember() {
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
             />
+            {/* Case à cocher WhatsApp */}
+            <div className="mt-2 flex items-center">
+              <input
+                type="checkbox"
+                name="is_whatsapp"
+                checked={formData.is_whatsapp}
+                onChange={handleChange}
+                className="mr-2"
+              />
+              <label className="text-gray-700">Ce numéro est WhatsApp</label>
+            </div>
           </div>
 
           {/* Email */}
@@ -144,7 +165,7 @@ export default function AddMember() {
             </select>
           </div>
 
-          {/* Comment est-il venu ? */}
+          {/* Comment est venu */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
             <select
@@ -172,27 +193,41 @@ export default function AddMember() {
             />
           </div>
 
+          {/* Informations supplémentaires */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
+            <textarea
+              name="infos_supplementaires"
+              value={formData.infos_supplementaires}
+              onChange={handleChange}
+              rows={3}
+              placeholder="Ajoute ici d'autres détails utiles sur la personne..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+          </div>
+
           {/* Boutons */}
           <div className="flex justify-between mt-4 gap-4">
-            {/* Annuler */}
             <button
               type="button"
-              onClick={() => setFormData({
-                nom: "",
-                prenom: "",
-                telephone: "",
-                email: "",
-                ville: "",
-                statut: "nouveau",
-                how_came: "",
-                besoin: "",
-              })}
+              onClick={() =>
+                setFormData({
+                  nom: "",
+                  prenom: "",
+                  telephone: "",
+                  email: "",
+                  ville: "",
+                  statut: "nouveau",
+                  how_came: "",
+                  besoin: "",
+                  is_whatsapp: false,
+                  infos_supplementaires: "",
+                })
+              }
               className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
             >
               Annuler
             </button>
-
-            {/* Ajouter */}
             <button
               type="submit"
               className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
