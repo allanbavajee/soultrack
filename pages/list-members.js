@@ -15,25 +15,30 @@ export default function ListMembers() {
     if (!error && data) setMembers(data);
   };
 
+  // Changer le statut localement
   const handleChangeStatus = (id, newStatus) => {
     setMembers((prev) =>
       prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
     );
   };
 
+  // Membres filtrés
   const filteredMembers = members.filter((m) => {
     if (!filter) return true;
-    if (filter === "star") return m.star === true;
+    if (filter === "star") return m.star === true || m.star === "true";
     return m.statut === filter;
   });
 
+  // Déterminer la couleur du bord selon le statut
   const getBorderColor = (member) => {
-    if (member.star) return "#FBC02D"; // jaune pour star
-    if (member.statut === "a déjà mon église") return "#4285F4"; // bleu
-    if (member.statut === "evangelisé") return "#9C27B0"; // violet
-    if (member.statut === "actif") return "#34A853"; // vert
-    if (member.statut === "ancien") return "#EA4335"; // rouge
-    return "#34A853"; // par défaut pour veut rejoindre ICC / visiteur
+    if (member.star === true || member.star === "true") return "#FBC02D"; // jaune
+    if (member.statut === "a déjà mon église") return "#34A853"; // vert
+    if (member.statut === "evangelisé") return "#4285F4"; // bleu
+    if (member.statut === "actif") return "#EA4335"; // rouge
+    if (member.statut === "ancien") return "#9C27B0"; // violet
+    if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
+      return "#FBBC05"; // orange
+    return "#CCCCCC"; // par défaut gris
   };
 
   return (
@@ -55,7 +60,7 @@ export default function ListMembers() {
           <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
           <option value="visiteur">Visiteur</option>
           <option value="a déjà mon église">A déjà mon église</option>
-          <option value="evangelisé">Evangelisé</option>
+          <option value="evangelisé">Évangélisé</option>
           <option value="star">⭐ Star</option>
         </select>
       </div>
@@ -70,14 +75,16 @@ export default function ListMembers() {
         {filteredMembers.map((member) => (
           <div
             key={member.id}
-            className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+            className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300"
             style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
           >
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center">
                   {member.prenom} {member.nom}{" "}
-                  {member.star && <span className="ml-2 text-yellow-400">⭐</span>}
+                  {(member.star === true || member.star === "true") && (
+                    <span className="ml-2 text-yellow-400">⭐</span>
+                  )}
                 </h2>
                 <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
                 <p className="text-sm text-gray-500">Statut : {member.statut}</p>
@@ -92,7 +99,7 @@ export default function ListMembers() {
                 <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
                 <option value="visiteur">Visiteur</option>
                 <option value="a déjà mon église">A déjà mon église</option>
-                <option value="evangelisé">Evangelisé</option>
+                <option value="evangelisé">Évangélisé</option>
                 <option value="actif">Actif</option>
                 <option value="ancien">Ancien</option>
               </select>
