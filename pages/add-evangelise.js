@@ -10,20 +10,23 @@ export default function AddEvangelise() {
     nom: "",
     prenom: "",
     telephone: "",
-    isWhatsapp: false,
     email: "",
     ville: "",
     statut: "evangelisé",
+    infos_supplementaires: "", // <-- utilise la colonne existante
+    whatsapp: false,
+    how_came: "",
     besoin: "",
-    infos_supplementaires: "",
-    how_came: "evangelisation",
   });
 
   const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -37,13 +40,13 @@ export default function AddEvangelise() {
         nom: "",
         prenom: "",
         telephone: "",
-        isWhatsapp: false,
         email: "",
         ville: "",
         statut: "evangelisé",
-        besoin: "",
         infos_supplementaires: "",
-        how_came: "evangelisation",
+        whatsapp: false,
+        how_came: "",
+        besoin: "",
       });
     } catch (err) {
       alert(err.message);
@@ -51,8 +54,8 @@ export default function AddEvangelise() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-white">
+      <div className="w-full max-w-md bg-gray-50 p-8 rounded-3xl shadow-2xl">
         <button
           onClick={() => router.back()}
           className="flex items-center text-orange-500 font-semibold mb-4"
@@ -60,66 +63,92 @@ export default function AddEvangelise() {
           ← Retour
         </button>
 
-        <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-2">
-          Ajouter une personne évangélisée
+        <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-4">
+          Ajouter évangélisé
         </h1>
-        <p className="text-center text-gray-500 italic mb-6">
-          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
-        </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Nom */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Nom</label>
-            <input type="text" name="nom" value={formData.nom} onChange={handleChange} required className="w-full px-4 py-3 border rounded-xl" />
-          </div>
-          {/* Prénom */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Prénom</label>
-            <input type="text" name="prenom" value={formData.prenom} onChange={handleChange} required className="w-full px-4 py-3 border rounded-xl" />
-          </div>
-          {/* Téléphone */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
-            <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} required className="w-full px-4 py-3 border rounded-xl" />
-          </div>
-          {/* WhatsApp */}
-          <div className="flex items-center gap-2">
-            <input type="checkbox" name="isWhatsapp" checked={formData.isWhatsapp} onChange={handleChange} />
-            <label className="text-gray-700">Ce numéro est WhatsApp</label>
-          </div>
-          {/* Email */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Email</label>
-            <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-3 border rounded-xl" />
-          </div>
-          {/* Ville */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Ville</label>
-            <input type="text" name="ville" value={formData.ville} onChange={handleChange} className="w-full px-4 py-3 border rounded-xl" />
-          </div>
-          {/* Besoin */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Besoin</label>
-            <textarea name="besoin" value={formData.besoin} onChange={handleChange} rows={3} className="w-full px-4 py-3 border rounded-xl"></textarea>
-          </div>
-          {/* Info supplémentaire */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
-            <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} rows={3} className="w-full px-4 py-3 border rounded-xl"></textarea>
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            name="prenom"
+            placeholder="Prénom"
+            value={formData.prenom}
+            onChange={handleChange}
+            className="w-full p-3 rounded-xl border"
+            required
+          />
+          <input
+            type="text"
+            name="nom"
+            placeholder="Nom"
+            value={formData.nom}
+            onChange={handleChange}
+            className="w-full p-3 rounded-xl border"
+            required
+          />
+          <input
+            type="text"
+            name="telephone"
+            placeholder="Téléphone"
+            value={formData.telephone}
+            onChange={handleChange}
+            className="w-full p-3 rounded-xl border"
+            required
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full p-3 rounded-xl border"
+          />
+          <input
+            type="text"
+            name="ville"
+            placeholder="Ville"
+            value={formData.ville}
+            onChange={handleChange}
+            className="w-full p-3 rounded-xl border"
+          />
 
-          <div className="flex justify-between gap-4 mt-4">
-            <button type="button" onClick={() => setFormData({
-              nom: "", prenom: "", telephone: "", isWhatsapp: false, email: "", ville: "", statut: "evangelisé", besoin: "", info_supp: "", how_came: "evangelisation"
-            })} className="flex-1 py-3 bg-blue-500 text-white rounded-2xl">Annuler</button>
+          {/* Checkbox WhatsApp */}
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="whatsapp"
+              checked={formData.whatsapp}
+              onChange={handleChange}
+              className="h-5 w-5"
+            />
+            Ce numéro a WhatsApp
+          </label>
 
-            <button type="submit" className="flex-1 py-3 bg-green-600 text-white rounded-2xl">Ajouter</button>
-          </div>
+          {/* Infos supplémentaires */}
+          <textarea
+            name="infos_supplementaires"
+            placeholder="Informations supplémentaires"
+            value={formData.infos_supplementaires}
+            onChange={handleChange}
+            className="w-full p-3 rounded-xl border"
+            rows={3}
+          />
+
+          <button
+            type="submit"
+            className="w-full py-3 bg-green-600 text-white rounded-xl font-bold"
+          >
+            Ajouter
+          </button>
         </form>
 
-        {success && <div className="text-green-600 font-semibold text-center mt-4">✅ Personne évangélisée ajoutée !</div>}
+        {success && (
+          <p className="text-green-600 font-semibold text-center mt-4">
+            ✅ Évangélisé ajouté avec succès !
+          </p>
+        )}
       </div>
     </div>
   );
 }
+
