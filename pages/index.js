@@ -24,7 +24,7 @@ export default function Home() {
           href="/add-member"
           className="bg-white p-6 rounded-3xl shadow-lg flex flex-col items-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#4285F4]"
         >
-          <div className="text-5xl mb-4">👤➕</div>
+          <div className="text-5xl mb-4">➕</div>
           <h2 className="text-xl font-bold text-gray-800 text-center">Ajouter un membre</h2>
         </Link>
 
@@ -42,7 +42,7 @@ export default function Home() {
           href="/add-evangelise"
           className="bg-white p-6 rounded-3xl shadow-lg flex flex-col items-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#fbbc05]"
         >
-          <div className="text-5xl mb-4">📖✨</div>
+          <div className="text-5xl mb-4">✨</div>
           <h2 className="text-xl font-bold text-gray-800 text-center">Ajouter un évangélisé</h2>
         </Link>
 
