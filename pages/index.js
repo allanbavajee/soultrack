@@ -8,7 +8,7 @@ export default function Home() {
 
       {/* Header avec 2 logos */}
       <div className="flex flex-col md:flex-row items-center justify-center mt-8 gap-6">
-        <Image src="/images/icc.logo.png" alt="Logo 1" width={100} height={100} />
+        <Image src="/images/icc.logo.jpg" alt="Logo 1" width={100} height={100} />
         <Image src="/images/second.logo.png" alt="Logo 2" width={100} height={100} />
       </div>
 
