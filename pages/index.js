@@ -7,8 +7,8 @@ export default function Home() {
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
       {/* Logos */}
       <div className="flex items-center justify-center gap-6 mb-6">
-        <Image src="icc.logo.png" alt="ICC Logo" width={90} height={90} />
-        <Image src="/soul.logo.png" alt="SoulTrack Logo" width={90} height={90} />
+        <Image src="/public/icc.logo.png" alt="ICC Logo" width={90} height={90} />
+        <Image src="/public/soul.logo.png" alt="SoulTrack Logo" width={90} height={90} />
       </div>
 
       {/* Slogan */}
