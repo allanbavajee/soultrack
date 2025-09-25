@@ -1,11 +1,11 @@
 /* pages/index.js */
+/* pages/index.js */
 import Link from "next/link";
 import Image from "next/image";
 
 export default function Home() {
   return (
-    
-
+    <div className="min-h-screen bg-white flex flex-col items-center p-6">
       {/* Logos */}
       <div className="flex flex-col md:flex-row items-center justify-center mt-8 gap-6">
         <Image src="/soul.logo.png" alt="SoulTrack Logo" width={90} height={90} />
@@ -58,10 +58,11 @@ export default function Home() {
 
       {/* Message d'amour */}
       <div className="mt-10 p-6 rounded-3xl shadow-md max-w-2xl text-center text-gray-800">
-        <p className="text-lg font-handwriting">
+        <p className="text-lg font-handwriting font-semibold">
           ❤️ Aimons-nous les uns les autres, comme Christ nous a aimés.
         </p>
       </div>
     </div>
   );
 }
+
