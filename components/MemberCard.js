@@ -24,7 +24,7 @@ export default function MemberCard({ member, fetchMembers }) {
   const handleWhatsApp = async () => {
     if (!selectedCellule) return;
 
-    const prenomResponsable = selectedCellule.responsable.split(" ")[0]; // seulement le prénom
+    const prenomResponsable = selectedCellule.responsable.split(" ")[0];
     const message = `👋 Salut ${prenomResponsable},
 
 🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
@@ -44,34 +44,39 @@ Merci pour ton cœur ❤️ et ton amour ✨`;
       "_blank"
     );
 
-    // Mise à jour du statut
+    // Mise à jour du statut du membre en "ancien"
     await supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
     fetchMembers();
   };
 
   // Style de la carte
-  const cardStyle =
-    member.star
-      ? "bg-green-100 border-green-400"
-      : member.statut === "ancien"
-      ? "bg-white border-gray-300"
-      : "bg-orange-100 border-orange-400";
+  const getBorderColor = () => {
+    if (member.star) return "#FBC02D"; // jaune pour star
+    if (member.statut === "a déjà mon église") return "#4285F4"; // bleu
+    if (member.statut === "evangelisé") return "#EA4335"; // rouge
+    if (member.statut === "actif") return "#34A853"; // vert
+    return "#fbbc05"; // veut rejoindre ICC / visiteur par défaut
+  };
 
   return (
-    <div className={`p-4 rounded-xl border shadow mb-3 ${cardStyle}`}>
+    <div
+      className="p-4 rounded-xl border shadow mb-3 bg-white"
+      style={{ borderTop: `4px solid ${getBorderColor()}` }}
+    >
       <div className="flex justify-between items-center">
-        <h2 className="font-bold text-lg">
-          {member.prenom} {member.nom}
+        <h2 className="font-bold text-lg flex items-center">
+          {member.prenom} {member.nom}{" "}
+          {member.star && <span className="ml-2 text-yellow-400">⭐</span>}
         </h2>
         <span className="text-sm font-semibold text-orange-600">{member.statut}</span>
       </div>
 
       <p className="text-sm text-gray-600">📱 {member.telephone}</p>
 
-      {/* Texte bleu cliquable pour afficher les détails */}
+      {/* Texte cliquable Voir détails */}
       <p
         onClick={() => setShowDetails(!showDetails)}
-        className="mt-2 text-sm text-blue-500 underline cursor-pointer"
+        className="mt-2 text-blue-500 cursor-pointer hover:underline text-sm"
       >
         {showDetails ? "Fermer détails" : "Voir détails"}
       </p>
@@ -85,7 +90,7 @@ Merci pour ton cœur ❤️ et ton amour ✨`;
           <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
           <p>Comment venu : {member.how_came || "—"}</p>
 
-          {/* Menu déroulant + WhatsApp pour visiteurs et ceux qui veulent rejoindre ICC */}
+          {/* Menu déroulant + bouton WhatsApp pour visiteurs / veut rejoindre ICC */}
           {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
             <div className="mt-3">
               <label className="block mb-1 font-semibold">Choisir une cellule :</label>
