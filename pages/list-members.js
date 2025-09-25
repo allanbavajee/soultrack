@@ -1,81 +1,101 @@
 // pages/list-members.js
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
   const [filter, setFilter] = useState("");
 
-  // Charger les membres depuis Supabase
   useEffect(() => {
-    async function fetchMembers() {
-      const { data, error } = await supabase.from("membres").select("*");
-      if (!error && data) setMembers(data);
-    }
     fetchMembers();
   }, []);
 
-  // Déterminer la couleur du bord selon le statut
-  const getBorderColor = (member) => {
-    if (member.star === true || member.star === "true") return "border-yellow-400";
-    if (member.statut === "a déjà mon église") return "border-green-400";
-    if (member.statut === "evangelise") return "border-blue-400";
-    if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
-      return "border-orange-400";
-    return "border-gray-300";
+  const fetchMembers = async () => {
+    const { data, error } = await supabase.from("membres").select("*");
+    if (!error && data) setMembers(data);
   };
 
-  // Membres filtrés
-  const filteredMembers = filter
-    ? members.filter((m) => m.statut === filter)
-    : members;
+  const handleChangeStatus = (id, newStatus) => {
+    setMembers((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
+    );
+  };
+
+  const filteredMembers = members.filter((m) => {
+    if (!filter) return true;
+    if (filter === "star") return m.star === true;
+    return m.statut === filter;
+  });
+
+  const getBorderColor = (member) => {
+    if (member.star) return "#FBC02D"; // jaune pour star
+    if (member.statut === "a déjà mon église") return "#4285F4"; // bleu
+    if (member.statut === "evangelisé") return "#9C27B0"; // violet
+    if (member.statut === "actif") return "#34A853"; // vert
+    if (member.statut === "ancien") return "#EA4335"; // rouge
+    return "#34A853"; // par défaut pour veut rejoindre ICC / visiteur
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-3xl font-bold mb-4">Liste des membres</h1>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
+        Liste des membres
+      </h1>
 
-      {/* Filtre par statut */}
-      <div className="mb-4 flex items-center gap-4">
-        <label className="font-semibold">Filtrer par statut :</label>
+      {/* Filtre déroulant */}
+      <div className="flex justify-center mb-6">
         <select
-          className="p-2 border rounded-lg"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
+          className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
         >
-          <option value="">-- Tous --</option>
+          <option value="">-- Filtrer par statut --</option>
           <option value="actif">Actif</option>
           <option value="ancien">Ancien</option>
           <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
           <option value="visiteur">Visiteur</option>
           <option value="a déjà mon église">A déjà mon église</option>
-          <option value="evangelise">Évangélisé</option>
+          <option value="evangelisé">Evangelisé</option>
+          <option value="star">⭐ Star</option>
         </select>
-
-        <span className="ml-auto font-semibold">
-          Total : {filteredMembers.length}
-        </span>
       </div>
 
-      {/* Liste des membres */}
-      <div className="space-y-3">
+      {/* Compteur */}
+      <p className="text-center text-gray-600 mb-6">
+        Total membres : {members.length} | Affichés : {filteredMembers.length}
+      </p>
+
+      {/* Cartes membres */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredMembers.map((member) => (
           <div
             key={member.id}
-            className={`p-4 rounded-xl border-t-4 shadow flex justify-between items-center ${getBorderColor(member)}`}
+            className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+            style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
           >
-            <div>
-              <span className="font-bold text-lg">
-                {member.prenom} {member.nom}{" "}
-                {(member.star === true || member.star === "true") && (
-                  <span className="ml-1 text-yellow-400">⭐</span>
-                )}
-              </span>
-              <p className="text-sm text-gray-600">📱 {member.telephone}</p>
-              <p className="text-sm text-gray-600">Ville : {member.ville || "—"}</p>
-            </div>
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center">
+                  {member.prenom} {member.nom}{" "}
+                  {member.star && <span className="ml-2 text-yellow-400">⭐</span>}
+                </h2>
+                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
+                <p className="text-sm text-gray-500">Statut : {member.statut}</p>
+              </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-gray-700">{member.statut}</span>
+              {/* Changer le statut localement */}
+              <select
+                value={member.statut}
+                onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+                className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              >
+                <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                <option value="visiteur">Visiteur</option>
+                <option value="a déjà mon église">A déjà mon église</option>
+                <option value="evangelisé">Evangelisé</option>
+                <option value="actif">Actif</option>
+                <option value="ancien">Ancien</option>
+              </select>
             </div>
           </div>
         ))}
