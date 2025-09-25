@@ -16,15 +16,16 @@ export default function ListMembers() {
   };
 
   const handleChangeStatus = (id, newStatus) => {
-    // Met à jour localement le statut
     setMembers((prev) =>
       prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
     );
   };
 
-  // Filtrer les membres
-  const filteredMembers =
-    filter === "all" ? members : members.filter((m) => m.statut === filter);
+  const filteredMembers = members.filter((m) => {
+    if (filter === "all") return true;
+    if (filter === "star") return m.star === true;
+    return m.statut === filter;
+  });
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -32,56 +33,20 @@ export default function ListMembers() {
         Liste des membres
       </h1>
 
-      {/* Filtre */}
-      <div className="flex flex-wrap justify-center gap-4 mb-4">
-        <button
-          onClick={() => setFilter("all")}
-          className={`px-4 py-2 rounded ${
-            filter === "all" ? "bg-indigo-500 text-white" : "bg-white"
-          } border`}
+      {/* Filtre déroulant */}
+      <div className="flex justify-center mb-6">
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="border rounded px-4 py-2"
         >
-          Tous ({members.length})
-        </button>
-        <button
-          onClick={() => setFilter("veut rejoindre ICC")}
-          className={`px-4 py-2 rounded ${
-            filter === "veut rejoindre ICC" ? "bg-green-500 text-white" : "bg-white"
-          } border`}
-        >
-          Veut rejoindre ICC ({members.filter(m => m.statut === "veut rejoindre ICC").length})
-        </button>
-        <button
-          onClick={() => setFilter("visiteur")}
-          className={`px-4 py-2 rounded ${
-            filter === "visiteur" ? "bg-green-500 text-white" : "bg-white"
-          } border`}
-        >
-          Visiteur ({members.filter(m => m.statut === "visiteur").length})
-        </button>
-        <button
-          onClick={() => setFilter("a déjà mon église")}
-          className={`px-4 py-2 rounded ${
-            filter === "a déjà mon église" ? "bg-blue-500 text-white" : "bg-white"
-          } border`}
-        >
-          A déjà mon église ({members.filter(m => m.statut === "a déjà mon église").length})
-        </button>
-        <button
-          onClick={() => setFilter("evangelisé")}
-          className={`px-4 py-2 rounded ${
-            filter === "evangelisé" ? "bg-purple-500 text-white" : "bg-white"
-          } border`}
-        >
-          Evangelisé ({members.filter(m => m.statut === "evangelisé").length})
-        </button>
-        <button
-          onClick={() => setFilter("star")}
-          className={`px-4 py-2 rounded ${
-            filter === "star" ? "bg-yellow-400 text-white" : "bg-white"
-          } border`}
-        >
-          ⭐ Star ({members.filter(m => m.star).length})
-        </button>
+          <option value="all">Tous ({members.length})</option>
+          <option value="veut rejoindre ICC">Veut rejoindre ICC ({members.filter(m => m.statut === "veut rejoindre ICC").length})</option>
+          <option value="visiteur">Visiteur ({members.filter(m => m.statut === "visiteur").length})</option>
+          <option value="a déjà mon église">A déjà mon église ({members.filter(m => m.statut === "a déjà mon église").length})</option>
+          <option value="evangelisé">Evangelisé ({members.filter(m => m.statut === "evangelisé").length})</option>
+          <option value="star">⭐ Star ({members.filter(m => m.star).length})</option>
+        </select>
       </div>
 
       {/* Compteur */}
@@ -98,11 +63,11 @@ export default function ListMembers() {
             style={{
               borderTopWidth: "4px",
               borderTopColor: member.star
-                ? "#FBC02D" // jaune
+                ? "#FBC02D" // jaune pour star = TRUE
                 : member.statut === "a déjà mon église"
-                ? "#4285F4" // bleu
+                ? "#4285F4"
                 : member.statut === "evangelisé"
-                ? "#9C27B0" // violet
+                ? "#9C27B0"
                 : "#34A853", // vert pour veut rejoindre ICC / visiteur
             }}
           >
@@ -114,7 +79,7 @@ export default function ListMembers() {
               <p className="text-sm text-gray-500">Statut : {member.statut}</p>
             </div>
 
-            {/* Menu déroulant pour changer le statut */}
+            {/* Menu déroulant pour changer le statut localement */}
             <select
               value={member.statut}
               onChange={(e) => handleChangeStatus(member.id, e.target.value)}
@@ -131,4 +96,3 @@ export default function ListMembers() {
     </div>
   );
 }
-
