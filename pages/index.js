@@ -1,6 +1,7 @@
 /* /pages/index.js */
 import Image from "next/image";
 import Link from "next/link";
+import '../styles/globals.css';
 
 export default function Home() {
   return (
@@ -9,7 +10,7 @@ export default function Home() {
       {/* Logos */}
       <div className="flex gap-6 items-center mb-4">
         <Image src="/image/icc.logo.jpg" alt="icc" width={90} height={90} />
-        <Image src="/image/soul.logo.png" alt="soultrack" width={90} height={90} />
+        <Image src="/image/soul.logo.png" alt="SoulTrack" width={90} height={90} />
       </div>
 
       {/* Slogan */}
