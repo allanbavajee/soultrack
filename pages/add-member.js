@@ -197,8 +197,8 @@ export default function AddMember() {
           <div>
             <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
             <textarea
-              name="infos_supp"
-              value={formData.infos_supp}
+              name="infos_supplementaires"
+              value={formData.infos_supplementaires}
               onChange={handleChange}
               rows={3}
               placeholder="Ajoute ici d'autres détails utiles sur la personne..."
