@@ -15,7 +15,7 @@ export default function AddEvangelise() {
     ville: "",
     statut: "evangelisé",
     besoin: "",
-    info_supp: "",
+    infos_supplementaires: "",
     how_came: "evangelisation",
   });
 
@@ -42,7 +42,7 @@ export default function AddEvangelise() {
         ville: "",
         statut: "evangelisé",
         besoin: "",
-        info_supp: "",
+        infos_supplementaires: "",
         how_came: "evangelisation",
       });
     } catch (err) {
@@ -106,7 +106,7 @@ export default function AddEvangelise() {
           {/* Info supplémentaire */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
-            <textarea name="info_supp" value={formData.info_supp} onChange={handleChange} rows={3} className="w-full px-4 py-3 border rounded-xl"></textarea>
+            <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} rows={3} className="w-full px-4 py-3 border rounded-xl"></textarea>
           </div>
 
           <div className="flex justify-between gap-4 mt-4">
