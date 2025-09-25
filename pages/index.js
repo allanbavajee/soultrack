@@ -12,9 +12,9 @@ export default function Home() {
       </div>
 
       {/* Slogan */}
-      <h2 className="text-2xl md:text-3xl font-handwriting text-center text-gray-800 mb-10">
+      <h1 className="text-2xl md:text-3xl font-handwriting text-center text-gray-800 mb-10">
         Tu es précieux, tu es attendu, tu es aimé
-      </h2>
+      </h1>
 
       {/* Cartes colorées */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
