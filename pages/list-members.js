@@ -32,7 +32,7 @@ export default function ListMembers() {
     if (member.statut === "a déjà mon église") return "#4285F4"; // bleu
     if (member.statut === "evangelisé") return "#34A853";        // vert
     if (member.statut === "actif") return "#fbbc05";             // jaune/orange
-    if (member.statut === "ancien") return "#ea4335";            // rouge
+    if (member.statut === "ancien") return "#EA4335";            // rouge
     if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
       return "#34a853"; // vert foncé
     return "#999"; // couleur par défaut
@@ -55,3 +55,53 @@ export default function ListMembers() {
           <option value="actif">Actif</option>
           <option value="ancien">Ancien</option>
           <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+          <option value="visiteur">Visiteur</option>
+          <option value="a déjà mon église">A déjà mon église</option>
+          <option value="evangelisé">Evangelisé</option>
+          <option value="star">⭐ Star</option>
+        </select>
+      </div>
+
+      {/* Compteur */}
+      <p className="text-center text-gray-600 mb-6">
+        Total membres : {members.length} | Affichés : {filteredMembers.length}
+      </p>
+
+      {/* Cartes membres */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredMembers.map((member) => (
+          <div
+            key={member.id}
+            className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+            style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center">
+                  {member.prenom} {member.nom}{" "}
+                  {member.star && <span className="ml-2 text-yellow-400">⭐</span>}
+                </h2>
+                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
+                <p className="text-sm text-gray-500">Statut : {member.statut}</p>
+              </div>
+
+              {/* Changer le statut localement */}
+              <select
+                value={member.statut}
+                onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+                className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              >
+                <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                <option value="visiteur">Visiteur</option>
+                <option value="a déjà mon église">A déjà mon église</option>
+                <option value="evangelisé">Evangelisé</option>
+                <option value="actif">Actif</option>
+                <option value="ancien">Ancien</option>
+              </select>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
