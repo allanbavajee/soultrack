@@ -1,229 +1,62 @@
 // pages/add-evangelise.js
-import { useState } from "react";
-import { supabase } from "../lib/supabaseClient";
-import { useRouter } from "next/router";
+/* pages/index.js */
+import Link from "next/link";
+import Image from "next/image";
 
-export default function AddEvangelise() {
-  const router = useRouter();
-
-  const [formData, setFormData] = useState({
-    nom: "",
-    prenom: "",
-    telephone: "",
-    email: "",
-    ville: "",
-    statut: "evangelisé",
-    infos_supplementaires: "",
-    is_whatsapp: false,
-    how_came: "",
-    besoin: "",
-  });
-
-  const [success, setSuccess] = useState(false);
-
-  const handleChange = (e) => {
-    const { name, type, value, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const { data, error } = await supabase.from("membres").insert([formData]);
-      if (error) throw error;
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-
-      setFormData({
-        nom: "",
-        prenom: "",
-        telephone: "",
-        email: "",
-        ville: "",
-        statut: "evangelisé",
-        infos_supplementaires: "",
-        is_whatsapp: false,
-        how_came: "",
-        besoin: "",
-      });
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
+export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
-        {/* Flèche retour */}
-        <button
-          onClick={() => router.back()}
-          className="flex items-center text-orange-500 font-semibold mb-4"
+    <div className="min-h-screen bg-white flex flex-col items-center p-6">
+      {/* Rebords colorés en haut */}
+      <div className="w-full h-4 flex">
+        <div className="flex-1 bg-[#4285F4]"></div>
+        <div className="flex-1 bg-[#34a853]"></div>
+        <div className="flex-1 bg-[#fbbc05]"></div>
+        <div className="flex-1 bg-[#ea4335]"></div>
+      </div>
+
+      {/* Logos */}
+      <div className="flex flex-col md:flex-row items-center justify-center mt-8 gap-6">
+        <Image src="/soul.logo.png" alt="SoulTrack Logo" width={90} height={90} />
+        <Image src="/icc.logo.png" alt="ICC Logo" width={90} height={90} />
+      </div>
+
+      {/* Slogan */}
+      <h2 className="mt-4 text-2xl md:text-3xl font-handwriting text-center text-gray-800">
+        Tu es précieux, tu es attendu, tu es aimé
+      </h2>
+
+      {/* Cartes colorées */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mt-10">
+        {/* Ajouter un membre */}
+        <Link
+          href="/add-member"
+          className="bg-white p-8 rounded-3xl shadow-lg flex flex-col items-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#4285F4]"
         >
-          ← Retour
-        </button>
+          <div className="text-5xl mb-4">👤➕</div>
+          <h2 className="text-xl font-bold text-gray-800">Ajouter un membre</h2>
+          <p className="text-gray-500 mt-2 text-center">
+            Enregistrez rapidement un nouveau venu à l’église.
+          </p>
+        </Link>
 
-        <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-2">
-          Ajouter une personne évangélisée
-        </h1>
-        <p className="text-center text-gray-500 italic mb-6">
-          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
+        {/* Ajouter un évangélisé */}
+        <Link
+          href="/add-evangelise"
+          className="bg-white p-8 rounded-3xl shadow-lg flex flex-col items-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#34a853]"
+        >
+          <div className="text-5xl mb-4">📖✨</div>
+          <h2 className="text-xl font-bold text-gray-800">Ajouter un évangélisé</h2>
+          <p className="text-gray-500 mt-2 text-center">
+            Enregistrez les personnes reçues lors des évangélisations de rue.
+          </p>
+        </Link>
+      </div>
+
+      {/* Message d'amour */}
+      <div className="mt-10 p-6 rounded-3xl shadow-md max-w-2xl text-center text-gray-800">
+        <p className="text-lg font-semibold">
+          ❤️ Aimons-nous les uns les autres, comme Christ nous a aimés.
         </p>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Nom */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Nom</label>
-            <input
-              type="text"
-              name="nom"
-              value={formData.nom}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              required
-            />
-          </div>
-
-          {/* Prénom */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Prénom</label>
-            <input
-              type="text"
-              name="prenom"
-              value={formData.prenom}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              required
-            />
-          </div>
-
-          {/* Téléphone */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
-            <input
-              type="text"
-              name="telephone"
-              value={formData.telephone}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              required
-            />
-          </div>
-
-          {/* WhatsApp */}
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="is_whatsapp"
-              checked={formData.is_whatsapp}
-              onChange={handleChange}
-              className="h-5 w-5"
-            />
-            <label className="text-gray-700 font-medium">Ce numéro a WhatsApp</label>
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
-
-          {/* Ville */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Ville</label>
-            <input
-              type="text"
-              name="ville"
-              value={formData.ville}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
-
-          {/* Comment est-il venu */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
-            <select
-              name="how_came"
-              value={formData.how_came}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="evangelisation">Évangélisation de rue</option>
-              <option value="réseaux">Réseaux</option>
-              <option value="autre">Autre</option>
-            </select>
-          </div>
-
-          {/* Besoin */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Besoin de la personne</label>
-            <textarea
-              name="besoin"
-              value={formData.besoin}
-              onChange={handleChange}
-              rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
-
-          {/* Infos supplémentaires */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
-            <textarea
-              name="infos_supplementaires"
-              value={formData.infos_supplementaires}
-              onChange={handleChange}
-              rows={2}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
-
-          {/* Boutons */}
-          <div className="flex justify-between mt-4 gap-4">
-            <button
-              type="button"
-              onClick={() =>
-                setFormData({
-                  nom: "",
-                  prenom: "",
-                  telephone: "",
-                  email: "",
-                  ville: "",
-                  statut: "evangelisé",
-                  infos_supplementaires: "",
-                  is_whatsapp: false,
-                  how_came: "",
-                  besoin: "",
-                })
-              }
-              className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
-            >
-              Ajouter
-            </button>
-          </div>
-        </form>
-
-        {success && (
-          <div className="text-green-600 font-semibold text-center mt-4">
-            ✅ Personne évangélisée ajoutée avec succès !
-          </div>
-        )}
       </div>
     </div>
   );
