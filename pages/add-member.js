@@ -16,7 +16,7 @@ export default function AddMember() {
     how_came: "",
     besoin: "",
     is_whatsapp: false,
-    infos_supplementaires: "",
+    infos_supp: "",
   });
 
   const [success, setSuccess] = useState(false);
@@ -48,7 +48,7 @@ export default function AddMember() {
         how_came: "",
         besoin: "",
         is_whatsapp: false,
-        infos_supplementaires: "",
+        infos_supp: "",
       });
     } catch (err) {
       alert(err.message);
