@@ -4,14 +4,7 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center p-6">
-      {/* Rebords colorés en haut */}
-      <div className="w-full h-4 flex">
-        <div className="flex-1 bg-[#4285F4]"></div>
-        <div className="flex-1 bg-[#34a853]"></div>
-        <div className="flex-1 bg-[#fbbc05]"></div>
-        <div className="flex-1 bg-[#ea4335]"></div>
-      </div>
+    
 
       {/* Logos */}
       <div className="flex flex-col md:flex-row items-center justify-center mt-8 gap-6">
@@ -65,7 +58,7 @@ export default function Home() {
 
       {/* Message d'amour */}
       <div className="mt-10 p-6 rounded-3xl shadow-md max-w-2xl text-center text-gray-800">
-        <p className="text-lg font-semibold">
+        <p className="text-lg font-handwriting">
           ❤️ Aimons-nous les uns les autres, comme Christ nous a aimés.
         </p>
       </div>
