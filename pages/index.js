@@ -8,7 +8,7 @@ export default function Home() {
       {/* Logos */}
       <div className="flex items-center justify-center gap-6 mb-6">
         <Image src="/icc.logo.png" alt="ICC Logo" width={90} height={90} />
-        <Image src="/soul.logo.png" alt="SoulTrack Logo" width={90} height={90} />
+        <Image src="/soul.logo.png" alt="SoulTrack Logo" width={100} height={100} />
       </div>
 
       {/* Slogan */}
@@ -57,7 +57,7 @@ export default function Home() {
 
       {/* Message d’amour */}
       <div className="mt-10 max-w-2xl text-center">
-        <p className="text-lg font-semibold text-gray-700">
+        <p className="text-lg font-handwriting text-gray-700">
           ❤️ Aimons-nous les uns les autres, comme Christ nous a aimés.
         </p>
       </div>
