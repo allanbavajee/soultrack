@@ -197,8 +197,8 @@ export default function AddMember() {
           <div>
             <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
             <textarea
-              name="infos_supplementaires"
-              value={formData.infos_supplementaires}
+              name="infos_supp"
+              value={formData.infos_supp}
               onChange={handleChange}
               rows={3}
               placeholder="Ajoute ici d'autres détails utiles sur la personne..."
@@ -221,7 +221,7 @@ export default function AddMember() {
                   how_came: "",
                   besoin: "",
                   is_whatsapp: false,
-                  infos_supplementaires: "",
+                  infos_supp: "",
                 })
               }
               className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
