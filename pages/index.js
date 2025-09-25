@@ -16,7 +16,7 @@ export default function Home() {
       {/* Slogan */}
       <h2 className="text-2xl md:text-3xl font-handwriting text-center text-gray-800 mb-8">
         Tu es précieux, tu es attendu, tu es aimé
-      </h2
+      </h2>
 
       {/* Cartes colorées */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
