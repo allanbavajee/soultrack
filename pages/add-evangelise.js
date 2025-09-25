@@ -14,7 +14,7 @@ export default function AddEvangelise() {
     ville: "",
     statut: "evangelisé",
     infos_supplementaires: "", // <-- utilise la colonne existante
-    whatsapp: false,
+    is_whatsapp: false,
     how_came: "",
     besoin: "",
   });
@@ -44,7 +44,7 @@ export default function AddEvangelise() {
         ville: "",
         statut: "evangelisé",
         infos_supplementaires: "",
-        whatsapp: false,
+        is_whatsapp: false,
         how_came: "",
         besoin: "",
       });
@@ -116,8 +116,8 @@ export default function AddEvangelise() {
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
-              name="whatsapp"
-              checked={formData.whatsapp}
+              name="is_whatsapp"
+              checked={formData.is_whatsapp}
               onChange={handleChange}
               className="h-5 w-5"
             />
