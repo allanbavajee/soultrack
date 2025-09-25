@@ -9,7 +9,7 @@ export default function Home() {
       {/* Logos + slogan */}
       <div className="flex flex-col items-center mt-12 mb-8">
         <div className="flex space-x-6 mb-4">
-          <Image src="/soul.logo.png" alt="Logo 1" width={90} height={90} />
+          <Image src="/image/icc.logo.png" alt="Logo 1" width={90} height={90} />
           <Image src="/icc.logo.png" alt="Logo 2" width={90} height={90} />
         </div>
         <h2 className="text-2xl md:text-3xl font-handwriting text-center text-indigo-700">
