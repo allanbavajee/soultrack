@@ -16,7 +16,7 @@ export default function AddMember() {
     how_came: "",
     besoin: "",
     is_whatsapp: false,
-    infos_supp: "",
+    infos_supplementaires: "",
   });
 
   const [success, setSuccess] = useState(false);
@@ -48,7 +48,7 @@ export default function AddMember() {
         how_came: "",
         besoin: "",
         is_whatsapp: false,
-        infos_supp: "",
+        infos_supplementaires: "",
       });
     } catch (err) {
       alert(err.message);
@@ -221,7 +221,7 @@ export default function AddMember() {
                   how_came: "",
                   besoin: "",
                   is_whatsapp: false,
-                  infos_supp: "",
+                  infos_supplementaires: "",
                 })
               }
               className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
