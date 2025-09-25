@@ -1,4 +1,4 @@
-/* list-members.js */
+// pages/list-members.js
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -6,7 +6,6 @@ export default function ListMembers() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Charger les membres depuis Supabase
   useEffect(() => {
     fetchMembers();
   }, []);
@@ -22,7 +21,6 @@ export default function ListMembers() {
     setLoading(false);
   };
 
-  // Mettre à jour le statut dans Supabase
   const handleStatusChange = async (id, newStatus) => {
     const { error } = await supabase
       .from("membres")
@@ -33,7 +31,6 @@ export default function ListMembers() {
       console.error("Erreur de mise à jour :", error);
       alert("Impossible de mettre à jour le statut !");
     } else {
-      // Mettre à jour localement aussi
       setMembers((prev) =>
         prev.map((m) =>
           m.id === id ? { ...m, statut: newStatus } : m
@@ -42,9 +39,8 @@ export default function ListMembers() {
     }
   };
 
-  // Fonction pour les couleurs selon statut
   const getStatusColor = (member) => {
-    if (member.star) return "bg-yellow-400 text-black"; // ⭐ couleur spéciale
+    if (member.star === true) return "bg-yellow-400 text-black"; // ⭐ seulement si true
     switch (member.statut) {
       case "actif":
         return "bg-green-500 text-white";
@@ -81,17 +77,17 @@ export default function ListMembers() {
               <p className="text-gray-600">📍 {member.ville}</p>
             </div>
 
-            {/* Badge statut */}
             <div className="mt-3 flex items-center justify-between">
+              {/* Badge statut */}
               <span
                 className={`px-3 py-1 rounded-full text-sm font-bold ${getStatusColor(
                   member
                 )}`}
               >
-                {member.star ? "⭐ Actif" : member.statut || "—"}
+                {member.star === true ? "⭐" : member.statut || "—"}
               </span>
 
-              {/* Sélecteur de statut */}
+              {/* Sélecteur statut */}
               <select
                 value={member.statut || ""}
                 onChange={(e) => handleStatusChange(member.id, e.target.value)}
