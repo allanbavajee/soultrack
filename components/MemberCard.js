@@ -1,26 +1,24 @@
-/* components/MemberCard.js */
-
-import { useState, useEffect } from "react";
+// components/MemberCard.js
+import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-export default function MemberCard({ member, fetchMembers }) {
-  const [cellules, setCellules] = useState([]);
+export default function MemberCard({ member, fetchMembers, cellules }) {
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Charger toutes les cellules
-  useEffect(() => {
-    async function fetchCellules() {
-      const { data, error } = await supabase
-        .from("cellules")
-        .select("cellule, responsable, telephone");
+  // ✅ Couleur en fonction du statut
+  const getBorderColor = (member) => {
+    if (member.star) return "#FBC02D"; // Jaune star
+    if (member.statut === "a déjà mon église") return "#4285F4"; // Bleu
+    if (member.statut === "evangelisé") return "#34A853"; // Vert
+    if (member.statut === "actif") return "#fbbc05"; // Jaune/orange
+    if (member.statut === "ancien") return "#EA4335"; // Rouge
+    if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
+      return "#34a853"; // Vert foncé
+    return "#999"; // Par défaut
+  };
 
-      if (!error && data) setCellules(data);
-    }
-    fetchCellules();
-  }, []);
-
-  // Envoyer WhatsApp et mettre à jour le statut
+  // ✅ Envoi WhatsApp
   const handleWhatsApp = async () => {
     if (!selectedCellule) return;
 
@@ -44,43 +42,36 @@ Merci pour ton cœur ❤️ et ton amour ✨`;
       "_blank"
     );
 
-    // Mise à jour du statut du membre en "ancien"
+    // ✅ Met à jour le statut en "ancien"
     await supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
     fetchMembers();
   };
 
-  // Style de la carte
-  const getBorderColor = () => {
-    if (member.star) return "#FBC02D"; // jaune pour star
-    if (member.statut === "a déjà mon église") return "#4285F4"; // bleu
-    if (member.statut === "evangelisé") return "#EA4335"; // rouge
-    if (member.statut === "actif") return "#34A853"; // vert
-    return "#fbbc05"; // veut rejoindre ICC / visiteur par défaut
-  };
-
   return (
     <div
-      className="p-4 rounded-xl border shadow mb-3 bg-white"
-      style={{ borderTop: `4px solid ${getBorderColor()}` }}
+      className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300"
+      style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
     >
-      <div className="flex justify-between items-center">
-        <h2 className="font-bold text-lg flex items-center">
-          {member.prenom} {member.nom}{" "}
-          {member.star && <span className="ml-2 text-yellow-400">⭐</span>}
-        </h2>
-        <span className="text-sm font-semibold text-orange-600">{member.statut}</span>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center">
+            {member.prenom} {member.nom}{" "}
+            {member.star && <span className="ml-2 text-yellow-400">⭐</span>}
+          </h2>
+          <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
+          <p className="text-sm text-gray-500">Statut : {member.statut}</p>
+        </div>
       </div>
 
-      <p className="text-sm text-gray-600">📱 {member.telephone}</p>
-
-      {/* Texte cliquable Voir détails */}
+      {/* 🔹 Lien texte bleu pour voir les détails */}
       <p
         onClick={() => setShowDetails(!showDetails)}
-        className="mt-2 text-blue-500 cursor-pointer hover:underline text-sm"
+        className="mt-2 text-sm text-blue-500 underline cursor-pointer"
       >
         {showDetails ? "Fermer détails" : "Voir détails"}
       </p>
 
+      {/* 🔹 Détails affichés au clic */}
       {showDetails && (
         <div className="mt-3 text-sm text-gray-700 space-y-1">
           <p>Email : {member.email || "—"}</p>
@@ -90,7 +81,7 @@ Merci pour ton cœur ❤️ et ton amour ✨`;
           <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
           <p>Comment venu : {member.how_came || "—"}</p>
 
-          {/* Menu déroulant + bouton WhatsApp pour visiteurs / veut rejoindre ICC */}
+          {/* ✅ Si statut visiteur / veut rejoindre ICC */}
           {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
             <div className="mt-3">
               <label className="block mb-1 font-semibold">Choisir une cellule :</label>
