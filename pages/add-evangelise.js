@@ -10,12 +10,10 @@ export default function AddEvangelise() {
     nom: "",
     prenom: "",
     telephone: "",
-    email: "",
     ville: "",
     statut: "evangelisé",
     infos_supplementaires: "",
     is_whatsapp: false,
-    how_came: "",
     besoin: "",
   });
 
@@ -41,12 +39,10 @@ export default function AddEvangelise() {
         nom: "",
         prenom: "",
         telephone: "",
-        email: "",
         ville: "",
         statut: "evangelisé",
         infos_supplementaires: "",
         is_whatsapp: false,
-        how_came: "",
         besoin: "",
       });
     } catch (err) {
@@ -124,18 +120,6 @@ export default function AddEvangelise() {
             <label className="text-gray-700 font-medium">Ce numéro a WhatsApp</label>
           </div>
 
-          {/* Email */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
-
           {/* Ville */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Ville</label>
@@ -146,22 +130,6 @@ export default function AddEvangelise() {
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
-          </div>
-
-          {/* Comment est-il venu */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
-            <select
-              name="how_came"
-              value={formData.how_came}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="evangelisation">Évangélisation de rue</option>
-              <option value="réseaux">Réseaux</option>
-              <option value="autre">Autre</option>
-            </select>
           </div>
 
           {/* Besoin */}
