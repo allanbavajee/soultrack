@@ -78,8 +78,7 @@ Merci pour ton cœur ❤️ et son amour ✨`;
     if (member.statut === "ancien") return "#999999"; // gris
     if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
       return "#34A853"; // vert
-    if (member.statut === "evangelisé") return "#fbbc05"; // jaune/orange
-    return "#ccc"; // par défaut
+    
   };
 
   return (
