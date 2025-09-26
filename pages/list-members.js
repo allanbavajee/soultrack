@@ -108,7 +108,6 @@ Merci pour ton cœur ❤️ et son amour ✨`;
           <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
           <option value="visiteur">Visiteur</option>
           <option value="a déjà mon église">A déjà mon église</option>
-          <option value="evangelisé">Evangelisé</option>
           <option value="star">⭐ Star</option>
         </select>
       </div>
