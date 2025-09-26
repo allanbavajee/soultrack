@@ -64,7 +64,7 @@ export default function ListMembers() {
         <div className="mb-4">
           <a
             href="/"
-            className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium"
+            className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
           >
         ← Retour
         </a>
