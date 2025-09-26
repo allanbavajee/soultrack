@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center p-6">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
       {/* Logos */}
       <div className="flex flex-col md:flex-row items-center justify-center mt-8 gap-6">
         <Image src="/soul.logo.png" alt="SoulTrack Logo" width={90} height={90} />
@@ -17,7 +17,7 @@ export default function Home() {
       </h2>
 
       {/* Cartes d'actions */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-6 w-full max-w-6xl mt-10">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 w-full max-w-6xl mt-10 justify-items-center">
         {/* Ajouter un membre */}
         <Link
           href="/add-member"
