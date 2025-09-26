@@ -28,15 +28,15 @@ export default function ListMembers() {
     return m.statut === filter;
   });
 
-  const getBorderColor = (member) => {
+  const getStatusColor = (member) => {
     if (member.star) return "#FBC02D";           // jaune pour Star
     if (member.statut === "actif") return "#4285F4";             // bleu
     if (member.statut === "a déjà mon église") return "#EA4335"; // rouge
     if (member.statut === "ancien") return "#9E9E9E";           // gris
     if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
       return "#34A853"; // vert
-    if (member.statut === "evangelisé") return "#F57C00"; // orange foncé (exemple)
-    return "#999"; // couleur par défaut
+    if (member.statut === "evangelisé") return "#F57C00"; // orange foncé
+    return "#999"; // par défaut
   };
 
   return (
@@ -78,21 +78,26 @@ export default function ListMembers() {
       {/* Cartes membres */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredMembers.map((member) => {
-          const borderColor = getBorderColor(member);
+          const statusColor = getStatusColor(member);
           return (
             <div
               key={member.id}
               className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer"
-              style={{ borderTop: `4px solid ${borderColor}` }}
+              style={{ borderTop: `4px solid ${statusColor}` }}
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-lg font-bold mb-1 flex items-center" style={{ color: borderColor }}>
+                  <h2 className="text-lg font-bold mb-1 flex items-center text-black">
                     {member.prenom} {member.nom}
                     {member.star && <span className="ml-2 text-yellow-400">⭐</span>}
                   </h2>
                   <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
-                  <p className="text-sm font-semibold" style={{ color: borderColor }}>Statut : {member.statut}</p>
+                  <p className="text-sm text-black">
+                    Statut :{" "}
+                    <span className="font-bold" style={{ color: statusColor }}>
+                      {member.statut}
+                    </span>
+                  </p>
                 </div>
 
                 {/* Changer le statut localement */}
