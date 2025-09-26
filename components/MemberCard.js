@@ -8,15 +8,19 @@ export default function MemberCard({ member, fetchMembers = () => {}, cellules =
   const safeStar = member?.star === true || member?.star === "true";
 
   const getBorderColor = () => {
-    if (safeStar) return "#FBC02D"; // Jaune star
-    if (member?.statut === "a déjà mon église") return "#4285F4"; // Bleu
-    if (member?.statut === "evangelisé") return "#34A853"; // Vert
-    if (member?.statut === "actif") return "#fbbc05"; // Jaune/orange
-    if (member?.statut === "ancien") return "#EA4335"; // Rouge
-    if (member?.statut === "veut rejoindre ICC" || member?.statut === "visiteur")
-      return "#34a853"; // Vert foncé
-    return "#999"; // Par défaut gris
-  };
+  const isStar = member?.star === true || member?.star === "true";
+  if (isStar) return "#FBC02D"; // ⭐ Jaune Star (prioritaire)
+
+  if (member?.statut === "actif") return "#4285F4"; // Bleu
+  if (member?.statut === "a déjà mon église") return "#EA4335"; // Rouge
+  if (member?.statut === "ancien") return "#9E9E9E"; // Gris
+  if (member?.statut === "visiteur" || member?.statut === "veut rejoindre ICC")
+    return "#34A853"; // Vert
+  if (member?.statut === "evangelisé") return "#FB8C00"; // Orange
+
+  return "#999"; // par défaut
+};
+
 
   const handleWhatsApp = async () => {
     try {
