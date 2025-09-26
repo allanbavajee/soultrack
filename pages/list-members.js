@@ -60,6 +60,15 @@ export default function ListMembers() {
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
           Liste des membres
         </h1>
+        {/* Flèche retour */}
+        <div className="mb-4">
+          <a
+            href="/"
+            className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+        ← Retour
+        </a>
+        </div>
 
         {/* Filtre déroulant */}
         <div className="flex justify-center mb-4">
