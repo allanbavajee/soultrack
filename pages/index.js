@@ -36,15 +36,6 @@ export default function Home() {
           <h2 className="text-xl font-bold text-gray-800 text-center">Liste des membres</h2>
         </Link>
 
-        {/* Ajouter un évangélisé */}
-        <Link
-          href="/add-evangelise"
-          className="bg-white p-6 rounded-3xl shadow-lg flex flex-col items-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#fbbc05]"
-        >
-          <div className="text-5xl mb-4">✨</div>
-          <h2 className="text-xl font-bold text-gray-800 text-center">Ajouter un évangélisé</h2>
-        </Link>
-
         {/* Tableau de suivi cellule */}
         <Link
           href="/cellule-dashboard"
@@ -56,7 +47,7 @@ export default function Home() {
 
         {/* Page évangélisation */}
         <Link
-          href="/evangelisation"
+          href="/evangelisation-hub"
           className="bg-white p-6 rounded-3xl shadow-lg flex flex-col items-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#ff9800]"
         >
           <div className="text-5xl mb-4">🙌</div>
