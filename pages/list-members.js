@@ -7,7 +7,8 @@ export default function ListMembers() {
   const [filter, setFilter] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
-  const [selectedCellules, setSelectedCellules] = useState({}); // pour les evangelisés
+  const [selectedCellules, setSelectedCellules] = useState({});
+  const [selectedEvangelises, setSelectedEvangelises] = useState({}); // members sélectionnés pour WhatsApp groupé
 
   useEffect(() => {
     fetchMembers();
@@ -30,7 +31,7 @@ export default function ListMembers() {
     );
   };
 
-  const handleWhatsApp = (member, cellule) => {
+  const handleWhatsAppSingle = (member, cellule) => {
     if (!cellule) return;
     const prenomResponsable = cellule.responsable.split(" ")[0];
     const message = `👋 Salut ${prenomResponsable},
@@ -45,12 +46,23 @@ Voici ses infos :
 - 🙏 Besoin : ${member.besoin || "—"}  
 - 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}  
 
-Merci pour ton cœur ❤️ et ton amour ✨`;
+Merci pour ton cœur ❤️ et son amour ✨`;
 
     window.open(
       `https://wa.me/${cellule.telephone}?text=${encodeURIComponent(message)}`,
       "_blank"
     );
+  };
+
+  // WhatsApp groupé pour tous les evangelisés sélectionnés
+  const handleWhatsAppGroup = () => {
+    Object.entries(selectedEvangelises).forEach(([memberId, membre]) => {
+      const cellule = selectedCellules[memberId];
+      if (!cellule) return;
+      handleWhatsAppSingle(membre, cellule);
+    });
+    // vider la sélection après envoi
+    setSelectedEvangelises({});
   };
 
   const filteredMembers = members.filter((m) => {
@@ -107,6 +119,16 @@ Merci pour ton cœur ❤️ et ton amour ✨`;
         Total membres : {members.length} | Affichés : {filteredMembers.length}
       </p>
 
+      {/* Bouton WhatsApp groupé pour evangelisés */}
+      {Object.keys(selectedEvangelises).length > 0 && (
+        <button
+          onClick={handleWhatsAppGroup}
+          className="mb-4 w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
+        >
+          📤 Envoyer WhatsApp aux responsables des membres sélectionnés
+        </button>
+      )}
+
       {/* Cartes membres */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredMembers.map((member) => (
@@ -161,40 +183,30 @@ Merci pour ton cœur ❤️ et ton amour ✨`;
                 <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
                 <p>Comment venu : {member.how_came || "—"}</p>
 
-                {/* Pour "evangelisé" seulement */}
+                {/* Checkbox pour evangelisés */}
                 {member.statut === "evangelisé" && (
-                  <div className="mt-2">
-                    <label className="block mb-1 font-semibold">
-                      Choisir une cellule pour les membres sélectionnés :
-                    </label>
-                    <select
-                      className="w-full p-2 border rounded-lg"
-                      value={selectedCellules[member.id]?.cellule || ""}
+                  <div className="mt-2 flex items-center">
+                    <input
+                      type="checkbox"
+                      className="mr-2"
+                      checked={!!selectedEvangelises[member.id]}
                       onChange={(e) => {
-                        const cellule = cellules.find((c) => c.cellule === e.target.value);
-                        setSelectedCellules((prev) => ({ ...prev, [member.id]: cellule }));
+                        if (e.target.checked) {
+                          setSelectedEvangelises((prev) => ({ ...prev, [member.id]: member }));
+                        } else {
+                          setSelectedEvangelises((prev) => {
+                            const copy = { ...prev };
+                            delete copy[member.id];
+                            return copy;
+                          });
+                        }
                       }}
-                    >
-                      <option value="">-- Sélectionner --</option>
-                      {cellules.length > 0 &&
-                        cellules.map((c) => (
-                          <option key={c.cellule} value={c.cellule}>
-                            {c.cellule} ({c.responsable})
-                          </option>
-                        ))}
-                    </select>
-                    {selectedCellules[member.id] && (
-                      <button
-                        onClick={() => handleWhatsApp(member, selectedCellules[member.id])}
-                        className="mt-2 w-full py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600"
-                      >
-                        📤 Envoyer WhatsApp au responsable
-                      </button>
-                    )}
+                    />
+                    <span>Ajouter aux membres à envoyer WhatsApp</span>
                   </div>
                 )}
 
-                {/* Pour visiteur / veut rejoindre ICC */}
+                {/* Menu déroulant + WhatsApp pour visiteurs / veut rejoindre ICC */}
                 {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
                   <div className="mt-2">
                     <label className="block mb-1 font-semibold">Choisir une cellule :</label>
@@ -207,19 +219,18 @@ Merci pour ton cœur ❤️ et ton amour ✨`;
                       }}
                     >
                       <option value="">-- Sélectionner --</option>
-                      {cellules.length > 0 &&
-                        cellules.map((c) => (
-                          <option key={c.cellule} value={c.cellule}>
-                            {c.cellule} ({c.responsable})
-                          </option>
-                        ))}
+                      {cellules.map((c) => (
+                        <option key={c.cellule} value={c.cellule}>
+                          {c.cellule} ({c.responsable})
+                        </option>
+                      ))}
                     </select>
                     {selectedCellules[member.id] && (
                       <button
-                        onClick={() => handleWhatsApp(member, selectedCellules[member.id])}
+                        onClick={() => handleWhatsAppSingle(member, selectedCellules[member.id])}
                         className="mt-2 w-full py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600"
                       >
-                        📤 Envoyer WhatsApp au responsable
+                        📤 Envoyer sur WhatsApp
                       </button>
                     )}
                   </div>
