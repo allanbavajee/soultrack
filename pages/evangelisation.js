@@ -61,6 +61,13 @@ Voici ses infos :
       <h1 className="text-3xl font-bold text-center text-gray-800 mb-4">
         Évangélisation – Liste des évangélisés
       </h1>
+      {/* Flèche retour */}
+      <button
+        onClick={() => window.history.back()}
+        className="flex items-center text-orange-500 font-semibold mb-4"
+      >
+        ← Retour
+      </button>
 
       {/* Compteurs */}
       <div className="flex justify-center gap-6 mb-6">
