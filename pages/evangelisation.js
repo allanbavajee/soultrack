@@ -1,11 +1,12 @@
+// pages/evangelisation.js
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Evangelisation() {
-  const [members, setMembers] = useState([]);
+  const [evangelises, setEvangelises] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState(null);
-  const [selectedMembers, setSelectedMembers] = useState({});
+  const [selectedContacts, setSelectedContacts] = useState({}); // checkbox
 
   useEffect(() => {
     fetchEvangelises();
@@ -16,8 +17,8 @@ export default function Evangelisation() {
     const { data, error } = await supabase
       .from("membres")
       .select("*")
-      .eq("statut", "evangelisé");
-    if (!error && data) setMembers(data);
+      .eq("statut", "evangelisé"); // uniquement les evangelisés
+    if (!error && data) setEvangelises(data);
   };
 
   const fetchCellules = async () => {
@@ -27,63 +28,60 @@ export default function Evangelisation() {
     if (!error && data) setCellules(data);
   };
 
+  const handleCheckbox = (member) => {
+    setSelectedContacts((prev) => {
+      const copy = { ...prev };
+      if (copy[member.id]) delete copy[member.id];
+      else copy[member.id] = member;
+      return copy;
+    });
+  };
+
   const handleWhatsAppGroup = () => {
     if (!selectedCellule) {
-      alert("Sélectionne d'abord une cellule !");
+      alert("Sélectionne d'abord une cellule.");
       return;
     }
 
-    Object.values(selectedMembers).forEach((member) => {
-      const prenomResponsable = (selectedCellule.responsable || "").split(" ")[0] || "Frère/Soeur";
+    Object.values(selectedContacts).forEach((member) => {
+      const prenomResponsable = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
+      const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
+      if (!telDigits) return;
+
       const message = `👋 Salut ${prenomResponsable},
 
-🙏 Dieu nous a envoyé une nouvelle âme à suivre.
-Voici ses infos :
+🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
+Voici ses infos :  
 
-- 👤 Nom : ${member.prenom} ${member.nom}
-- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}
-- 📧 Email : ${member.email || "—"}
-- 🏙️ Ville : ${member.ville || "—"}
-- 🙏 Besoin : ${member.besoin || "—"}
-- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}`;
+- 👤 Nom : ${member.prenom} ${member.nom}  
+- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
+- 📧 Email : ${member.email || "—"}  
+- 🏙️ Ville : ${member.ville || "—"}  
+- 🙏 Besoin : ${member.besoin || "—"}  
+- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}  
+
+Merci pour ton cœur ❤️ et son amour ✨`;
 
       window.open(
-        `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(message)}`,
+        `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
         "_blank"
       );
     });
 
-    setSelectedMembers({});
+    setSelectedContacts({});
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <h1 className="text-3xl font-bold text-center text-gray-800 mb-4">
-        Évangélisation – Liste des évangélisés
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+      <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
+        Évangélisés à envoyer aux cellules
       </h1>
-      {/* Flèche retour */}
-      <button
-        onClick={() => window.history.back()}
-        className="flex items-center text-orange-500 font-semibold mb-4"
-      >
-        ← Retour
-      </button>
 
-      {/* Compteurs */}
-      <div className="flex justify-center gap-6 mb-6">
-        <span className="font-semibold text-gray-700">
-          Total évangélisés : {members.length}
-        </span>
-        <span className="font-semibold text-gray-700">
-          Sélectionnés : {Object.keys(selectedMembers).length}
-        </span>
-      </div>
-
-      {/* Choix cellule global */}
-      <div className="mb-6 flex gap-4 items-center">
-        <label className="font-semibold">Choisir une cellule :</label>
+      {/* Choix cellule en haut */}
+      <div className="mb-4 w-full max-w-md mx-auto">
+        <label className="block mb-2 font-semibold">Choisir une cellule :</label>
         <select
-          className="border rounded-lg p-2"
+          className="w-full p-2 border rounded-lg"
           value={selectedCellule?.cellule || ""}
           onChange={(e) => {
             const cellule = cellules.find((c) => c.cellule === e.target.value);
@@ -97,54 +95,55 @@ Voici ses infos :
             </option>
           ))}
         </select>
-
-        <button
-          onClick={handleWhatsAppGroup}
-          className="ml-4 px-4 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600"
-        >
-          📤 Envoyer WhatsApp
-        </button>
       </div>
 
-      {/* Cartes membres */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {members.map((member) => (
+      {/* Bouton WhatsApp groupé */}
+      {Object.keys(selectedContacts).length > 0 && (
+        <div className="mb-4 w-full max-w-md mx-auto">
+          <button
+            onClick={handleWhatsAppGroup}
+            className="w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
+          >
+            📤 Envoyer WhatsApp aux contacts sélectionnés
+          </button>
+        </div>
+      )}
+
+      {/* Liste cartes evangelisés */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {evangelises.map((member) => (
           <div
             key={member.id}
-            className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300"
-            style={{ borderTop: "4px solid #FB8C00" }}
+            className="bg-white w-full p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col"
           >
-            <h2 className="text-lg font-bold text-gray-800 mb-1">{member.prenom} {member.nom}</h2>
-            <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
-            <p className="text-sm text-orange-600 font-bold">Évangélisé</p>
+            <div className="flex justify-between items-start w-full">
+              <div className="w-full">
+                <h2 className="text-lg font-bold text-gray-800 mb-1">
+                  {member.prenom} {member.nom}
+                </h2>
+                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
+                <p className="text-sm font-bold text-orange-500">Statut : {member.statut}</p>
+              </div>
+            </div>
 
+            {/* Checkbox "Envoyer ce contact" */}
+            <div className="mt-2 flex items-center">
+              <input
+                type="checkbox"
+                className="mr-2"
+                checked={!!selectedContacts[member.id]}
+                onChange={() => handleCheckbox(member)}
+              />
+              <span>Envoyer ce contact</span>
+            </div>
+
+            {/* Détails */}
             <div className="mt-2 text-sm text-gray-700 space-y-1">
               <p>Email : {member.email || "—"}</p>
               <p>Besoin : {member.besoin || "—"}</p>
               <p>Ville : {member.ville || "—"}</p>
               <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
               <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-            </div>
-
-            {/* Case à cocher */}
-            <div className="mt-3 flex items-center">
-              <input
-                type="checkbox"
-                className="mr-2"
-                checked={!!selectedMembers[member.id]}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setSelectedMembers((prev) => ({ ...prev, [member.id]: member }));
-                  } else {
-                    setSelectedMembers((prev) => {
-                      const copy = { ...prev };
-                      delete copy[member.id];
-                      return copy;
-                    });
-                  }
-                }}
-              />
-              <span>Envoyer ce contact</span>
             </div>
           </div>
         ))}
