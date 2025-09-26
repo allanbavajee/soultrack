@@ -2,34 +2,45 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-export default function MemberCard({ member, fetchMembers, cellules }) {
+export default function MemberCard({ member, fetchMembers = () => {}, cellules = [] }) {
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const safeStar = member?.star === true || member?.star === "true";
 
-  // ✅ Couleur en fonction du statut
-  const getBorderColor = (member) => {
-    if (member.star) return "#FBC02D"; // Jaune star
-    if (member.statut === "a déjà mon église") return "#4285F4"; // Bleu
-    if (member.statut === "evangelisé") return "#34A853"; // Vert
-    if (member.statut === "actif") return "#fbbc05"; // Jaune/orange
-    if (member.statut === "ancien") return "#EA4335"; // Rouge
-    if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
+  const getBorderColor = () => {
+    if (safeStar) return "#FBC02D"; // Jaune star
+    if (member?.statut === "a déjà mon église") return "#4285F4"; // Bleu
+    if (member?.statut === "evangelisé") return "#34A853"; // Vert
+    if (member?.statut === "actif") return "#fbbc05"; // Jaune/orange
+    if (member?.statut === "ancien") return "#EA4335"; // Rouge
+    if (member?.statut === "veut rejoindre ICC" || member?.statut === "visiteur")
       return "#34a853"; // Vert foncé
-    return "#999"; // Par défaut
+    return "#999"; // Par défaut gris
   };
 
-  // ✅ Envoi WhatsApp
   const handleWhatsApp = async () => {
-    if (!selectedCellule) return;
+    try {
+      if (!selectedCellule) {
+        alert("Sélectionne d'abord une cellule.");
+        return;
+      }
 
-    const prenomResponsable = selectedCellule.responsable.split(" ")[0];
-    const message = `👋 Salut ${prenomResponsable},
+      const telRaw = selectedCellule.telephone || "";
+      // Nettoyer le numéro pour wa.me : garder uniquement chiffres
+      const telDigits = telRaw.replace(/\D/g, "");
+      if (!telDigits) {
+        alert("Le responsable sélectionné n'a pas de téléphone valide.");
+        return;
+      }
+
+      const prenomResponsable = (selectedCellule.responsable || "").split(" ")[0] || "Frère/Soeur";
+      const message = `👋 Salut ${prenomResponsable},
 
 🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
 Voici ses infos :  
 
-- 👤 Nom : ${member.prenom} ${member.nom}  
-- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
+- 👤 Nom : ${member.prenom || "—"} ${member.nom || "—"}  
+- 📱 Téléphone : ${member.telephone || "—"} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
 - 📧 Email : ${member.email || "—"}  
 - 🏙️ Ville : ${member.ville || "—"}  
 - 🙏 Besoin : ${member.besoin || "—"}  
@@ -37,64 +48,80 @@ Voici ses infos :
 
 Merci pour ton cœur ❤️ et ton amour ✨`;
 
-    window.open(
-      `https://wa.me/${selectedCellule.telephone}?text=${encodeURIComponent(message)}`,
-      "_blank"
-    );
+      // ouvrir WhatsApp dans un nouvel onglet
+      const waUrl = `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`;
+      window.open(waUrl, "_blank");
 
-    // ✅ Met à jour le statut en "ancien"
-    await supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
-    fetchMembers();
+      // update statut en 'ancien' (on essaye, on log si erreur)
+      try {
+        const { error } = await supabase.from("membres").update({ statut: "ancien" }).eq("id", member.id);
+        if (error) console.error("Erreur update statut:", error);
+      } catch (e) {
+        console.error("Erreur lors de l'update supabase:", e);
+      }
+
+      // rafraîchir la liste
+      try {
+        await fetchMembers();
+      } catch (e) {
+        console.warn("fetchMembers a échoué après envoi WhatsApp:", e);
+      }
+    } catch (err) {
+      console.error("handleWhatsApp error:", err);
+      alert("Une erreur s'est produite. Regarde la console pour plus de détails.");
+    }
   };
 
   return (
     <div
       className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300"
-      style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
+      style={{ borderTop: `4px solid ${getBorderColor()}` }}
     >
       <div className="flex justify-between items-start">
         <div>
           <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center">
-            {member.prenom} {member.nom}{" "}
-            {member.star && <span className="ml-2 text-yellow-400">⭐</span>}
+            {member?.prenom || "—"} {member?.nom || "—"}{" "}
+            {safeStar && <span className="ml-2 text-yellow-400">⭐</span>}
           </h2>
-          <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
-          <p className="text-sm text-gray-500">Statut : {member.statut}</p>
+          <p className="text-sm text-gray-600 mb-1">📱 {member?.telephone || "—"}</p>
+          <p className="text-sm text-gray-500">Statut : {member?.statut || "—"}</p>
         </div>
       </div>
 
-      {/* 🔹 Lien texte bleu pour voir les détails */}
+      {/* Lien texte bleu pour Détails */}
       <p
-        onClick={() => setShowDetails(!showDetails)}
+        onClick={() => setShowDetails((s) => !s)}
         className="mt-2 text-sm text-blue-500 underline cursor-pointer"
       >
-        {showDetails ? "Fermer détails" : "Voir détails"}
+        {showDetails ? "Fermer détails" : "Détails"}
       </p>
 
-      {/* 🔹 Détails affichés au clic */}
+      {/* Détails */}
       {showDetails && (
         <div className="mt-3 text-sm text-gray-700 space-y-1">
-          <p>Email : {member.email || "—"}</p>
-          <p>Besoin : {member.besoin || "—"}</p>
-          <p>Ville : {member.ville || "—"}</p>
-          <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
-          <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-          <p>Comment venu : {member.how_came || "—"}</p>
+          <p>Email : {member?.email || "—"}</p>
+          <p>Besoin : {member?.besoin || "—"}</p>
+          <p>Ville : {member?.ville || "—"}</p>
+          <p>WhatsApp : {member?.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+          <p>Infos supplémentaires : {member?.infos_supplementaires || "—"}</p>
+          <p>Comment est-il venu : {member?.how_came || "—"}</p>
 
-          {/* ✅ Si statut visiteur / veut rejoindre ICC */}
-          {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
-            <div className="mt-3">
+          {/* Menu + WhatsApp pour visiteurs / veut rejoindre ICC */}
+          {(member?.statut === "visiteur" || member?.statut === "veut rejoindre ICC") && (
+            <div className="mt-2">
               <label className="block mb-1 font-semibold">Choisir une cellule :</label>
               <select
                 className="w-full p-2 border rounded-lg"
                 value={selectedCellule?.cellule || ""}
                 onChange={(e) => {
-                  const cellule = cellules.find((c) => c.cellule === e.target.value);
-                  setSelectedCellule(cellule);
+                  const cellule = Array.isArray(cellules)
+                    ? cellules.find((c) => String(c?.cellule) === String(e.target.value))
+                    : undefined;
+                  setSelectedCellule(cellule || null);
                 }}
               >
                 <option value="">-- Sélectionner --</option>
-                {cellules.length > 0 ? (
+                {Array.isArray(cellules) && cellules.length > 0 ? (
                   cellules.map((c) => (
                     <option key={c.cellule} value={c.cellule}>
                       {c.cellule} ({c.responsable})
