@@ -1,4 +1,4 @@
-// pages/cellule-dashboard.js
+// pages/suivis-cellule.js
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
