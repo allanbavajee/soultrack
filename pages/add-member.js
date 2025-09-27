@@ -123,19 +123,7 @@ export default function AddMember() {
               />
               <label className="text-gray-700">Ce numéro est WhatsApp</label>
             </div>
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
+          </div>          
 
           {/* Ville */}
           <div>
