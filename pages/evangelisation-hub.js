@@ -8,6 +8,13 @@ export default function EvangelisationHub() {
       <h1 className="text-3xl font-bold text-gray-800 mb-10 text-center">
         Évangélisation
       </h1>
+       {/* Flèche retour */}
+        <button
+          onClick={() => router.back()}
+           className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
+        >
+          ← Retour
+        </button>
 
       {/* Boutons */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl justify-items-center">
