@@ -32,6 +32,16 @@ export default function EvangelisationHub() {
             Liste des évangélisés
           </h2>
         </Link>
+
+         {/* Tableau de suivi cellule */}
+        <Link
+          href="/cellule-dashboard"
+          className="bg-white p-6 rounded-3xl shadow-lg flex flex-col items-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#f06292]"
+        >
+          <div className="text-5xl mb-4">📋</div>
+          <h2 className="text-xl font-bold text-gray-800 text-center">Suivi cellule</h2>
+        </Link>
+            
       </div>
     </div>
   );
