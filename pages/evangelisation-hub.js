@@ -6,14 +6,16 @@ export default function EvangelisationHub() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 relative">
-      {/* Flèche retour en haut à droite */}
-      <button
-        onClick={() => router.back()}
-        className="absolute top-6 right-6 text-orange-500 font-semibold hover:text-orange-600 transition-colors"
-      >
-        ← Retour
-      </button>
+    <div className="min-h-screen bg-white flex flex-col items-center p-6">
+      {/* Flèche retour */}
+      <div className="w-full max-w-4xl">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center text-orange-500 font-semibold mb-6 hover:text-orange-600 transition-colors"
+        >
+          ← Retour
+        </button>
+      </div>
 
       {/* Titre */}
       <h1 className="text-3xl font-bold text-gray-800 mb-10 text-center">
