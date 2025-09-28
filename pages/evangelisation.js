@@ -6,57 +6,60 @@ export default function Evangelisation() {
   const [evangelises, setEvangelises] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState(null);
-  const [selectedContacts, setSelectedContacts] = useState({});
+  const [selectedContacts, setSelectedContacts] = useState({}); // checkbox
 
   useEffect(() => {
     fetchEvangelises();
     fetchCellules();
   }, []);
 
+  // Récupère uniquement les évangélisés SANS suivi
   const fetchEvangelises = async () => {
     const { data, error } = await supabase
       .from("membres")
-      .select("*")
+      .select("*, suivis(id)")
       .eq("statut", "evangelisé");
 
-    if (!error && data) setEvangelises(data);
+    if (!error && data) {
+      // garder uniquement ceux qui n’ont pas encore de suivi
+      const disponibles = data.filter((m) => !m.suivis || m.suivis.length === 0);
+      setEvangelises(disponibles);
+    }
   };
 
   const fetchCellules = async () => {
     const { data, error } = await supabase
       .from("cellules")
-      .select("cellule,responsable,telephone");
-
+      .select("id, cellule, responsable, telephone");
     if (!error && data) setCellules(data);
   };
 
   const handleCheckbox = (member) => {
     setSelectedContacts((prev) => {
       const copy = { ...prev };
-      if (copy[member.id]) {
-        delete copy[member.id];
-      } else {
-        copy[member.id] = member;
-      }
+      if (copy[member.id]) delete copy[member.id];
+      else copy[member.id] = member;
       return copy;
     });
   };
 
-  const handleWhatsAppGroup = () => {
+  const handleWhatsAppGroup = async () => {
     if (!selectedCellule) {
       alert("Sélectionne d'abord une cellule.");
       return;
     }
 
-    const prenomResponsable =
-      selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
-    const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
-    if (!telDigits) return;
+    for (const member of Object.values(selectedContacts)) {
+      const prenomResponsable =
+        selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
+      const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
+      if (!telDigits) continue;
 
-    // 📌 Créer un seul message avec tous les contacts sélectionnés
-    let contactsText = "";
-    Object.values(selectedContacts).forEach((member) => {
-      contactsText += `
+      const message = `👋 Salut ${prenomResponsable},
+
+🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
+Voici ses infos :  
+
 - 👤 Nom : ${member.prenom} ${member.nom}  
 - 📱 Téléphone : ${member.telephone} ${
         member.is_whatsapp ? "(WhatsApp ✅)" : ""
@@ -66,23 +69,28 @@ export default function Evangelisation() {
 - 🙏 Besoin : ${member.besoin || "—"}  
 - 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}  
 
-`;
-    });
+Merci pour ton cœur ❤️ et son amour ✨`;
 
-    const message = `👋 Salut ${prenomResponsable},
+      // 🔹 Ouvre WhatsApp avec le message
+      window.open(
+        `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
 
-🙏 Dieu nous a envoyé de nouvelles âmes à suivre.  
-Voici leurs infos :  
+      // 🔹 Crée une entrée dans la table "suivis"
+      await supabase.from("suivis").insert([
+        {
+          membre_id: member.id,
+          cellule_id: selectedCellule.id,
+          statut: "en attente",
+          commentaire: "",
+        },
+      ]);
+    }
 
-${contactsText}
-Merci pour ton cœur ❤️ et ton amour ✨`;
-
-    window.open(
-      `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
-      "_blank"
-    );
-
+    // Reset sélection et recharge la liste
     setSelectedContacts({});
+    fetchEvangelises();
   };
 
   return (
@@ -91,7 +99,7 @@ Merci pour ton cœur ❤️ et ton amour ✨`;
         Évangélisés à envoyer aux cellules
       </h1>
 
-      {/* Choix cellule */}
+      {/* Choix cellule en haut */}
       <div className="mb-4 w-full max-w-md mx-auto">
         <label className="block mb-2 font-semibold">Choisir une cellule :</label>
         <select
@@ -104,7 +112,7 @@ Merci pour ton cœur ❤️ et ton amour ✨`;
         >
           <option value="">-- Sélectionner --</option>
           {cellules.map((c) => (
-            <option key={c.cellule} value={c.cellule}>
+            <option key={c.id} value={c.cellule}>
               {c.cellule} ({c.responsable})
             </option>
           ))}
@@ -123,7 +131,7 @@ Merci pour ton cœur ❤️ et ton amour ✨`;
         </div>
       )}
 
-      {/* Liste des évangélisés */}
+      {/* Liste cartes evangelisés */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {evangelises.map((member) => (
           <div
@@ -135,16 +143,14 @@ Merci pour ton cœur ❤️ et ton amour ✨`;
                 <h2 className="text-lg font-bold text-gray-800 mb-1">
                   {member.prenom} {member.nom}
                 </h2>
-                <p className="text-sm text-gray-600 mb-1">
-                  📱 {member.telephone}
-                </p>
+                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
                 <p className="text-sm font-bold text-orange-500">
                   Statut : {member.statut}
                 </p>
               </div>
             </div>
 
-            {/* Checkbox */}
+            {/* Checkbox "Envoyer ce contact" */}
             <div className="mt-2 flex items-center">
               <input
                 type="checkbox"
@@ -161,9 +167,7 @@ Merci pour ton cœur ❤️ et ton amour ✨`;
               <p>Besoin : {member.besoin || "—"}</p>
               <p>Ville : {member.ville || "—"}</p>
               <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
-              <p>
-                Infos supplémentaires : {member.infos_supplementaires || "—"}
-              </p>
+              <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
             </div>
           </div>
         ))}
