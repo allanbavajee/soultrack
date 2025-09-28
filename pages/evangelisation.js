@@ -13,18 +13,12 @@ export default function Evangelisation() {
     fetchCellules();
   }, []);
 
-  // Récupère uniquement les évangélisés SANS suivi
   const fetchEvangelises = async () => {
     const { data, error } = await supabase
       .from("membres")
-      .select("*, suivis(id)")
-      .eq("statut", "evangelisé");
-
-    if (!error && data) {
-      // garder uniquement ceux qui n’ont pas encore de suivi
-      const disponibles = data.filter((m) => !m.suivis || m.suivis.length === 0);
-      setEvangelises(disponibles);
-    }
+      .select("*")
+      .eq("statut", "evangelisé"); // uniquement les evangelisés
+    if (!error && data) setEvangelises(data);
   };
 
   const fetchCellules = async () => {
@@ -71,26 +65,28 @@ Voici ses infos :
 
 Merci pour ton cœur ❤️ et son amour ✨`;
 
-      // 🔹 Ouvre WhatsApp avec le message
+      // Ouvrir WhatsApp
       window.open(
         `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
         "_blank"
       );
 
-      // 🔹 Crée une entrée dans la table "suivis"
-      await supabase.from("suivis").insert([
-        {
-          membre_id: member.id,
-          cellule_id: selectedCellule.id,
-          statut: "en attente",
-          commentaire: "",
-        },
-      ]);
+      // Sauvegarde du suivi
+      await supabase.from("suivis").insert({
+        membre_id: member.id,
+        cellule_id: selectedCellule.id,
+        envoye_par: "pasteur", // 👉 tu peux remplacer par l’utilisateur connecté
+      });
+
+      // Mise à jour du statut du membre
+      await supabase
+        .from("membres")
+        .update({ statut: "envoyé" })
+        .eq("id", member.id);
     }
 
-    // Reset sélection et recharge la liste
     setSelectedContacts({});
-    fetchEvangelises();
+    fetchEvangelises(); // rafraîchit la liste
   };
 
   return (
@@ -143,7 +139,9 @@ Merci pour ton cœur ❤️ et son amour ✨`;
                 <h2 className="text-lg font-bold text-gray-800 mb-1">
                   {member.prenom} {member.nom}
                 </h2>
-                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
+                <p className="text-sm text-gray-600 mb-1">
+                  📱 {member.telephone}
+                </p>
                 <p className="text-sm font-bold text-orange-500">
                   Statut : {member.statut}
                 </p>
