@@ -1,4 +1,4 @@
-/* pages/evangelisation.js */
+// pages/evangelisation.js
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -7,19 +7,21 @@ export default function Evangelisation() {
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [selectedContacts, setSelectedContacts] = useState({}); // checkbox
+  const [loading, setLoading] = useState(true);
 
-  // 🔄 Charger les données
   useEffect(() => {
     fetchEvangelises();
     fetchCellules();
   }, []);
 
   const fetchEvangelises = async () => {
+    setLoading(true);
     const { data, error } = await supabase
       .from("membres")
       .select("*")
       .eq("statut", "evangelisé"); // uniquement les evangelisés non envoyés
     if (!error && data) setEvangelises(data);
+    setLoading(false);
   };
 
   const fetchCellules = async () => {
@@ -29,7 +31,6 @@ export default function Evangelisation() {
     if (!error && data) setCellules(data);
   };
 
-  // ✅ Sélection / désélection contact
   const handleCheckbox = (member) => {
     setSelectedContacts((prev) => {
       const copy = { ...prev };
@@ -39,24 +40,18 @@ export default function Evangelisation() {
     });
   };
 
-  // 📤 Envoyer WhatsApp et créer les suivis
   const handleWhatsAppGroup = async () => {
-    if (!selectedCellule) return alert("Sélectionne d'abord une cellule.");
+    if (!selectedCellule) {
+      alert("Sélectionne d'abord une cellule.");
+      return;
+    }
 
     for (const member of Object.values(selectedContacts)) {
-      // 1️⃣ Créer suivi dans Supabase
-      await supabase.from("suivis").insert({
-        membre_id: member.id,
-        cellule_id: selectedCellule.id,
-        statut: "en attente",
-      });
-
-      // 2️⃣ Préparer message WhatsApp
-      const prenom = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
+      const prenomResponsable = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
       const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
       if (!telDigits) continue;
 
-      const message = `👋 Salut ${prenom},
+      const message = `👋 Salut ${prenomResponsable},
 
 🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
 Voici ses infos :  
@@ -70,18 +65,32 @@ Voici ses infos :
 
 Merci pour ton cœur ❤️ et son amour ✨`;
 
-      window.open(
-        `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
-        "_blank"
-      );
+      // Insérer dans la table suivis
+      const { error: insertError } = await supabase.from("suivis").insert([
+        {
+          membre_id: member.id,
+          cellule_id: selectedCellule.id,
+          statut: "envoyé",
+          created_at: new Date(),
+        },
+      ]);
+
+      if (insertError) {
+        console.error("Erreur lors de l'ajout au suivi:", insertError.message);
+        continue;
+      }
+
+      window.open(`https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`, "_blank");
     }
 
-    // 3️⃣ Supprimer contacts envoyés de la liste
+    // Retirer les contacts envoyés de la liste
     setEvangelises((prev) =>
-      prev.filter((m) => !Object.keys(selectedContacts).includes(String(m.id)))
+      prev.filter((m) => !Object.keys(selectedContacts).includes(m.id))
     );
     setSelectedContacts({});
   };
+
+  if (loading) return <p className="text-center mt-20 text-gray-600">Chargement...</p>;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
@@ -89,7 +98,7 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         Évangélisés à envoyer aux cellules
       </h1>
 
-      {/* Choix cellule */}
+      {/* Choix cellule en haut */}
       <div className="mb-4 w-full max-w-md mx-auto">
         <label className="block mb-2 font-semibold">Choisir une cellule :</label>
         <select
