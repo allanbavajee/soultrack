@@ -57,7 +57,7 @@ export default function SuiviEvangelisation() {
               <th className="p-3 border-b">Nom</th>
               <th className="p-3 border-b">Cellule</th>
               <th className="p-3 border-b">Statut</th>
-              <th className="p-3 border-b">Action</th>
+              <th className="p-3 border-b">Détails</th>
             </tr>
           </thead>
           <tbody>
@@ -80,7 +80,7 @@ export default function SuiviEvangelisation() {
                 </td>
                 <td className="p-3 border-b">
                   <details>
-                    <summary className="text-blue-500 cursor-pointer">Détails</summary>
+                    <summary className="text-blue-500 cursor-pointer">Afficher</summary>
                     <div className="mt-2 text-sm text-gray-700 space-y-1">
                       <p>📱 {s.membre?.telephone}</p>
                       <p>Email : {s.membre?.email || "—"}</p>
