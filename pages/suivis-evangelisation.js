@@ -4,41 +4,65 @@ import { supabase } from "../lib/supabaseClient";
 
 export default function SuiviEvangelisation() {
   const [suivis, setSuivis] = useState([]);
+  const [cellules, setCellules] = useState([]);
+  const [selectedCellule, setSelectedCellule] = useState("");
   const [loading, setLoading] = useState(true);
+  const [editedStatus, setEditedStatus] = useState({}); // suiviId -> nouveau statut
 
   useEffect(() => {
+    fetchCellules();
     fetchSuivis();
   }, []);
 
+  const fetchCellules = async () => {
+    const { data, error } = await supabase.from("cellules").select("id, cellule");
+    if (!error && data) setCellules(data);
+  };
+
   const fetchSuivis = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let query = supabase
       .from("suivis")
       .select(`
         id,
         statut,
-        membre:membre_id (prenom, nom, telephone, email, ville, besoin, infos_supplementaires, is_whatsapp),
-        cellule:cellule_id (cellule, responsable)
+        membre:membre_id (id, prenom, nom, statut, telephone, email, ville, besoin, infos_supplementaires, is_whatsapp),
+        cellule:cellule_id (id, cellule, responsable)
       `)
       .order("created_at", { ascending: false });
 
+    if (selectedCellule) query = query.eq("cellule_id", selectedCellule);
+
+    const { data, error } = await query;
     if (!error && data) setSuivis(data);
     setLoading(false);
   };
 
-  const handleChangeStatus = async (suiviId, newStatus) => {
+  const handleChangeStatus = (suiviId, newStatus) => {
+    setEditedStatus((prev) => ({ ...prev, [suiviId]: newStatus }));
+  };
+
+  const handleValidateStatus = async (suivi) => {
+    const newStatus = editedStatus[suivi.id];
+    if (!newStatus) return;
+
     const { error } = await supabase
       .from("suivis")
       .update({ statut: newStatus })
-      .eq("id", suiviId);
+      .eq("id", suivi.id);
 
     if (error) {
       console.error("Erreur mise à jour statut:", error.message);
       return;
     }
-    setSuivis((prev) =>
-      prev.map((s) => (s.id === suiviId ? { ...s, statut: newStatus } : s))
-    );
+
+    // si devient "actif" => mettre aussi à jour membre
+    if (newStatus === "actif") {
+      await supabase.from("membres").update({ statut: "actif" }).eq("id", suivi.membre.id);
+    }
+
+    // refresh affichage
+    fetchSuivis();
   };
 
   if (loading) return <p className="text-center mt-20 text-gray-600">Chargement...</p>;
@@ -49,6 +73,26 @@ export default function SuiviEvangelisation() {
         Suivi des évangélisés
       </h1>
 
+      {/* Filtre cellule */}
+      <div className="mb-6 max-w-md mx-auto">
+        <label className="block mb-2 font-semibold">Filtrer par cellule :</label>
+        <select
+          className="w-full border p-2 rounded-lg"
+          value={selectedCellule}
+          onChange={(e) => {
+            setSelectedCellule(e.target.value);
+            setTimeout(fetchSuivis, 100); // recharge après sélection
+          }}
+        >
+          <option value="">Toutes les cellules</option>
+          {cellules.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.cellule}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full border border-gray-300 rounded-lg bg-white shadow-sm">
           <thead className="bg-gray-100 text-left">
@@ -57,7 +101,7 @@ export default function SuiviEvangelisation() {
               <th className="p-3 border-b">Nom</th>
               <th className="p-3 border-b">Cellule</th>
               <th className="p-3 border-b">Statut</th>
-              <th className="p-3 border-b">Détails</th>
+              <th className="p-3 border-b">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -68,7 +112,7 @@ export default function SuiviEvangelisation() {
                 <td className="p-3 border-b">{s.cellule?.cellule}</td>
                 <td className="p-3 border-b">
                   <select
-                    value={s.statut}
+                    value={editedStatus[s.id] || s.statut}
                     onChange={(e) => handleChangeStatus(s.id, e.target.value)}
                     className="border p-1 rounded"
                   >
@@ -79,20 +123,12 @@ export default function SuiviEvangelisation() {
                   </select>
                 </td>
                 <td className="p-3 border-b">
-                  <details>
-                    <summary className="text-blue-500 cursor-pointer">Afficher</summary>
-                    <div className="mt-2 text-sm text-gray-700 space-y-1">
-                      <p>📱 {s.membre?.telephone}</p>
-                      <p>Email : {s.membre?.email || "—"}</p>
-                      <p>Ville : {s.membre?.ville || "—"}</p>
-                      <p>Besoin : {s.membre?.besoin || "—"}</p>
-                      <p>Infos : {s.membre?.infos_supplementaires || "—"}</p>
-                      <p>WhatsApp : {s.membre?.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
-                      <p className="mt-2 text-gray-500 text-xs">
-                        Responsable : {s.cellule?.responsable}
-                      </p>
-                    </div>
-                  </details>
+                  <button
+                    onClick={() => handleValidateStatus(s)}
+                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Valider
+                  </button>
                 </td>
               </tr>
             ))}
