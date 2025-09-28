@@ -1,4 +1,4 @@
-// pages/evangelisation.js
+/* pages/evangelisation.js */
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -8,6 +8,7 @@ export default function Evangelisation() {
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [selectedContacts, setSelectedContacts] = useState({}); // checkbox
 
+  // 🔄 Charger les données
   useEffect(() => {
     fetchEvangelises();
     fetchCellules();
@@ -16,14 +17,9 @@ export default function Evangelisation() {
   const fetchEvangelises = async () => {
     const { data, error } = await supabase
       .from("membres")
-      .select("*, suivis(id)") // vérifie si suivi existe
-      .eq("statut", "evangelisé");
-    
-    if (!error && data) {
-      // ne garder que ceux qui n'ont pas encore de suivi
-      const filtered = data.filter(m => !m.suivis || m.suivis.length === 0);
-      setEvangelises(filtered);
-    }
+      .select("*")
+      .eq("statut", "evangelisé"); // uniquement les evangelisés non envoyés
+    if (!error && data) setEvangelises(data);
   };
 
   const fetchCellules = async () => {
@@ -33,8 +29,9 @@ export default function Evangelisation() {
     if (!error && data) setCellules(data);
   };
 
+  // ✅ Sélection / désélection contact
   const handleCheckbox = (member) => {
-    setSelectedContacts(prev => {
+    setSelectedContacts((prev) => {
       const copy = { ...prev };
       if (copy[member.id]) delete copy[member.id];
       else copy[member.id] = member;
@@ -42,31 +39,36 @@ export default function Evangelisation() {
     });
   };
 
+  // 📤 Envoyer WhatsApp et créer les suivis
   const handleWhatsAppGroup = async () => {
-    if (!selectedCellule) {
-      alert("Sélectionne d'abord une cellule.");
-      return;
-    }
+    if (!selectedCellule) return alert("Sélectionne d'abord une cellule.");
 
     for (const member of Object.values(selectedContacts)) {
-      // 1️⃣ Créer le suivi
-      const { error } = await supabase.from("suivis").insert({
+      // 1️⃣ Créer suivi dans Supabase
+      await supabase.from("suivis").insert({
         membre_id: member.id,
         cellule_id: selectedCellule.id,
-        statut: "envoyé",
-        commentaire: "",
+        statut: "en attente",
       });
-      if (error) {
-        console.error("Erreur création suivi:", error);
-        continue;
-      }
 
-      // 2️⃣ Envoyer le message WhatsApp
-      const prenomResponsable = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
+      // 2️⃣ Préparer message WhatsApp
+      const prenom = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
       const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
       if (!telDigits) continue;
 
-      const message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\n- Nom : ${member.prenom} ${member.nom}\n- Téléphone : ${member.telephone}\n- Email : ${member.email || "—"}\n- Ville : ${member.ville || "—"}\n- Besoin : ${member.besoin || "—"}\n- Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\nMerci pour ton cœur ❤️ et son amour ✨`;
+      const message = `👋 Salut ${prenom},
+
+🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
+Voici ses infos :  
+
+- 👤 Nom : ${member.prenom} ${member.nom}  
+- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
+- 📧 Email : ${member.email || "—"}  
+- 🏙️ Ville : ${member.ville || "—"}  
+- 🙏 Besoin : ${member.besoin || "—"}  
+- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}  
+
+Merci pour ton cœur ❤️ et son amour ✨`;
 
       window.open(
         `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
@@ -74,9 +76,10 @@ export default function Evangelisation() {
       );
     }
 
-    // 3️⃣ Retirer les contacts envoyés de la page
-    const remaining = evangelises.filter(m => !selectedContacts[m.id]);
-    setEvangelises(remaining);
+    // 3️⃣ Supprimer contacts envoyés de la liste
+    setEvangelises((prev) =>
+      prev.filter((m) => !Object.keys(selectedContacts).includes(String(m.id)))
+    );
     setSelectedContacts({});
   };
 
@@ -91,15 +94,15 @@ export default function Evangelisation() {
         <label className="block mb-2 font-semibold">Choisir une cellule :</label>
         <select
           className="w-full p-2 border rounded-lg"
-          value={selectedCellule?.cellule || ""}
-          onChange={e => {
-            const cellule = cellules.find(c => c.cellule === e.target.value);
+          value={selectedCellule?.id || ""}
+          onChange={(e) => {
+            const cellule = cellules.find((c) => c.id === e.target.value);
             setSelectedCellule(cellule || null);
           }}
         >
           <option value="">-- Sélectionner --</option>
-          {cellules.map(c => (
-            <option key={c.id} value={c.cellule}>
+          {cellules.map((c) => (
+            <option key={c.id} value={c.id}>
               {c.cellule} ({c.responsable})
             </option>
           ))}
@@ -120,8 +123,11 @@ export default function Evangelisation() {
 
       {/* Liste cartes evangelisés */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {evangelises.map(member => (
-          <div key={member.id} className="bg-white w-full p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col">
+        {evangelises.map((member) => (
+          <div
+            key={member.id}
+            className="bg-white w-full p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col"
+          >
             <div className="flex justify-between items-start w-full">
               <div className="w-full">
                 <h2 className="text-lg font-bold text-gray-800 mb-1">
@@ -132,7 +138,7 @@ export default function Evangelisation() {
               </div>
             </div>
 
-            {/* Checkbox */}
+            {/* Checkbox "Envoyer ce contact" */}
             <div className="mt-2 flex items-center">
               <input
                 type="checkbox"
