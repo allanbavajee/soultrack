@@ -53,7 +53,7 @@ export default function EvangelisationHub() {
         >
           <div className="text-5xl mb-4">📋</div>
           <h2 className="text-xl font-bold text-gray-800 text-center">
-            Suivi cellule
+            Suivis des Evangélisés
           </h2>
         </Link>
       </div>
