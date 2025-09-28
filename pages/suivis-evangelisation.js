@@ -1,64 +1,67 @@
-/* pages/suivi-evangelisation.js */
+// pages/suivi-evangelisation.js
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 export default function SuiviEvangelisation() {
   const [suivis, setSuivis] = useState([]);
-  const [celluleId, setCelluleId] = useState(null); // cellule du responsable
-  const [loading, setLoading] = useState(true);
+  const [cellules, setCellules] = useState([]);
+  const [filterCellule, setFilterCellule] = useState("");
 
-  // 🟢 Charger la cellule du responsable connecté
   useEffect(() => {
-    const fetchCellule = async () => {
-      // Remplace ceci par la logique pour récupérer la cellule du responsable connecté
-      const { data: celluleData, error: celluleError } = await supabase
-        .from("cellules")
-        .select("*")
-        .eq("responsable", supabase.auth.user()?.email)
-        .single();
-
-      if (!celluleError && celluleData) {
-        setCelluleId(celluleData.id);
-      }
-    };
-    fetchCellule();
+    fetchCellules();
+    fetchSuivis();
   }, []);
 
-  // 🔄 Charger les suivis de cette cellule
-  useEffect(() => {
-    if (!celluleId) return;
-    const fetchSuivis = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("suivis")
-        .select(
-          `id, statut, commentaire, membre_id, created_at, membres(*)`
-        )
-        .eq("cellule_id", celluleId)
-        .order("created_at", { ascending: false });
+  const fetchCellules = async () => {
+    const { data, error } = await supabase
+      .from("cellules")
+      .select("id,cellule,responsable");
+    if (!error && data) setCellules(data);
+  };
 
-      if (!error && data) setSuivis(data);
-      setLoading(false);
-    };
+  const fetchSuivis = async () => {
+    const { data, error } = await supabase
+      .from("suivis")
+      .select(`
+        id,
+        membre_id,
+        cellule_id,
+        statut,
+        commentaire,
+        created_at,
+        membres (prenom, nom, telephone, email, ville, besoin, infos_supplementaires, is_whatsapp),
+        cellules (cellule,responsable)
+      `);
+    if (!error && data) setSuivis(data);
+  };
 
-    fetchSuivis();
-  }, [celluleId]);
-
-  // 🔄 Mettre à jour statut ou commentaire
-  const updateSuivi = async (id, field, value) => {
+  const handleChangeStatut = async (suiviId, newStatut) => {
     const { error } = await supabase
       .from("suivis")
-      .update({ [field]: value })
-      .eq("id", id);
-
+      .update({ statut: newStatut })
+      .eq("id", suiviId);
     if (!error) {
       setSuivis((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
+        prev.map((s) => (s.id === suiviId ? { ...s, statut: newStatut } : s))
       );
     }
   };
 
-  if (loading) return <p className="p-6 text-center">Chargement...</p>;
+  const handleChangeCommentaire = async (suiviId, newCommentaire) => {
+    const { error } = await supabase
+      .from("suivis")
+      .update({ commentaire: newCommentaire })
+      .eq("id", suiviId);
+    if (!error) {
+      setSuivis((prev) =>
+        prev.map((s) => (s.id === suiviId ? { ...s, commentaire: newCommentaire } : s))
+      );
+    }
+  };
+
+  const filteredSuivis = suivis.filter((s) =>
+    filterCellule ? s.cellule_id === filterCellule : true
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -66,49 +69,71 @@ export default function SuiviEvangelisation() {
         Suivi des évangélisés
       </h1>
 
-      {suivis.length === 0 && (
-        <p className="text-center text-gray-600 mt-6">Aucun suivi pour le moment.</p>
-      )}
+      {/* Filtre cellule */}
+      <div className="mb-6 w-full max-w-md mx-auto">
+        <label className="block mb-2 font-semibold">Filtrer par cellule :</label>
+        <select
+          className="w-full p-2 border rounded-lg"
+          value={filterCellule}
+          onChange={(e) => setFilterCellule(e.target.value)}
+        >
+          <option value="">-- Toutes les cellules --</option>
+          {cellules.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.cellule} ({c.responsable})
+            </option>
+          ))}
+        </select>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {suivis.map((suivi) => (
+      {/* Liste des suivis */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredSuivis.map((s) => (
           <div
-            key={suivi.id}
-            className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300"
+            key={s.id}
+            className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col"
           >
-            <h2 className="text-lg font-bold text-gray-800 mb-2">
-              {suivi.membres.prenom} {suivi.membres.nom}
+            <h2 className="text-lg font-bold text-gray-800 mb-1">
+              {s.membres.prenom} {s.membres.nom}
             </h2>
-            <p className="text-sm text-gray-600 mb-1">📱 {suivi.membres.telephone}</p>
-            <p className="text-sm text-gray-600 mb-2">
-              📧 {suivi.membres.email || "—"}
+            <p className="text-sm text-gray-600 mb-1">📱 {s.membres.telephone}</p>
+            <p className="text-sm font-bold text-indigo-500 mb-1">
+              Cellule : {s.cellules.cellule} ({s.cellules.responsable})
             </p>
 
             {/* Statut */}
-            <label className="block font-semibold mb-1">Statut :</label>
-            <select
-              value={suivi.statut}
-              onChange={(e) => updateSuivi(suivi.id, "statut", e.target.value)}
-              className="w-full p-2 border rounded-lg mb-2"
-            >
-              <option value="en attente">En attente</option>
-              <option value="contacté">Contacté</option>
-              <option value="actif">Actif</option>
-            </select>
+            <div className="mb-2">
+              <label className="font-semibold">Statut :</label>
+              <select
+                className="w-full p-1 border rounded mt-1"
+                value={s.statut}
+                onChange={(e) => handleChangeStatut(s.id, e.target.value)}
+              >
+                <option value="en attente">En attente</option>
+                <option value="en cours">En cours</option>
+                <option value="terminé">Terminé</option>
+              </select>
+            </div>
 
             {/* Commentaire */}
-            <label className="block font-semibold mb-1">Commentaire :</label>
-            <textarea
-              value={suivi.commentaire || ""}
-              onChange={(e) => updateSuivi(suivi.id, "commentaire", e.target.value)}
-              className="w-full p-2 border rounded-lg mb-2"
-              rows={3}
-              placeholder="Ajouter un commentaire..."
-            />
+            <div>
+              <label className="font-semibold">Commentaire :</label>
+              <textarea
+                className="w-full p-1 border rounded mt-1"
+                rows={3}
+                value={s.commentaire || ""}
+                onChange={(e) => handleChangeCommentaire(s.id, e.target.value)}
+              ></textarea>
+            </div>
 
-            <p className="text-xs text-gray-500 mt-2">
-              Ajouté le : {new Date(suivi.created_at).toLocaleString()}
-            </p>
+            {/* Infos supplémentaires */}
+            <div className="mt-2 text-sm text-gray-700 space-y-1">
+              <p>Email : {s.membres.email || "—"}</p>
+              <p>Besoin : {s.membres.besoin || "—"}</p>
+              <p>Ville : {s.membres.ville || "—"}</p>
+              <p>WhatsApp : {s.membres.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+              <p>Infos supplémentaires : {s.membres.infos_supplementaires || "—"}</p>
+            </div>
           </div>
         ))}
       </div>
