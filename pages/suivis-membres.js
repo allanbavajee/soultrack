@@ -198,7 +198,7 @@ export default function SuivisMembres() {
               >
                 <option value="envoyé">Envoyé</option>
                 <option value="en cours">En cours</option>
-                <option value="actif">Actif</option>
+                <option value="Intégrer">Intégrer</option>
                 <option value="refus">Refus</option>
               </select>
 
