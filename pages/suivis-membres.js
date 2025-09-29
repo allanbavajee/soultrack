@@ -1,8 +1,10 @@
-// pages/suivis-membres.js/
+// pages/suivis-membres.js
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { useRouter } from "next/router";
 
 export default function SuivisMembres() {
+  const router = useRouter();
   const [suivis, setSuivis] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState("");
@@ -10,7 +12,6 @@ export default function SuivisMembres() {
   const [currentMember, setCurrentMember] = useState(null);
   const [newStatus, setNewStatus] = useState("");
 
-  // Liste des membres refus
   const [showRefus, setShowRefus] = useState(false);
   const [refusMembers, setRefusMembers] = useState([]);
 
@@ -32,45 +33,41 @@ export default function SuivisMembres() {
     if (!error) setCellules(data);
   };
 
-  // 👉 On affiche UNIQUEMENT les membres actifs
+  // Afficher tous les membres sauf les "anciens"
   const fetchSuivis = async (cellule = null) => {
     let query = supabase
       .from("suivis_membres")
-      .select(
-        `
+      .select(`
         id,
         statut,
         membre:membre_id (
           id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp
         ),
         cellule:cellule_id (id, cellule)
-      `
-      )
-      .eq("statut", "actif"); // afficher uniquement les actifs
+      `)
+      .neq("statut", "ancien");
 
     if (cellule) query = query.eq("cellule_id", cellule);
 
     const { data, error } = await query.order("created_at", { ascending: false });
-    if (!error) setSuivis(data);
+    if (!error) setSuivis(data || []);
   };
 
   const fetchRefus = async () => {
     const { data, error } = await supabase
       .from("suivis_membres")
-      .select(
-        `
+      .select(`
         id,
         statut,
         membre:membre_id (
           id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp
         ),
         cellule:cellule_id (id, cellule)
-      `
-      )
+      `)
       .eq("statut", "refus")
       .order("created_at", { ascending: false });
 
-    if (!error) setRefusMembers(data);
+    if (!error) setRefusMembers(data || []);
   };
 
   const openPopup = (member) => {
@@ -84,13 +81,11 @@ export default function SuivisMembres() {
   const handleValidate = async () => {
     if (!currentMember) return;
 
-    // Mettre à jour le suivi
     await supabase
       .from("suivis_membres")
       .update({ statut: newStatus })
       .eq("id", currentMember.id);
 
-    // Si actif, mettre à jour le membre et recharger la liste
     if (newStatus === "actif") {
       await supabase
         .from("membres")
@@ -104,7 +99,7 @@ export default function SuivisMembres() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-     {/* Flèche retour */}
+      {/* Flèche retour */}
       <div className="w-full max-w-4xl mb-6">
         <button
           onClick={() => router.back()}
@@ -113,7 +108,8 @@ export default function SuivisMembres() {
           ← Retour
         </button>
       </div>
-      <h1 className="text-3xl font-bold text-center mb-6">Liste des membres actifs</h1>
+
+      <h1 className="text-3xl font-bold text-center mb-6">Suivi des membres</h1>
 
       {/* Filtre cellule */}
       <div className="mb-6 max-w-md mx-auto">
@@ -145,7 +141,7 @@ export default function SuivisMembres() {
         </span>
       </div>
 
-      {/* Tableau des membres actifs */}
+      {/* Tableau des suivis */}
       <div className="overflow-x-auto">
         <table className="table-auto w-full max-w-4xl mx-auto border-collapse border border-gray-300 text-center">
           <thead>
@@ -158,22 +154,24 @@ export default function SuivisMembres() {
             </tr>
           </thead>
           <tbody>
-            {suivis.map((s) => (
-              <tr key={s.id}>
-                <td className="border px-4 py-2">{s.membre.nom}</td>
-                <td className="border px-4 py-2">{s.membre.prenom}</td>
-                <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
-                <td className="border px-4 py-2">{s.statut}</td>
-                <td className="border px-4 py-2">
-                  <span
-                    className="text-blue-600 cursor-pointer hover:underline"
-                    onClick={() => openPopup(s)}
-                  >
-                    Afficher
-                  </span>
-                </td>
-              </tr>
-            ))}
+            {suivis.map((s) =>
+              s.membre ? (
+                <tr key={s.id}>
+                  <td className="border px-4 py-2">{s.membre.nom}</td>
+                  <td className="border px-4 py-2">{s.membre.prenom}</td>
+                  <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
+                  <td className="border px-4 py-2">{s.statut}</td>
+                  <td className="border px-4 py-2">
+                    <span
+                      className="text-blue-600 cursor-pointer hover:underline"
+                      onClick={() => openPopup(s)}
+                    >
+                      Afficher
+                    </span>
+                  </td>
+                </tr>
+              ) : null
+            )}
           </tbody>
         </table>
       </div>
@@ -225,7 +223,7 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* Popup liste refus */}
+      {/* Popup refus */}
       {showRefus && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl max-w-3xl w-full relative">
@@ -247,14 +245,16 @@ export default function SuivisMembres() {
                   </tr>
                 </thead>
                 <tbody>
-                  {refusMembers.map((s) => (
-                    <tr key={s.id}>
-                      <td className="border px-4 py-2">{s.membre.nom}</td>
-                      <td className="border px-4 py-2">{s.membre.prenom}</td>
-                      <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
-                      <td className="border px-4 py-2">{s.statut}</td>
-                    </tr>
-                  ))}
+                  {refusMembers.map((s) =>
+                    s.membre ? (
+                      <tr key={s.id}>
+                        <td className="border px-4 py-2">{s.membre.nom}</td>
+                        <td className="border px-4 py-2">{s.membre.prenom}</td>
+                        <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
+                        <td className="border px-4 py-2">{s.statut}</td>
+                      </tr>
+                    ) : null
+                  )}
                 </tbody>
               </table>
             </div>
