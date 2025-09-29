@@ -6,72 +6,95 @@ export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState("");
-  const [modalData, setModalData] = useState(null); // données du popup
+  const [showPopup, setShowPopup] = useState(false);
+  const [currentContact, setCurrentContact] = useState(null);
   const [newStatus, setNewStatus] = useState("");
 
   useEffect(() => {
-    fetchSuivis();
     fetchCellules();
+    fetchSuivis();
   }, []);
 
-  const fetchSuivis = async () => {
-    let query = supabase.from("suivis").select("*, membre: membre_id(*) , cellule: cellule_id(*)");
-    if (selectedCellule) query = query.eq("cellule_id", selectedCellule);
-
-    const { data, error } = await query;
-    if (!error && data) setSuivis(data);
-  };
+  useEffect(() => {
+    if (selectedCellule) {
+      fetchSuivis(selectedCellule);
+    } else {
+      fetchSuivis();
+    }
+  }, [selectedCellule]);
 
   const fetchCellules = async () => {
-    const { data } = await supabase.from("cellules").select("*");
-    if (data) setCellules(data);
+    const { data, error } = await supabase
+      .from("cellules")
+      .select("id, cellule");
+    if (!error) setCellules(data);
   };
 
-  const handleOpenModal = (suivi) => {
-    setModalData(suivi);
-    setNewStatus(suivi.statut);
+  const fetchSuivis = async (cellule = null) => {
+    let query = supabase
+      .from("suivis")
+      .select(
+        `
+        id,
+        statut,
+        membre:membre_id (id, prenom, nom, telephone, email, ville, besoin, infos_supplementaires, is_whatsapp),
+        cellule:cellule_id (id, cellule)
+      `
+      )
+      .neq("statut", "actif"); // ne pas afficher les actifs
+
+    if (cellule) {
+      query = query.eq("cellule_id", cellule);
+    }
+
+    const { data, error } = await query.order("created_at", { ascending: false });
+    if (!error) setSuivis(data);
   };
 
-  const handleCloseModal = () => {
-    setModalData(null);
+  const openPopup = (contact) => {
+    setCurrentContact(contact);
+    setNewStatus(contact.statut);
+    setShowPopup(true);
   };
 
-  const handleSaveStatus = async () => {
-    if (!modalData) return;
+  const handleStatusChange = (e) => {
+    setNewStatus(e.target.value);
+  };
 
+  const handleValidate = async () => {
+    if (!currentContact) return;
+
+    // Mettre à jour dans suivis
     await supabase
       .from("suivis")
       .update({ statut: newStatus })
-      .eq("id", modalData.id);
+      .eq("id", currentContact.id);
 
-    // si statut devient "actif", ajouter dans membres
+    // Si actif, mettre à jour membre aussi
     if (newStatus === "actif") {
       await supabase
         .from("membres")
         .update({ statut: "actif" })
-        .eq("id", modalData.membre.id);
+        .eq("id", currentContact.membre.id);
     }
 
-    setModalData(null);
-    fetchSuivis();
+    setShowPopup(false);
+    fetchSuivis(selectedCellule);
   };
 
   return (
-    <div className="min-h-screen p-4 bg-gray-50">
+    <div className="min-h-screen bg-gray-50 p-6">
       <h1 className="text-3xl font-bold text-center mb-6">Suivi des évangélisés</h1>
 
       {/* Filtre cellule */}
-      <div className="mb-4 w-full max-w-md mx-auto">
+      <div className="mb-6 max-w-md mx-auto">
         <label className="block mb-2 font-semibold">Filtrer par cellule :</label>
         <select
           className="w-full p-2 border rounded-lg"
           value={selectedCellule}
-          onChange={(e) => {
-            setSelectedCellule(e.target.value);
-            fetchSuivis();
-          }}
+          onChange={(e) => setSelectedCellule(e.target.value)}
         >
-          <option value="">-- Toutes --</option>
+          <option value="">-- Toutes les cellules --</option>
           {cellules.map((c) => (
             <option key={c.id} value={c.id}>
               {c.cellule}
@@ -82,27 +105,27 @@ export default function SuivisEvangelisation() {
 
       {/* Tableau */}
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border rounded-lg">
+        <table className="table-auto w-full max-w-4xl mx-auto border-collapse border border-gray-300 text-center">
           <thead>
-            <tr className="text-center">
-              <th className="px-4 py-2 border">Nom</th>
-              <th className="px-4 py-2 border">Prénom</th>
-              <th className="px-4 py-2 border">Cellule</th>
-              <th className="px-4 py-2 border">Statut</th>
-              <th className="px-4 py-2 border">Détails</th>
+            <tr className="bg-gray-200">
+              <th className="border px-4 py-2">Nom</th>
+              <th className="border px-4 py-2">Prénom</th>
+              <th className="border px-4 py-2">Cellule</th>
+              <th className="border px-4 py-2">Statut</th>
+              <th className="border px-4 py-2">Détails</th>
             </tr>
           </thead>
           <tbody>
             {suivis.map((s) => (
-              <tr key={s.id} className="text-center border-b">
-                <td className="px-4 py-2">{s.membre.nom}</td>
-                <td className="px-4 py-2">{s.membre.prenom}</td>
-                <td className="px-4 py-2">{s.cellule?.cellule || "-"}</td>
-                <td className="px-4 py-2">{s.statut}</td>
-                <td className="px-4 py-2">
+              <tr key={s.id}>
+                <td className="border px-4 py-2">{s.membre.nom}</td>
+                <td className="border px-4 py-2">{s.membre.prenom}</td>
+                <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
+                <td className="border px-4 py-2">{s.statut}</td>
+                <td className="border px-4 py-2">
                   <span
-                    onClick={() => handleOpenModal(s)}
                     className="text-blue-600 cursor-pointer hover:underline"
+                    onClick={() => openPopup(s)}
                   >
                     Afficher
                   </span>
@@ -113,49 +136,50 @@ export default function SuivisEvangelisation() {
         </table>
       </div>
 
-      {/* Modal popup */}
-      {modalData && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-xl w-11/12 max-w-md relative">
+      {/* Popup */}
+      {showPopup && currentContact && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full relative">
+            <h2 className="text-xl font-bold mb-4">Détails du contact</h2>
             <button
-              onClick={handleCloseModal}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+              className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+              onClick={() => setShowPopup(false)}
             >
               ✖
             </button>
-            <h2 className="text-xl font-bold mb-4">
-              {modalData.membre.prenom} {modalData.membre.nom}
-            </h2>
-            <div className="space-y-2 text-gray-700 text-sm">
-              <p>📱 Téléphone : {modalData.membre.telephone}</p>
-              <p>Email : {modalData.membre.email || "—"}</p>
-              <p>Ville : {modalData.membre.ville || "—"}</p>
-              <p>Besoin : {modalData.membre.besoin || "—"}</p>
-              <p>Infos supplémentaires : {modalData.membre.infos_supplementaires || "—"}</p>
-              <p>Cellule : {modalData.cellule?.cellule || "—"}</p>
-              <p>Statut actuel : {modalData.statut}</p>
+            <div className="space-y-1 text-gray-700">
+              <p>Nom : {currentContact.membre.nom}</p>
+              <p>Prénom : {currentContact.membre.prenom}</p>
+              <p>📱 Téléphone : {currentContact.membre.telephone}</p>
+              <p>📧 Email : {currentContact.membre.email || "—"}</p>
+              <p>🏙️ Ville : {currentContact.membre.ville || "—"}</p>
+              <p>🙏 Besoin : {currentContact.membre.besoin || "—"}</p>
+              <p>📝 Infos supplémentaires : {currentContact.membre.infos_supplementaires || "—"}</p>
+              <p>WhatsApp : {currentContact.membre.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
             </div>
 
             <div className="mt-4">
-              <label className="block mb-1 font-semibold">Changer le statut :</label>
+              <label className="block mb-2 font-semibold">Changer le statut :</label>
               <select
                 className="w-full p-2 border rounded-lg"
                 value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value)}
+                onChange={handleStatusChange}
               >
                 <option value="envoyé">Envoyé</option>
                 <option value="en cours">En cours</option>
                 <option value="actif">Actif</option>
                 <option value="refus">Refus</option>
               </select>
-            </div>
 
-            <button
-              onClick={handleSaveStatus}
-              className="mt-4 w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
-            >
-              Valider
-            </button>
+              {newStatus !== currentContact.statut && (
+                <button
+                  className="mt-4 w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
+                  onClick={handleValidate}
+                >
+                  Valider
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
