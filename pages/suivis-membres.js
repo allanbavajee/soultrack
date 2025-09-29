@@ -9,7 +9,6 @@ export default function SuivisMembres() {
   const [showPopup, setShowPopup] = useState(false);
   const [currentMember, setCurrentMember] = useState(null);
   const [newStatus, setNewStatus] = useState("");
-  const [commentaire, setCommentaire] = useState("");
 
   useEffect(() => {
     fetchCellules();
@@ -48,7 +47,6 @@ export default function SuivisMembres() {
   const openPopup = (member) => {
     setCurrentMember(member);
     setNewStatus(member.statut);
-    setCommentaire(member.commentaire || "");
     setShowPopup(true);
   };
 
@@ -56,9 +54,10 @@ export default function SuivisMembres() {
 
   const handleValidate = async () => {
     if (!currentMember) return;
+
     await supabase
       .from("suivis_membres")
-      .update({ statut: newStatus, commentaire })
+      .update({ statut: newStatus, commentaire: currentMember.commentaire || null })
       .eq("id", currentMember.id);
 
     setShowPopup(false);
@@ -137,7 +136,7 @@ export default function SuivisMembres() {
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl max-w-md w-full relative">
             <button
-              className="absolute top-2 right-2 text-gray-600"
+              className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
               onClick={() => setShowPopup(false)}
             >
               ✖
@@ -163,17 +162,26 @@ export default function SuivisMembres() {
                 <option value="refus">Refus</option>
               </select>
 
-              <label className="block mb-2 mt-2 font-semibold">Commentaire :</label>
-              <textarea
-                className="w-full p-2 border rounded-lg"
-                rows={3}
-                value={commentaire}
-                onChange={(e) => setCommentaire(e.target.value)}
-              />
+              {/* Commentaire pour refus */}
+              {newStatus === "refus" && (
+                <div className="mt-2">
+                  <label className="block mb-1 font-semibold">Commentaire :</label>
+                  <textarea
+                    className="w-full p-2 border rounded-lg"
+                    value={currentMember.commentaire || ""}
+                    onChange={(e) =>
+                      setCurrentMember((prev) => ({
+                        ...prev,
+                        commentaire: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              )}
 
-              {(newStatus !== currentMember.statut || commentaire !== currentMember.commentaire) && (
+              {newStatus !== currentMember.statut && (
                 <button
-                  className="mt-4 w-full py-2 bg-green-500 text-white rounded-lg"
+                  className="mt-4 w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
                   onClick={handleValidate}
                 >
                   Valider
