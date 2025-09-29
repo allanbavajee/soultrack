@@ -80,6 +80,16 @@ export default function SuivisEvangelisation() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <h1 className="text-3xl font-bold text-center mb-6">Suivi des évangélisés</h1>
+  
+       {/* Flèche retour */}
+      <div className="w-full max-w-4xl mb-6">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center text-orange-500 font-semibold hover:text-orange-600 transition-colors"
+        >
+          ← Retour
+        </button>
+      </div>
 
       {/* Filtre cellule */}
       <div className="mb-6 max-w-md mx-auto">
