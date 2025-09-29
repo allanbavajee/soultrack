@@ -8,7 +8,7 @@ export default function ListMembers() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
-  const [selectedEvangelises, setSelectedEvangelises] = useState({});
+  const [selectedEvangelises, setSelectedEvangelises] = useState({}); // sélectionnés pour WhatsApp groupé
 
   useEffect(() => {
     fetchMembers();
@@ -27,7 +27,11 @@ export default function ListMembers() {
     if (!error && data) setCellules(data);
   };
 
-  const handleChangeStatus = (id, newStatus) => {
+  const handleChangeStatus = async (id, newStatus) => {
+    // update en base
+    await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
+
+    // update en local
     setMembers((prev) =>
       prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
     );
@@ -58,31 +62,24 @@ Merci pour ton cœur ❤️ et son amour ✨`;
       "_blank"
     );
 
-    // 🔥 Mise à jour du statut après envoi
-    if (
-      member.statut === "visiteur" ||
-      member.statut === "veut rejoindre ICC"
-    ) {
-      const { error } = await supabase
-        .from("membres")
-        .update({ statut: "actif" })
-        .eq("id", member.id);
+    // mettre à jour le statut en "actif"
+    await supabase.from("membres").update({ statut: "actif" }).eq("id", member.id);
 
-      if (!error) {
-        // supprimer le membre de la liste locale
-        setMembers((prev) => prev.filter((m) => m.id !== member.id));
-      } else {
-        console.error("Erreur maj statut:", error);
-      }
-    }
+    // mettre à jour en local
+    setMembers((prev) =>
+      prev.map((m) =>
+        m.id === member.id ? { ...m, statut: "actif" } : m
+      )
+    );
   };
 
-  const handleWhatsAppGroup = async () => {
-    for (const [memberId, membre] of Object.entries(selectedEvangelises)) {
+  // WhatsApp groupé
+  const handleWhatsAppGroup = () => {
+    Object.entries(selectedEvangelises).forEach(([memberId, membre]) => {
       const cellule = selectedCellules[memberId];
-      if (!cellule) continue;
-      await handleWhatsAppSingle(membre, cellule);
-    }
+      if (!cellule) return;
+      handleWhatsAppSingle(membre, cellule);
+    });
     setSelectedEvangelises({});
   };
 
@@ -93,12 +90,12 @@ Merci pour ton cœur ❤️ et son amour ✨`;
   });
 
   const getBorderColor = (member) => {
-    if (member.star) return "#FBC02D";
-    if (member.statut === "actif") return "#4285F4";
-    if (member.statut === "a déjà mon église") return "#EA4335";
-    if (member.statut === "ancien") return "#999999";
+    if (member.star) return "#FBC02D"; // jaune
+    if (member.statut === "actif") return "#4285F4"; // bleu
+    if (member.statut === "a déjà mon église") return "#EA4335"; // rouge
+    if (member.statut === "ancien") return "#999999"; // gris
     if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
-      return "#34A853";
+      return "#34A853"; // vert
   };
 
   return (
@@ -115,7 +112,7 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         Liste des membres
       </h1>
 
-      {/* Filtre déroulant */}
+      {/* Filtre */}
       <div className="flex justify-center mb-6">
         <select
           value={filter}
@@ -143,7 +140,7 @@ Merci pour ton cœur ❤️ et son amour ✨`;
           onClick={handleWhatsAppGroup}
           className="mb-4 w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
         >
-          📤 Envoyer WhatsApp aux responsables des membres sélectionnés
+          📤 Envoyer WhatsApp aux responsables sélectionnés
         </button>
       )}
 
@@ -177,7 +174,7 @@ Merci pour ton cœur ❤️ et son amour ✨`;
                 </p>
               </div>
 
-              {/* Changer le statut localement */}
+              {/* Menu statut */}
               <select
                 value={member.statut}
                 onChange={(e) => handleChangeStatus(member.id, e.target.value)}
@@ -211,12 +208,10 @@ Merci pour ton cœur ❤️ et son amour ✨`;
                 <p>Besoin : {member.besoin || "—"}</p>
                 <p>Ville : {member.ville || "—"}</p>
                 <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
-                <p>
-                  Infos supplémentaires : {member.infos_supplementaires || "—"}
-                </p>
+                <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
                 <p>Comment venu : {member.how_came || "—"}</p>
 
-                {/* Checkbox pour evangelisés */}
+                {/* Checkbox pour évangélisés */}
                 {member.statut === "evangelisé" && (
                   <div className="mt-2 flex items-center">
                     <input
@@ -238,11 +233,11 @@ Merci pour ton cœur ❤️ et son amour ✨`;
                         }
                       }}
                     />
-                    <span>Ajouter aux membres à envoyer WhatsApp</span>
+                    <span>Ajouter à l’envoi groupé WhatsApp</span>
                   </div>
                 )}
 
-                {/* Menu déroulant + WhatsApp */}
+                {/* Menu cellule + bouton WhatsApp */}
                 {(member.statut === "visiteur" ||
                   member.statut === "veut rejoindre ICC") && (
                   <div className="mt-2">
