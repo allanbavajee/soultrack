@@ -1,4 +1,4 @@
-// pages/suivis-membres.js
+// pages/suivis-membres.js/
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -32,6 +32,7 @@ export default function SuivisMembres() {
     if (!error) setCellules(data);
   };
 
+  // 👉 On affiche UNIQUEMENT les membres actifs
   const fetchSuivis = async (cellule = null) => {
     let query = supabase
       .from("suivis_membres")
@@ -45,7 +46,7 @@ export default function SuivisMembres() {
         cellule:cellule_id (id, cellule)
       `
       )
-      .neq("statut", "actif"); // ne pas afficher les actifs
+      .eq("statut", "actif"); // afficher uniquement les actifs
 
     if (cellule) query = query.eq("cellule_id", cellule);
 
@@ -89,7 +90,7 @@ export default function SuivisMembres() {
       .update({ statut: newStatus })
       .eq("id", currentMember.id);
 
-    // Si actif, mettre à jour le membre et le retirer du suivi
+    // Si actif, mettre à jour le membre et recharger la liste
     if (newStatus === "actif") {
       await supabase
         .from("membres")
@@ -103,7 +104,7 @@ export default function SuivisMembres() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-3xl font-bold text-center mb-6">Suivi des membres ajoutés</h1>
+      <h1 className="text-3xl font-bold text-center mb-6">Liste des membres actifs</h1>
 
       {/* Filtre cellule */}
       <div className="mb-6 max-w-md mx-auto">
@@ -135,7 +136,7 @@ export default function SuivisMembres() {
         </span>
       </div>
 
-      {/* Tableau des membres */}
+      {/* Tableau des membres actifs */}
       <div className="overflow-x-auto">
         <table className="table-auto w-full max-w-4xl mx-auto border-collapse border border-gray-300 text-center">
           <thead>
