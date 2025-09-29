@@ -24,7 +24,7 @@ export default function SuivisMembres() {
   }, [selectedCellule]);
 
   const fetchCellules = async () => {
-    const { data, error } = await supabase.from("cellules").select("id, cellule");
+    const { data, error } = await supabase.from("cellules").select("id, cellule,responsable,telephone");
     if (!error) setCellules(data);
   };
 
@@ -100,85 +100,62 @@ export default function SuivisMembres() {
       </div>
 
       {/* Tableau des suivis */}
-      <div className="overflow-x-auto">
-        <table className="table-auto w-full max-w-5xl mx-auto border-collapse border border-gray-300 text-center">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border px-4 py-2">Nom</th>
-              <th className="border px-4 py-2">Prénom</th>
-              <th className="border px-4 py-2">Cellule</th>
-              <th className="border px-4 py-2">Statut</th>
-              <th className="border px-4 py-2">Détails</th>
-            </tr>
-          </thead>
-          <tbody>
-            {suivis.map((s) => (
-              <tr key={s.id}>
-                <td className="border px-4 py-2">{s.membre.nom}</td>
-                <td className="border px-4 py-2">{s.membre.prenom}</td>
-                <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
-                <td className="border px-4 py-2">{s.statut}</td>
-                <td className="border px-4 py-2">
-                  <span
-                    className="text-blue-600 cursor-pointer hover:underline"
-                    onClick={() => openPopup(s)}
-                  >
-                    Afficher
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {suivis.map((s) => (
+          <div
+            key={s.id}
+            className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer border-t-4 border-blue-400"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-lg font-bold text-gray-800 mb-1">
+                  {s.membre.prenom} {s.membre.nom}
+                </h2>
+                <p className="text-sm text-gray-600 mb-1">📱 {s.membre.telephone}</p>
+                <p className="text-sm font-semibold">{s.statut}</p>
+              </div>
 
-      {/* Popup détails */}
-      {showPopup && currentSuivi && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl max-w-md w-full relative">
-            <h2 className="text-xl font-bold mb-4">Détails du membre</h2>
-            <button
-              className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
-              onClick={() => setShowPopup(false)}
-            >
-              ✖
-            </button>
-            <div className="space-y-1 text-gray-700">
-              <p>Nom : {currentSuivi.membre.nom}</p>
-              <p>Prénom : {currentSuivi.membre.prenom}</p>
-              <p>📱 Téléphone : {currentSuivi.membre.telephone}</p>
-              <p>📧 Email : {currentSuivi.membre.email || "—"}</p>
-              <p>🏙️ Ville : {currentSuivi.membre.ville || "—"}</p>
-              <p>📝 Infos supplémentaires : {currentSuivi.membre.infos_supplementaires || "—"}</p>
-              <p>Besoin : {currentSuivi.membre.besoin || "—"}</p>
-              <p>Comment venu : {currentSuivi.membre.how_came || "—"}</p>
-              <p>WhatsApp : {currentSuivi.membre.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
-            </div>
-
-            <div className="mt-4">
-              <label className="block mb-2 font-semibold">Changer le statut :</label>
+              {/* Menu statut */}
               <select
-                className="w-full p-2 border rounded-lg"
-                value={newStatus}
-                onChange={handleStatusChange}
+                value={s.statut}
+                onChange={(e) => {
+                  setCurrentSuivi(s);
+                  setNewStatus(e.target.value);
+                  handleValidate();
+                }}
+                className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
               >
                 <option value="envoyé">Envoyé</option>
                 <option value="en cours">En cours</option>
                 <option value="intégré">Intégré</option>
               </select>
-
-              {newStatus !== currentSuivi.statut && (
-                <button
-                  className="mt-4 w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
-                  onClick={handleValidate}
-                >
-                  Valider
-                </button>
-              )}
             </div>
+
+            {/* Détails */}
+            <p
+              className="mt-2 text-blue-500 underline cursor-pointer"
+              onClick={() =>
+                setCurrentSuivi((prev) => ({ ...prev, showDetails: !prev?.showDetails }))
+              }
+            >
+              Détails
+            </p>
+
+            {currentSuivi?.id === s.id && currentSuivi.showDetails && (
+              <div className="mt-2 text-sm text-gray-700 space-y-1">
+                <p>Email : {s.membre.email || "—"}</p>
+                <p>Besoin : {s.membre.besoin || "—"}</p>
+                <p>Ville : {s.membre.ville || "—"}</p>
+                <p>WhatsApp : {s.membre.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+                <p>Infos supplémentaires : {s.membre.infos_supplementaires || "—"}</p>
+                <p>Comment venu : {s.membre.how_came || "—"}</p>
+                <p>Cellule : {s.cellule?.cellule || "—"}</p>
+                <p>Responsable : {s.cellule?.responsable || "—"}</p>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
