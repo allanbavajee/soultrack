@@ -6,25 +6,31 @@ export default function Evangelisation() {
   const [evangelises, setEvangelises] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState(null);
-  const [selectedContacts, setSelectedContacts] = useState({});
+  const [selectedContacts, setSelectedContacts] = useState({}); // checkbox
 
   useEffect(() => {
     fetchEvangelises();
     fetchCellules();
   }, []);
 
+  // Récupère uniquement les membres evangelisés non encore envoyés
   const fetchEvangelises = async () => {
-    // Ne récupérer que les contacts non envoyés
     const { data, error } = await supabase
       .from("membres")
       .select("*")
-      .eq("statut", "evangelisé");
-    if (!error && data) setEvangelises(data);
+      .eq("statut", "evangelisé"); // uniquement à envoyer
+
+    if (!error && data) {
+      setEvangelises(data);
+    }
   };
 
   const fetchCellules = async () => {
-    const { data } = await supabase.from("cellules").select("cellule,responsable,telephone");
-    if (data) setCellules(data);
+    const { data, error } = await supabase
+      .from("cellules")
+      .select("cellule,responsable,telephone");
+
+    if (!error && data) setCellules(data);
   };
 
   const handleCheckbox = (member) => {
@@ -42,39 +48,52 @@ export default function Evangelisation() {
       return;
     }
 
-    const prenomResponsable = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
-    const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
-    if (!telDigits) return;
+    const membresAEnvoyer = Object.values(selectedContacts);
 
-    // Construire le message pour tous les contacts sélectionnés
-    let message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé de nouvelles âmes à suivre:\n\n`;
-    Object.values(selectedContacts).forEach((member, index) => {
-      message += `- 👤 Nom : ${member.prenom} ${member.nom}\n`;
-      message += `- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}\n`;
-      message += `- 📧 Email : ${member.email || "—"}\n`;
-      message += `- 🏙️ Ville : ${member.ville || "—"}\n`;
-      message += `- 🙏 Besoin : ${member.besoin || "—"}\n`;
-      message += `- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\n`;
-    });
+    for (const member of membresAEnvoyer) {
+      const prenomResponsable = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
+      const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
+      if (!telDigits) continue;
 
-    // Ouvrir un seul lien WhatsApp avec tous les contacts
-    window.open(`https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`, "_blank");
+      const message = `👋 Salut ${prenomResponsable},
 
-    // Marquer les contacts comme envoyés
-    await Promise.all(
-      Object.values(selectedContacts).map(async (member) => {
-        await supabase
-          .from("suivis")
-          .insert({
-            membre_id: member.id,
-            cellule_id: selectedCellule.id,
-            statut: "envoyé",
-          });
-      })
-    );
+🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
+Voici ses infos :  
 
+- 👤 Nom : ${member.prenom} ${member.nom}  
+- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
+- 📧 Email : ${member.email || "—"}  
+- 🏙️ Ville : ${member.ville || "—"}  
+- 🙏 Besoin : ${member.besoin || "—"}  
+- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}  
+
+Merci pour ton cœur ❤️ et son amour ✨`;
+
+      // Ouvre WhatsApp pour chaque contact
+      window.open(
+        `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
+
+      // Mets à jour le statut du membre dans la base pour qu'il disparaisse de la liste
+      await supabase
+        .from("membres")
+        .update({ statut: "envoyé" })
+        .eq("id", member.id);
+
+      // Crée un suivi pour la cellule
+      await supabase.from("suivis").insert({
+        membre_id: member.id,
+        cellule_id: selectedCellule.id,
+        statut: "envoyé",
+        created_at: new Date(),
+      });
+    }
+
+    // Vide la sélection
     setSelectedContacts({});
-    fetchEvangelises(); // Mettre à jour la liste pour ne plus afficher les contacts envoyés
+    // Recharge la liste des evangelises
+    fetchEvangelises();
   };
 
   return (
@@ -82,7 +101,15 @@ export default function Evangelisation() {
       <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
         Évangélisés à envoyer aux cellules
       </h1>
+  {/* Flèche retour */}
+        <button
+          onClick={() => router.back()}
+           className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
+        >
+          ← Retour
+        </button>
 
+      {/* Choix cellule */}
       <div className="mb-4 w-full max-w-md mx-auto">
         <label className="block mb-2 font-semibold">Choisir une cellule :</label>
         <select
@@ -102,6 +129,7 @@ export default function Evangelisation() {
         </select>
       </div>
 
+      {/* Bouton WhatsApp groupé */}
       {Object.keys(selectedContacts).length > 0 && (
         <div className="mb-4 w-full max-w-md mx-auto">
           <button
@@ -113,6 +141,7 @@ export default function Evangelisation() {
         </div>
       )}
 
+      {/* Liste cartes evangelisés */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {evangelises.map((member) => (
           <div
@@ -129,6 +158,7 @@ export default function Evangelisation() {
               </div>
             </div>
 
+            {/* Checkbox "Envoyer ce contact" */}
             <div className="mt-2 flex items-center">
               <input
                 type="checkbox"
@@ -139,6 +169,7 @@ export default function Evangelisation() {
               <span>Envoyer ce contact</span>
             </div>
 
+            {/* Détails */}
             <div className="mt-2 text-sm text-gray-700 space-y-1">
               <p>Email : {member.email || "—"}</p>
               <p>Besoin : {member.besoin || "—"}</p>
@@ -152,4 +183,5 @@ export default function Evangelisation() {
     </div>
   );
 }
+
 
