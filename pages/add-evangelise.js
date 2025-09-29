@@ -69,19 +69,6 @@ export default function AddEvangelise() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Nom */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Nom</label>
-            <input
-              type="text"
-              name="nom"
-              value={formData.nom}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              required
-            />
-          </div>
-
           {/* Prénom */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Prénom</label>
@@ -89,6 +76,19 @@ export default function AddEvangelise() {
               type="text"
               name="prenom"
               value={formData.prenom}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              required
+            />
+          </div>
+
+          {/* Nom */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Nom</label>
+            <input
+              type="text"
+              name="nom"
+              value={formData.nom}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
