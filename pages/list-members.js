@@ -8,7 +8,7 @@ export default function ListMembers() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
-  const [selectedEvangelises, setSelectedEvangelises] = useState({}); // sélectionnés pour WhatsApp groupé
+  const [selectedEvangelises, setSelectedEvangelises] = useState({});
 
   useEffect(() => {
     fetchMembers();
@@ -23,7 +23,7 @@ export default function ListMembers() {
   const fetchCellules = async () => {
     const { data, error } = await supabase
       .from("cellules")
-      .select("cellule,responsable,telephone");
+      .select("id, cellule, responsable, telephone");
     if (!error && data) setCellules(data);
   };
 
@@ -34,50 +34,36 @@ export default function ListMembers() {
     );
   };
 
-  // Envoi WhatsApp et création du suivi
   const handleWhatsAppSingle = async (member, cellule) => {
     if (!cellule) return;
 
     const prenomResponsable = cellule.responsable.split(" ")[0];
-    const message = `👋 Salut ${prenomResponsable},
-
-🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
-Voici ses infos :  
-
-- 👤 Nom : ${member.prenom} ${member.nom}  
+    const message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
+Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}  
 - 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
 - 📧 Email : ${member.email || "—"}  
 - 🏙️ Ville : ${member.ville || "—"}  
 - 🙏 Besoin : ${member.besoin || "—"}  
-- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}  
+- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\nMerci pour ton cœur ❤️ et son amour ✨`;
 
-Merci pour ton cœur ❤️ et son amour ✨`;
-
-    // ouvrir WhatsApp
     window.open(
       `https://wa.me/${cellule.telephone}?text=${encodeURIComponent(message)}`,
       "_blank"
     );
 
-    // 1️⃣ Mettre à jour le statut du membre en "actif"
+    // Mise à jour membre en actif
     await supabase.from("membres").update({ statut: "actif" }).eq("id", member.id);
 
-    // 2️⃣ Créer un suivi avec statut "envoyé"
+    // Création du suivi avec statut "envoye"
     await supabase.from("suivis_membres").insert([
-      {
-        membre_id: member.id,
-        cellule_id: cellule.id,
-        statut: "envoyé",
-      },
+      { membre_id: member.id, cellule_id: cellule.id, statut: "envoye" },
     ]);
 
-    // 3️⃣ Mise à jour locale
     setMembers((prev) =>
       prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m))
     );
   };
 
-  // WhatsApp groupé pour évangélisés
   const handleWhatsAppGroup = () => {
     Object.entries(selectedEvangelises).forEach(([memberId, membre]) => {
       const cellule = selectedCellules[memberId];
@@ -104,7 +90,6 @@ Merci pour ton cœur ❤️ et son amour ✨`;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      {/* Flèche retour */}
       <button
         onClick={() => window.history.back()}
         className="flex items-center text-orange-500 font-semibold mb-4"
@@ -116,7 +101,6 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         Liste des membres
       </h1>
 
-      {/* Filtre */}
       <div className="flex justify-center mb-6">
         <select
           value={filter}
@@ -133,12 +117,6 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         </select>
       </div>
 
-      {/* Compteur */}
-      <p className="text-center text-gray-600 mb-6">
-        Total membres : {members.length} | Affichés : {filteredMembers.length}
-      </p>
-
-      {/* Bouton WhatsApp groupé */}
       {Object.keys(selectedEvangelises).length > 0 && (
         <button
           onClick={handleWhatsAppGroup}
@@ -148,7 +126,6 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         </button>
       )}
 
-      {/* Cartes membres */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredMembers.map((member) => (
           <div
@@ -160,9 +137,7 @@ Merci pour ton cœur ❤️ et son amour ✨`;
               <div>
                 <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center">
                   {member.prenom} {member.nom}
-                  {member.star && (
-                    <span className="ml-2 text-yellow-400 font-bold">⭐</span>
-                  )}
+                  {member.star && <span className="ml-2 text-yellow-400 font-bold">⭐</span>}
                 </h2>
                 <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
                 <p
@@ -173,7 +148,6 @@ Merci pour ton cœur ❤️ et son amour ✨`;
                 </p>
               </div>
 
-              {/* Menu statut */}
               <select
                 value={member.statut}
                 onChange={(e) => handleChangeStatus(member.id, e.target.value)}
@@ -188,14 +162,10 @@ Merci pour ton cœur ❤️ et son amour ✨`;
               </select>
             </div>
 
-            {/* Détails */}
             <p
               className="mt-2 text-blue-500 underline cursor-pointer"
               onClick={() =>
-                setDetailsOpen((prev) => ({
-                  ...prev,
-                  [member.id]: !prev[member.id],
-                }))
+                setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
               }
             >
               {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
@@ -210,50 +180,15 @@ Merci pour ton cœur ❤️ et son amour ✨`;
                 <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
                 <p>Comment venu : {member.how_came || "—"}</p>
 
-                {/* Checkbox pour évangélisés */}
-                {member.statut === "evangelisé" && (
-                  <div className="mt-2 flex items-center">
-                    <input
-                      type="checkbox"
-                      className="mr-2"
-                      checked={!!selectedEvangelises[member.id]}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedEvangelises((prev) => ({
-                            ...prev,
-                            [member.id]: member,
-                          }));
-                        } else {
-                          setSelectedEvangelises((prev) => {
-                            const copy = { ...prev };
-                            delete copy[member.id];
-                            return copy;
-                          });
-                        }
-                      }}
-                    />
-                    <span>Ajouter à l’envoi groupé WhatsApp</span>
-                  </div>
-                )}
-
-                {/* Menu cellule + bouton WhatsApp */}
-                {(member.statut === "visiteur" ||
-                  member.statut === "veut rejoindre ICC") && (
+                {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
                   <div className="mt-2">
-                    <label className="block mb-1 font-semibold">
-                      Choisir une cellule :
-                    </label>
+                    <label className="block mb-1 font-semibold">Choisir une cellule :</label>
                     <select
                       className="w-full p-2 border rounded-lg"
                       value={selectedCellules[member.id]?.cellule || ""}
                       onChange={(e) => {
-                        const cellule = cellules.find(
-                          (c) => c.cellule === e.target.value
-                        );
-                        setSelectedCellules((prev) => ({
-                          ...prev,
-                          [member.id]: cellule,
-                        }));
+                        const cellule = cellules.find((c) => c.cellule === e.target.value);
+                        setSelectedCellules((prev) => ({ ...prev, [member.id]: cellule }));
                       }}
                     >
                       <option value="">-- Sélectionner --</option>
