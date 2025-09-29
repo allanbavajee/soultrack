@@ -8,10 +8,10 @@ export default function EvangelisationHub() {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center p-6">
       {/* Flèche retour */}
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-4xl mb-6">
         <button
           onClick={() => router.back()}
-          className="flex items-center text-orange-500 font-semibold mb-6 hover:text-orange-600 transition-colors"
+          className="flex items-center text-orange-500 font-semibold hover:text-orange-600 transition-colors"
         >
           ← Retour
         </button>
@@ -30,9 +30,7 @@ export default function EvangelisationHub() {
           className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#4285F4]"
         >
           <div className="text-5xl mb-4">➕</div>
-          <h2 className="text-xl font-bold text-gray-800 text-center">
-            Ajouter un évangélisé
-          </h2>
+          <h2 className="text-xl font-bold text-gray-800 text-center">Ajouter un évangélisé</h2>
         </Link>
 
         {/* Liste des évangélisés */}
@@ -41,20 +39,16 @@ export default function EvangelisationHub() {
           className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#34a853]"
         >
           <div className="text-5xl mb-4">👥</div>
-          <h2 className="text-xl font-bold text-gray-800 text-center">
-            Liste des évangélisés
-          </h2>
+          <h2 className="text-xl font-bold text-gray-800 text-center">Liste des évangélisés</h2>
         </Link>
 
-        {/* Tableau de suivi cellule */}
+        {/* Suivis des évangélisés */}
         <Link
           href="/suivis-evangelisation"
-          className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#f06292]"
+          className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#ff9800]"
         >
           <div className="text-5xl mb-4">📋</div>
-          <h2 className="text-xl font-bold text-gray-800 text-center">
-            Suivis des Evangélisés
-          </h2>
+          <h2 className="text-xl font-bold text-gray-800 text-center">Suivis des évangélisés</h2>
         </Link>
       </div>
     </div>
