@@ -35,7 +35,7 @@ export default function SuivisMembres() {
         ),
         cellule:cellule_id (id, cellule, responsable, telephone)
       `)
-      .in("statut", ["Envoyé","En Cours","Intégrer"]);
+      .in("statut", ["envoye","encours","integrer"]);
 
     if (cellule) query = query.eq("cellule_id", cellule);
 
