@@ -6,7 +6,7 @@ export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState("");
-  const [statusFilter, setStatusFilter] = useState("pending"); // default: envoyé / en cours
+  const [showRefus, setShowRefus] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [currentContact, setCurrentContact] = useState(null);
   const [newStatus, setNewStatus] = useState("");
@@ -17,8 +17,8 @@ export default function SuivisEvangelisation() {
   }, []);
 
   useEffect(() => {
-    fetchSuivis(selectedCellule, statusFilter);
-  }, [selectedCellule, statusFilter]);
+    fetchSuivis(selectedCellule, showRefus);
+  }, [selectedCellule, showRefus]);
 
   const fetchCellules = async () => {
     const { data, error } = await supabase
@@ -27,7 +27,7 @@ export default function SuivisEvangelisation() {
     if (!error) setCellules(data);
   };
 
-  const fetchSuivis = async (cellule = null, filter = "pending") => {
+  const fetchSuivis = async (cellule = null, refus = false) => {
     let query = supabase
       .from("suivis")
       .select(
@@ -39,13 +39,9 @@ export default function SuivisEvangelisation() {
       `
       );
 
-    // filtre par statut
-    if (filter === "pending") query = query.in("statut", ["envoyé", "en cours"]);
-    else if (filter === "refus") query = query.eq("statut", "refus");
-    // "all" = tout sauf actifs
-    else if (filter === "all") query = query.neq("statut", "actif");
+    if (refus) query = query.eq("statut", "refus");
+    else query = query.in("statut", ["envoyé", "en cours"]);
 
-    // filtre par cellule
     if (cellule) query = query.eq("cellule_id", cellule);
 
     const { data, error } = await query.order("created_at", { ascending: false });
@@ -65,13 +61,11 @@ export default function SuivisEvangelisation() {
   const handleValidate = async () => {
     if (!currentContact) return;
 
-    // Mettre à jour dans suivis
     await supabase
       .from("suivis")
       .update({ statut: newStatus })
       .eq("id", currentContact.id);
 
-    // Si actif, mettre à jour membre
     if (newStatus === "actif") {
       await supabase
         .from("membres")
@@ -80,45 +74,28 @@ export default function SuivisEvangelisation() {
     }
 
     setShowPopup(false);
-    fetchSuivis(selectedCellule, statusFilter);
+    fetchSuivis(selectedCellule, showRefus);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <h1 className="text-3xl font-bold text-center mb-6">Suivi des évangélisés</h1>
 
-      {/* Filtres */}
-      <div className="mb-6 max-w-md mx-auto flex flex-col gap-4">
-        {/* Filtre cellule */}
-        <div>
-          <label className="block mb-2 font-semibold">Filtrer par cellule :</label>
-          <select
-            className="w-full p-2 border rounded-lg"
-            value={selectedCellule}
-            onChange={(e) => setSelectedCellule(e.target.value)}
-          >
-            <option value="">-- Toutes les cellules --</option>
-            {cellules.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.cellule}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Filtre statut */}
-        <div>
-          <label className="block mb-2 font-semibold">Filtrer par statut :</label>
-          <select
-            className="w-full p-2 border rounded-lg"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="pending">Envoyé / En cours</option>
-            <option value="refus">Refus</option>
-            <option value="all">Tous (sauf actifs)</option>
-          </select>
-        </div>
+      {/* Filtre cellule */}
+      <div className="mb-6 max-w-md mx-auto">
+        <label className="block mb-2 font-semibold">Filtrer par cellule :</label>
+        <select
+          className="w-full p-2 border rounded-lg"
+          value={selectedCellule}
+          onChange={(e) => setSelectedCellule(e.target.value)}
+        >
+          <option value="">-- Toutes les cellules --</option>
+          {cellules.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.cellule}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Tableau */}
@@ -152,6 +129,16 @@ export default function SuivisEvangelisation() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Lien "les refus" */}
+      <div className="max-w-4xl mx-auto mt-4 text-right">
+        <span
+          className="text-blue-600 cursor-pointer hover:underline"
+          onClick={() => setShowRefus(!showRefus)}
+        >
+          {showRefus ? "Retour aux en cours/envoyés" : "Voir les refus"}
+        </span>
       </div>
 
       {/* Popup */}
