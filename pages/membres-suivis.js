@@ -47,7 +47,7 @@ export default function MembresSuivis() {
         </Link>
         {/* Page suivis de nouveau */}
         <Link
-          href="/membres-suivis"
+          href="/suivis-membres"
           className="bg-white p-6 rounded-3xl shadow-lg flex flex-col items-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#9c27b0]"
         >
           <div className="text-5xl mb-4">👤</div>
