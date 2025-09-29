@@ -13,23 +13,19 @@ export default function Evangelisation() {
     fetchCellules();
   }, []);
 
-  // Récupère uniquement les membres evangelisés non encore envoyés
+  // Récupérer uniquement les evangelisés encore à envoyer
   const fetchEvangelises = async () => {
     const { data, error } = await supabase
       .from("membres")
       .select("*")
-      .eq("statut", "evangelisé"); // uniquement à envoyer
-
-    if (!error && data) {
-      setEvangelises(data);
-    }
+      .eq("statut", "evangelisé"); // uniquement les evangelisés
+    if (!error && data) setEvangelises(data);
   };
 
   const fetchCellules = async () => {
     const { data, error } = await supabase
       .from("cellules")
-      .select("cellule,responsable,telephone");
-
+      .select("id, cellule, responsable, telephone");
     if (!error && data) setCellules(data);
   };
 
@@ -49,39 +45,38 @@ export default function Evangelisation() {
     }
 
     const membresAEnvoyer = Object.values(selectedContacts);
+    if (membresAEnvoyer.length === 0) return;
 
+    const prenomResponsable =
+      selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
+    const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
+    if (!telDigits) return;
+
+    // Construire un seul message pour tous les contacts
+    let message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé de nouvelles âmes à suivre:\n\n`;
+
+    membresAEnvoyer.forEach((member, idx) => {
+      message += `${idx + 1}. 👤 ${member.prenom} ${member.nom} | 📱 ${
+        member.telephone
+      } ${member.is_whatsapp ? "(WhatsApp ✅)" : ""} | 📧 ${
+        member.email || "—"
+      } | 🏙️ ${member.ville || "—"}\n\n`;
+    });
+
+    window.open(
+      `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
+      "_blank"
+    );
+
+    // Mettre à jour la base pour tous les membres
     for (const member of membresAEnvoyer) {
-      const prenomResponsable = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
-      const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
-      if (!telDigits) continue;
-
-      const message = `👋 Salut ${prenomResponsable},
-
-🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
-Voici ses infos :  
-
-- 👤 Nom : ${member.prenom} ${member.nom}  
-- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
-- 📧 Email : ${member.email || "—"}  
-- 🏙️ Ville : ${member.ville || "—"}  
-- 🙏 Besoin : ${member.besoin || "—"}  
-- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}  
-
-Merci pour ton cœur ❤️ et son amour ✨`;
-
-      // Ouvre WhatsApp pour chaque contact
-      window.open(
-        `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
-        "_blank"
-      );
-
-      // Mets à jour le statut du membre dans la base pour qu'il disparaisse de la liste
+      // Mettre à jour le statut dans membres
       await supabase
         .from("membres")
         .update({ statut: "envoyé" })
         .eq("id", member.id);
 
-      // Crée un suivi pour la cellule
+      // Ajouter dans suivis
       await supabase.from("suivis").insert({
         membre_id: member.id,
         cellule_id: selectedCellule.id,
@@ -90,10 +85,8 @@ Merci pour ton cœur ❤️ et son amour ✨`;
       });
     }
 
-    // Vide la sélection
     setSelectedContacts({});
-    // Recharge la liste des evangelises
-    fetchEvangelises();
+    fetchEvangelises(); // recharge la liste après envoi
   };
 
   return (
@@ -101,13 +94,6 @@ Merci pour ton cœur ❤️ et son amour ✨`;
       <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
         Évangélisés à envoyer aux cellules
       </h1>
-  {/* Flèche retour */}
-        <button
-          onClick={() => router.back()}
-           className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
-        >
-          ← Retour
-        </button>
 
       {/* Choix cellule */}
       <div className="mb-4 w-full max-w-md mx-auto">
@@ -122,7 +108,7 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         >
           <option value="">-- Sélectionner --</option>
           {cellules.map((c) => (
-            <option key={c.cellule} value={c.cellule}>
+            <option key={c.id} value={c.cellule}>
               {c.cellule} ({c.responsable})
             </option>
           ))}
@@ -154,7 +140,9 @@ Merci pour ton cœur ❤️ et son amour ✨`;
                   {member.prenom} {member.nom}
                 </h2>
                 <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
-                <p className="text-sm font-bold text-orange-500">Statut : {member.statut}</p>
+                <p className="text-sm font-bold text-orange-500">
+                  Statut : {member.statut}
+                </p>
               </div>
             </div>
 
@@ -168,20 +156,9 @@ Merci pour ton cœur ❤️ et son amour ✨`;
               />
               <span>Envoyer ce contact</span>
             </div>
-
-            {/* Détails */}
-            <div className="mt-2 text-sm text-gray-700 space-y-1">
-              <p>Email : {member.email || "—"}</p>
-              <p>Besoin : {member.besoin || "—"}</p>
-              <p>Ville : {member.ville || "—"}</p>
-              <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
-              <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-            </div>
           </div>
         ))}
       </div>
     </div>
   );
 }
-
-
