@@ -1,203 +1,180 @@
-// pages/evangelisation.js
+// pages/suivis-evangelisation.js
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-export default function Evangelisation() {
-  const [evangelises, setEvangelises] = useState([]);
+export default function SuivisEvangelisation() {
+  const [suivis, setSuivis] = useState([]);
   const [cellules, setCellules] = useState([]);
-  const [selectedCellule, setSelectedCellule] = useState(null);
-  const [selectedContacts, setSelectedContacts] = useState({}); // checkbox
-  const [popupMember, setPopupMember] = useState(null); // pour détails popup
+  const [selectedCellule, setSelectedCellule] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [currentContact, setCurrentContact] = useState(null);
+  const [newStatus, setNewStatus] = useState("");
 
   useEffect(() => {
-    fetchEvangelises();
     fetchCellules();
+    fetchSuivis();
   }, []);
 
-  const fetchEvangelises = async () => {
-    const { data, error } = await supabase
-      .from("membres")
-      .select("*")
-      .eq("statut", "evangelisé"); // uniquement les evangelisés
-    if (!error && data) setEvangelises(data);
-  };
+  useEffect(() => {
+    if (selectedCellule) {
+      fetchSuivis(selectedCellule);
+    } else {
+      fetchSuivis();
+    }
+  }, [selectedCellule]);
 
   const fetchCellules = async () => {
     const { data, error } = await supabase
       .from("cellules")
-      .select("cellule,responsable,telephone");
-    if (!error && data) setCellules(data);
+      .select("id, cellule");
+    if (!error) setCellules(data);
   };
 
-  const handleCheckbox = (member) => {
-    setSelectedContacts((prev) => {
-      const copy = { ...prev };
-      if (copy[member.id]) delete copy[member.id];
-      else copy[member.id] = member;
-      return copy;
-    });
-  };
+  const fetchSuivis = async (cellule = null) => {
+    let query = supabase
+      .from("suivis")
+      .select(
+        `
+        id,
+        statut,
+        membre:membre_id (id, prenom, nom, telephone, email, ville, besoin, infos_supplementaires, is_whatsapp),
+        cellule:cellule_id (id, cellule)
+      `
+      )
+      .neq("statut", "actif"); // ne pas afficher les actifs
 
-  const handleWhatsAppGroup = () => {
-    if (!selectedCellule) {
-      alert("Sélectionne d'abord une cellule.");
-      return;
+    if (cellule) {
+      query = query.eq("cellule_id", cellule);
     }
 
-    // Pour chaque contact sélectionné
-    Object.values(selectedContacts).forEach((member) => {
-      const prenomResponsable = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
-      const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
-      if (!telDigits) return;
+    const { data, error } = await query.order("created_at", { ascending: false });
+    if (!error) setSuivis(data);
+  };
 
-      const message = `👋 Salut ${prenomResponsable},
+  const openPopup = (contact) => {
+    setCurrentContact(contact);
+    setNewStatus(contact.statut);
+    setShowPopup(true);
+  };
 
-🙏 Dieu nous a envoyé de nouvelles âmes à suivre:
+  const handleStatusChange = (e) => {
+    setNewStatus(e.target.value);
+  };
 
-- 👤 Nom : ${member.prenom} ${member.nom}
-- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}
-- 📧 Email : ${member.email || "—"}
-- 🏙 Ville : ${member.ville || "—"}
-- 🙏 Besoin : ${member.besoin || "—"}
-- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}
+  const handleValidate = async () => {
+    if (!currentContact) return;
 
-Merci pour ton cœur ❤️ et son amour ✨`;
+    // Mettre à jour dans suivis
+    await supabase
+      .from("suivis")
+      .update({ statut: newStatus })
+      .eq("id", currentContact.id);
 
-      window.open(
-        `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
-        "_blank"
-      );
-    });
+    // Si actif, mettre à jour membre aussi
+    if (newStatus === "actif") {
+      await supabase
+        .from("membres")
+        .update({ statut: "actif" })
+        .eq("id", currentContact.membre.id);
+    }
 
-    // Supprimer les contacts envoyés de la liste
-    const idsEnvoyes = Object.keys(selectedContacts);
-    setEvangelises((prev) => prev.filter((m) => !idsEnvoyes.includes(m.id.toString())));
-    setSelectedContacts({});
+    setShowPopup(false);
+    fetchSuivis(selectedCellule);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
-      <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
-        Évangélisés à envoyer aux cellules
-      </h1>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <h1 className="text-3xl font-bold text-center mb-6">Suivi des évangélisés</h1>
 
-      {/* Choix cellule */}
-      <div className="mb-4 w-full max-w-md mx-auto">
-        <label className="block mb-2 font-semibold">Choisir une cellule :</label>
+      {/* Filtre cellule */}
+      <div className="mb-6 max-w-md mx-auto">
+        <label className="block mb-2 font-semibold">Filtrer par cellule :</label>
         <select
           className="w-full p-2 border rounded-lg"
-          value={selectedCellule?.cellule || ""}
-          onChange={(e) => {
-            const cellule = cellules.find((c) => c.cellule === e.target.value);
-            setSelectedCellule(cellule || null);
-          }}
+          value={selectedCellule}
+          onChange={(e) => setSelectedCellule(e.target.value)}
         >
-          <option value="">-- Sélectionner --</option>
+          <option value="">-- Toutes les cellules --</option>
           {cellules.map((c) => (
-            <option key={c.cellule} value={c.cellule}>
-              {c.cellule} ({c.responsable})
+            <option key={c.id} value={c.id}>
+              {c.cellule}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Bouton WhatsApp groupé */}
-      {Object.keys(selectedContacts).length > 0 && (
-        <div className="mb-4 w-full max-w-md mx-auto">
-          <button
-            onClick={handleWhatsAppGroup}
-            className="w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
-          >
-            📤 Envoyer WhatsApp aux contacts sélectionnés
-          </button>
-        </div>
-      )}
-
-      {/* Liste cartes */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {evangelises.map((member) => (
-          <div
-            key={member.id}
-            className="bg-white w-full p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col"
-          >
-            <div className="flex justify-between items-start w-full">
-              <div className="w-full">
-                <h2 className="text-lg font-bold text-gray-800 mb-1">{member.prenom} {member.nom}</h2>
-                <p className="text-sm text-gray-600 mb-1">{member.ville || "—"}</p>
-                <p className="text-sm font-bold text-orange-500">{member.statut}</p>
-              </div>
-              {/* Checkbox */}
-              <input
-                type="checkbox"
-                className="ml-2"
-                checked={!!selectedContacts[member.id]}
-                onChange={() => handleCheckbox(member)}
-              />
-            </div>
-
-            {/* Afficher détails */}
-            <p
-              className="mt-2 text-blue-500 underline cursor-pointer"
-              onClick={() => setPopupMember(member)}
-            >
-              Afficher
-            </p>
-          </div>
-        ))}
+      {/* Tableau */}
+      <div className="overflow-x-auto">
+        <table className="table-auto w-full max-w-4xl mx-auto border-collapse border border-gray-300 text-center">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="border px-4 py-2">Nom</th>
+              <th className="border px-4 py-2">Prénom</th>
+              <th className="border px-4 py-2">Cellule</th>
+              <th className="border px-4 py-2">Statut</th>
+              <th className="border px-4 py-2">Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            {suivis.map((s) => (
+              <tr key={s.id}>
+                <td className="border px-4 py-2">{s.membre.nom}</td>
+                <td className="border px-4 py-2">{s.membre.prenom}</td>
+                <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
+                <td className="border px-4 py-2">{s.statut}</td>
+                <td className="border px-4 py-2">
+                  <span
+                    className="text-blue-600 cursor-pointer hover:underline"
+                    onClick={() => openPopup(s)}
+                  >
+                    Afficher
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* Popup détails */}
-      {popupMember && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md relative">
+      {/* Popup */}
+      {showPopup && currentContact && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full relative">
+            <h2 className="text-xl font-bold mb-4">Détails du contact</h2>
             <button
-              onClick={() => setPopupMember(null)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 font-bold"
+              className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+              onClick={() => setShowPopup(false)}
             >
               ✖
             </button>
-            <h2 className="text-2xl font-bold mb-4">{popupMember.prenom} {popupMember.nom}</h2>
-            <p><strong>Statut:</strong> {popupMember.statut}</p>
-            <p><strong>Téléphone:</strong> {popupMember.telephone}</p>
-            <p><strong>Email:</strong> {popupMember.email || "—"}</p>
-            <p><strong>Ville:</strong> {popupMember.ville || "—"}</p>
-            <p><strong>Besoin:</strong> {popupMember.besoin || "—"}</p>
-            <p><strong>Infos supplémentaires:</strong> {popupMember.infos_supplementaires || "—"}</p>
+            <div className="space-y-1 text-gray-700">
+              <p>Nom : {currentContact.membre.nom}</p>
+              <p>Prénom : {currentContact.membre.prenom}</p>
+              <p>📱 Téléphone : {currentContact.membre.telephone}</p>
+              <p>📧 Email : {currentContact.membre.email || "—"}</p>
+              <p>🏙️ Ville : {currentContact.membre.ville || "—"}</p>
+              <p>🙏 Besoin : {currentContact.membre.besoin || "—"}</p>
+              <p>📝 Infos supplémentaires : {currentContact.membre.infos_supplementaires || "—"}</p>
+              <p>WhatsApp : {currentContact.membre.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+            </div>
 
-            {/* Changer le statut */}
             <div className="mt-4">
-              <label className="block mb-1 font-semibold">Changer statut:</label>
+              <label className="block mb-2 font-semibold">Changer le statut :</label>
               <select
                 className="w-full p-2 border rounded-lg"
-                value={popupMember.statut}
-                onChange={(e) =>
-                  setPopupMember((prev) => ({ ...prev, statut: e.target.value }))
-                }
+                value={newStatus}
+                onChange={handleStatusChange}
               >
-                <option value="evangelisé">Evangelisé</option>
                 <option value="envoyé">Envoyé</option>
                 <option value="en cours">En cours</option>
                 <option value="actif">Actif</option>
                 <option value="refus">Refus</option>
               </select>
-              {popupMember.statut !== "evangelisé" && (
+
+              {newStatus !== currentContact.statut && (
                 <button
-                  className="mt-3 w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
-                  onClick={async () => {
-                    // Mettre à jour le statut dans supabase
-                    await supabase
-                      .from("membres")
-                      .update({ statut: popupMember.statut })
-                      .eq("id", popupMember.id);
-                    
-                    // Si actif, enlever de la liste et mettre dans list-members
-                    if (popupMember.statut === "actif") {
-                      setEvangelises((prev) =>
-                        prev.filter((m) => m.id !== popupMember.id)
-                      );
-                    }
-                    setPopupMember(null);
-                  }}
+                  className="mt-4 w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
+                  onClick={handleValidate}
                 >
                   Valider
                 </button>
