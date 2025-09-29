@@ -1,4 +1,26 @@
- {/* Ajouter un membre */}
+import Link from "next/link";
+import { useRouter } from "next/router";
+
+export default function EvangelisationHub() {
+  const router = useRouter();
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col items-center p-6">
+      {/* Flèche retour */}
+      <div className="w-full max-w-4xl">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center text-orange-500 font-semibold mb-6 hover:text-orange-600 transition-colors"
+        >
+          ← Retour
+        </button>
+      </div>
+
+      {/* Titre */}
+      <h1 className="text-3xl font-bold text-gray-800 mb-10 text-center">
+        Suivis des Nouveau
+      </h1>
+{/* Ajouter un membre */}
         <Link
           href="/add-member"
           className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#4285F4]"
