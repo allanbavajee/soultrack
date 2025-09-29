@@ -1,4 +1,3 @@
-// pages/suivi-evangelisation.js
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -7,12 +6,16 @@ export default function SuiviEvangelisation() {
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState("");
   const [loading, setLoading] = useState(true);
-  const [editedStatus, setEditedStatus] = useState({}); // suiviId -> nouveau statut
+  const [editedStatus, setEditedStatus] = useState({});
 
   useEffect(() => {
     fetchCellules();
-    fetchSuivis();
   }, []);
+
+  // recharge automatiquement quand selectedCellule change
+  useEffect(() => {
+    fetchSuivis();
+  }, [selectedCellule]);
 
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule");
@@ -26,15 +29,17 @@ export default function SuiviEvangelisation() {
       .select(`
         id,
         statut,
-        membre:membre_id (id, prenom, nom, statut, telephone, email, ville, besoin, infos_supplementaires, is_whatsapp),
-        cellule:cellule_id (id, cellule, responsable)
+        membre:membre_id (id, prenom, nom, statut),
+        cellule:cellule_id (id, cellule)
       `)
       .order("created_at", { ascending: false });
 
     if (selectedCellule) query = query.eq("cellule_id", selectedCellule);
 
     const { data, error } = await query;
-    if (!error && data) setSuivis(data);
+    if (!error && data) {
+      setSuivis(data);
+    }
     setLoading(false);
   };
 
@@ -56,12 +61,10 @@ export default function SuiviEvangelisation() {
       return;
     }
 
-    // si devient "actif" => mettre aussi à jour membre
     if (newStatus === "actif") {
       await supabase.from("membres").update({ statut: "actif" }).eq("id", suivi.membre.id);
     }
 
-    // refresh affichage
     fetchSuivis();
   };
 
@@ -79,10 +82,7 @@ export default function SuiviEvangelisation() {
         <select
           className="w-full border p-2 rounded-lg"
           value={selectedCellule}
-          onChange={(e) => {
-            setSelectedCellule(e.target.value);
-            setTimeout(fetchSuivis, 100); // recharge après sélection
-          }}
+          onChange={(e) => setSelectedCellule(e.target.value)}
         >
           <option value="">Toutes les cellules</option>
           {cellules.map((c) => (
@@ -132,6 +132,14 @@ export default function SuiviEvangelisation() {
                 </td>
               </tr>
             ))}
+
+            {suivis.length === 0 && (
+              <tr>
+                <td colSpan="5" className="text-center p-4 text-gray-500">
+                  Aucun contact trouvé pour cette cellule.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
