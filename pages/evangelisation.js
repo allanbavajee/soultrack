@@ -13,33 +13,18 @@ export default function Evangelisation() {
     fetchCellules();
   }, []);
 
-  // Récupérer uniquement les contacts non encore envoyés
   const fetchEvangelises = async () => {
     const { data, error } = await supabase
       .from("membres")
       .select("*")
-      .eq("statut", "evangelisé");
-    if (!error && data) {
-      // filtrer ceux déjà envoyés
-      const filtered = await Promise.all(
-        data.map(async (member) => {
-          const { data: suiviData } = await supabase
-            .from("suivis")
-            .select("*")
-            .eq("membre_id", member.id)
-            .eq("statut", "envoyé")
-            .single();
-          return suiviData ? null : member;
-        })
-      );
-      setEvangelises(filtered.filter(Boolean));
-    }
+      .eq("statut", "evangelisé"); // uniquement les evangelisés
+    if (!error && data) setEvangelises(data);
   };
 
   const fetchCellules = async () => {
     const { data, error } = await supabase
       .from("cellules")
-      .select("*");
+      .select("cellule,responsable,telephone");
     if (!error && data) setCellules(data);
   };
 
@@ -52,16 +37,16 @@ export default function Evangelisation() {
     });
   };
 
-  const handleWhatsAppGroup = async () => {
+  const handleWhatsAppGroup = () => {
     if (!selectedCellule) {
-      alert("Sélectionnez d'abord une cellule.");
+      alert("Sélectionne d'abord une cellule.");
       return;
     }
 
-    for (const member of Object.values(selectedContacts)) {
+    Object.values(selectedContacts).forEach((member) => {
       const prenomResponsable = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
       const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
-      if (!telDigits) continue;
+      if (!telDigits) return;
 
       const message = `👋 Salut ${prenomResponsable},
 
@@ -77,24 +62,13 @@ Voici ses infos :
 
 Merci pour ton cœur ❤️ et son amour ✨`;
 
-      // Ouvrir WhatsApp
       window.open(
         `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
         "_blank"
       );
+    });
 
-      // Ajouter dans la table suivis
-      await supabase.from("suivis").insert({
-        membre_id: member.id,
-        cellule_id: selectedCellule.id,
-        statut: "envoyé",
-        created_at: new Date(),
-      });
-    }
-
-    // Vider la sélection et recharger la liste
     setSelectedContacts({});
-    fetchEvangelises();
   };
 
   return (
@@ -103,20 +77,20 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         Évangélisés à envoyer aux cellules
       </h1>
 
-      {/* Choix cellule */}
+      {/* Choix cellule en haut */}
       <div className="mb-4 w-full max-w-md mx-auto">
         <label className="block mb-2 font-semibold">Choisir une cellule :</label>
         <select
           className="w-full p-2 border rounded-lg"
-          value={selectedCellule?.id || ""}
+          value={selectedCellule?.cellule || ""}
           onChange={(e) => {
-            const cellule = cellules.find((c) => c.id === e.target.value);
+            const cellule = cellules.find((c) => c.cellule === e.target.value);
             setSelectedCellule(cellule || null);
           }}
         >
           <option value="">-- Sélectionner --</option>
           {cellules.map((c) => (
-            <option key={c.id} value={c.id}>
+            <option key={c.cellule} value={c.cellule}>
               {c.cellule} ({c.responsable})
             </option>
           ))}
@@ -135,34 +109,44 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         </div>
       )}
 
-      {/* Liste tableau */}
-      <div className="overflow-x-auto w-full">
-        <table className="min-w-full bg-white border rounded-lg">
-          <thead>
-            <tr className="text-center">
-              <th className="px-4 py-2 border">Nom</th>
-              <th className="px-4 py-2 border">Prénom</th>
-              <th className="px-4 py-2 border">Cellule</th>
-              <th className="px-4 py-2 border">Envoyer</th>
-            </tr>
-          </thead>
-          <tbody>
-            {evangelises.map((member) => (
-              <tr key={member.id} className="text-center border-b">
-                <td className="px-4 py-2">{member.nom}</td>
-                <td className="px-4 py-2">{member.prenom}</td>
-                <td className="px-4 py-2">{selectedCellule?.cellule || "-"}</td>
-                <td className="px-4 py-2">
-                  <input
-                    type="checkbox"
-                    checked={!!selectedContacts[member.id]}
-                    onChange={() => handleCheckbox(member)}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Liste cartes evangelisés */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {evangelises.map((member) => (
+          <div
+            key={member.id}
+            className="bg-white w-full p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col"
+          >
+            <div className="flex justify-between items-start w-full">
+              <div className="w-full">
+                <h2 className="text-lg font-bold text-gray-800 mb-1">
+                  {member.prenom} {member.nom}
+                </h2>
+                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
+                <p className="text-sm font-bold text-orange-500">Statut : {member.statut}</p>
+              </div>
+            </div>
+
+            {/* Checkbox "Envoyer ce contact" */}
+            <div className="mt-2 flex items-center">
+              <input
+                type="checkbox"
+                className="mr-2"
+                checked={!!selectedContacts[member.id]}
+                onChange={() => handleCheckbox(member)}
+              />
+              <span>Envoyer ce contact</span>
+            </div>
+
+            {/* Détails */}
+            <div className="mt-2 text-sm text-gray-700 space-y-1">
+              <p>Email : {member.email || "—"}</p>
+              <p>Besoin : {member.besoin || "—"}</p>
+              <p>Ville : {member.ville || "—"}</p>
+              <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+              <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
