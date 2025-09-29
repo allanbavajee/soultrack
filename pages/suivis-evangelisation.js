@@ -6,8 +6,9 @@ export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState("");
-  const [editingStatus, setEditingStatus] = useState({}); // pour afficher le bouton valider
-  const [detailsOpen, setDetailsOpen] = useState({}); // pour afficher les détails
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentSuivi, setCurrentSuivi] = useState(null);
+  const [newStatus, setNewStatus] = useState("");
 
   useEffect(() => {
     fetchCellules();
@@ -17,7 +18,7 @@ export default function SuivisEvangelisation() {
   const fetchCellules = async () => {
     const { data, error } = await supabase
       .from("cellules")
-      .select("id, cellule, responsable");
+      .select("id, cellule");
     if (!error && data) setCellules(data);
   };
 
@@ -28,50 +29,66 @@ export default function SuivisEvangelisation() {
         id,
         statut,
         commentaire,
-        created_at,
-        membre:membre_id (id, prenom, nom, telephone, email, ville, besoin, infos_supplementaires)
+        membre:membre_id (id, prenom, nom, telephone, email, ville, besoin, infos_supplementaires, cellule_id)
       `)
-      .neq("statut", "actif"); // ne pas afficher les contacts déjà actifs
+      .neq("statut", "actif");
     if (!error && data) setSuivis(data);
   };
 
-  const handleChangeStatus = (suiviId, newStatus) => {
-    setSuivis((prev) =>
-      prev.map((s) => (s.id === suiviId ? { ...s, statut: newStatus } : s))
-    );
-    setEditingStatus((prev) => ({ ...prev, [suiviId]: true }));
+  const handleOpenModal = (suivi) => {
+    setCurrentSuivi(suivi);
+    setNewStatus(suivi.statut);
+    setModalOpen(true);
   };
 
-  const handleValidateStatus = async (suivi) => {
-    // Mettre à jour le statut dans la table suivis
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setCurrentSuivi(null);
+  };
+
+  const handleValidateStatus = async () => {
+    if (!currentSuivi) return;
+
     await supabase
       .from("suivis")
-      .update({ statut: suivi.statut })
-      .eq("id", suivi.id);
+      .update({ statut: newStatus })
+      .eq("id", currentSuivi.id);
 
-    // Si le statut devient actif, mettre à jour la table membres
-    if (suivi.statut === "actif") {
+    if (newStatus === "actif") {
       await supabase
         .from("membres")
         .update({ statut: "actif" })
-        .eq("id", suivi.membre.id);
+        .eq("id", currentSuivi.membre.id);
 
-      // Retirer le suivi de la liste
-      setSuivis((prev) => prev.filter((s) => s.id !== suivi.id));
+      setSuivis((prev) => prev.filter((s) => s.id !== currentSuivi.id));
+    } else {
+      setSuivis((prev) =>
+        prev.map((s) =>
+          s.id === currentSuivi.id ? { ...s, statut: newStatus } : s
+        )
+      );
     }
 
-    // Cacher le bouton valider
-    setEditingStatus((prev) => ({ ...prev, [suivi.id]: false }));
+    handleCloseModal();
   };
 
   const filteredSuivis = selectedCellule
     ? suivis.filter((s) => s.membre.cellule_id === selectedCellule)
     : suivis;
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "envoyé": return "bg-yellow-100 text-yellow-800";
+      case "en cours": return "bg-blue-100 text-blue-800";
+      case "refus": return "bg-red-100 text-red-800";
+      case "actif": return "bg-green-100 text-green-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      {/* Titre */}
-      <h1 className="text-3xl font-bold text-gray-800 text-center mb-6">
+      <h1 className="text-3xl font-bold text-center mb-6">
         Suivi des évangélisés
       </h1>
 
@@ -86,13 +103,13 @@ export default function SuivisEvangelisation() {
           <option value="">-- Toutes les cellules --</option>
           {cellules.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.cellule} ({c.responsable})
+              {c.cellule}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Tableau des suivis */}
+      {/* Tableau */}
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white border rounded-lg">
           <thead>
@@ -110,55 +127,18 @@ export default function SuivisEvangelisation() {
                 <td className="py-2 px-4 border">{s.membre.nom}</td>
                 <td className="py-2 px-4 border">{s.membre.prenom}</td>
                 <td className="py-2 px-4 border">
-                  {
-                    cellules.find((c) => c.id === s.membre.cellule_id)
-                      ?.cellule || "—"
-                  }
+                  {cellules.find((c) => c.id === s.membre.cellule_id)?.cellule || "—"}
                 </td>
-                <td className="py-2 px-4 border">
-                  <select
-                    value={s.statut}
-                    onChange={(e) => handleChangeStatus(s.id, e.target.value)}
-                    className="border rounded px-2 py-1"
-                  >
-                    <option value="envoyé">Envoyé</option>
-                    <option value="en cours">En cours</option>
-                    <option value="refus">Refus</option>
-                    <option value="actif">Actif</option>
-                  </select>
-                  {editingStatus[s.id] && (
-                    <button
-                      onClick={() => handleValidateStatus(s)}
-                      className="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                      Valider
-                    </button>
-                  )}
+                <td className={`py-2 px-4 border font-semibold ${getStatusColor(s.statut)}`}>
+                  {s.statut}
                 </td>
                 <td className="py-2 px-4 border">
                   <span
                     className="text-blue-500 cursor-pointer underline"
-                    onClick={() =>
-                      setDetailsOpen((prev) => ({
-                        ...prev,
-                        [s.id]: !prev[s.id],
-                      }))
-                    }
+                    onClick={() => handleOpenModal(s)}
                   >
                     Afficher
                   </span>
-                  {detailsOpen[s.id] && (
-                    <div className="mt-2 text-left bg-gray-100 p-2 rounded">
-                      <p>Nom : {s.membre.nom}</p>
-                      <p>Prénom : {s.membre.prenom}</p>
-                      <p>Téléphone : {s.membre.telephone}</p>
-                      <p>Email : {s.membre.email || "—"}</p>
-                      <p>Ville : {s.membre.ville || "—"}</p>
-                      <p>Besoin : {s.membre.besoin || "—"}</p>
-                      <p>Infos supplémentaires : {s.membre.infos_supplementaires || "—"}</p>
-                      <p>Commentaire : {s.commentaire || "—"}</p>
-                    </div>
-                  )}
                 </td>
               </tr>
             ))}
@@ -172,6 +152,52 @@ export default function SuivisEvangelisation() {
           </tbody>
         </table>
       </div>
+
+      {/* Modal popup moderne */}
+      {modalOpen && currentSuivi && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-xl w-11/12 md:w-1/2 p-6 shadow-lg relative animate-fadeIn">
+            <button
+              onClick={handleCloseModal}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 font-bold text-lg"
+            >
+              ✕
+            </button>
+            <h2 className="text-2xl font-bold mb-4 border-b pb-2">
+              {currentSuivi.membre.prenom} {currentSuivi.membre.nom}
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-gray-700 mb-4">
+              <p><span className="font-semibold">Téléphone:</span> {currentSuivi.membre.telephone}</p>
+              <p><span className="font-semibold">Email:</span> {currentSuivi.membre.email || "—"}</p>
+              <p><span className="font-semibold">Ville:</span> {currentSuivi.membre.ville || "—"}</p>
+              <p><span className="font-semibold">Besoin:</span> {currentSuivi.membre.besoin || "—"}</p>
+              <p className="md:col-span-2"><span className="font-semibold">Infos supplémentaires:</span> {currentSuivi.membre.infos_supplementaires || "—"}</p>
+              <p className="md:col-span-2"><span className="font-semibold">Commentaire:</span> {currentSuivi.commentaire || "—"}</p>
+            </div>
+
+            <div className="flex items-center mt-4">
+              <label className="font-semibold mr-2">Changer le statut :</label>
+              <select
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value)}
+                className="border rounded px-3 py-1"
+              >
+                <option value="envoyé">Envoyé</option>
+                <option value="en cours">En cours</option>
+                <option value="refus">Refus</option>
+                <option value="actif">Actif</option>
+              </select>
+              <button
+                onClick={handleValidateStatus}
+                className="ml-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Valider
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
