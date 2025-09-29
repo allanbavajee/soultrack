@@ -1,4 +1,4 @@
-/* pages/membres-suivis.js */
+/* pages/membres-hub */
 import Link from "next/link";
 import { useRouter } from "next/router";
 
