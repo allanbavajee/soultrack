@@ -28,17 +28,16 @@ export default function ListMembers() {
   };
 
   const handleChangeStatus = async (id, newStatus) => {
-    // update en base
     await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
-
-    // update en local
     setMembers((prev) =>
       prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
     );
   };
 
+  // Envoi WhatsApp et création du suivi
   const handleWhatsAppSingle = async (member, cellule) => {
     if (!cellule) return;
+
     const prenomResponsable = cellule.responsable.split(" ")[0];
     const message = `👋 Salut ${prenomResponsable},
 
@@ -46,9 +45,7 @@ export default function ListMembers() {
 Voici ses infos :  
 
 - 👤 Nom : ${member.prenom} ${member.nom}  
-- 📱 Téléphone : ${member.telephone} ${
-      member.is_whatsapp ? "(WhatsApp ✅)" : ""
-    }  
+- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
 - 📧 Email : ${member.email || "—"}  
 - 🏙️ Ville : ${member.ville || "—"}  
 - 🙏 Besoin : ${member.besoin || "—"}  
@@ -62,18 +59,25 @@ Merci pour ton cœur ❤️ et son amour ✨`;
       "_blank"
     );
 
-    // mettre à jour le statut en "actif"
+    // 1️⃣ Mettre à jour le statut du membre en "actif"
     await supabase.from("membres").update({ statut: "actif" }).eq("id", member.id);
 
-    // mettre à jour en local
+    // 2️⃣ Créer un suivi avec statut "envoyé"
+    await supabase.from("suivis_membres").insert([
+      {
+        membre_id: member.id,
+        cellule_id: cellule.id,
+        statut: "envoyé",
+      },
+    ]);
+
+    // 3️⃣ Mise à jour locale
     setMembers((prev) =>
-      prev.map((m) =>
-        m.id === member.id ? { ...m, statut: "actif" } : m
-      )
+      prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m))
     );
   };
 
-  // WhatsApp groupé
+  // WhatsApp groupé pour évangélisés
   const handleWhatsAppGroup = () => {
     Object.entries(selectedEvangelises).forEach(([memberId, membre]) => {
       const cellule = selectedCellules[memberId];
@@ -90,12 +94,12 @@ Merci pour ton cœur ❤️ et son amour ✨`;
   });
 
   const getBorderColor = (member) => {
-    if (member.star) return "#FBC02D"; // jaune
-    if (member.statut === "actif") return "#4285F4"; // bleu
-    if (member.statut === "a déjà mon église") return "#EA4335"; // rouge
-    if (member.statut === "ancien") return "#999999"; // gris
+    if (member.star) return "#FBC02D";
+    if (member.statut === "actif") return "#4285F4";
+    if (member.statut === "a déjà mon église") return "#EA4335";
+    if (member.statut === "ancien") return "#999999";
     if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
-      return "#34A853"; // vert
+      return "#34A853";
   };
 
   return (
@@ -160,15 +164,10 @@ Merci pour ton cœur ❤️ et son amour ✨`;
                     <span className="ml-2 text-yellow-400 font-bold">⭐</span>
                   )}
                 </h2>
-                <p className="text-sm text-gray-600 mb-1">
-                  📱 {member.telephone}
-                </p>
+                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
                 <p
                   className="text-sm"
-                  style={{
-                    color: getBorderColor(member),
-                    fontWeight: "bold",
-                  }}
+                  style={{ color: getBorderColor(member), fontWeight: "bold" }}
                 >
                   {member.statut}
                 </p>
@@ -267,10 +266,7 @@ Merci pour ton cœur ❤️ et son amour ✨`;
                     {selectedCellules[member.id] && (
                       <button
                         onClick={() =>
-                          handleWhatsAppSingle(
-                            member,
-                            selectedCellules[member.id]
-                          )
+                          handleWhatsAppSingle(member, selectedCellules[member.id])
                         }
                         className="mt-2 w-full py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600"
                       >
