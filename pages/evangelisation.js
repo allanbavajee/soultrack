@@ -6,7 +6,7 @@ export default function Evangelisation() {
   const [evangelises, setEvangelises] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState(null);
-  const [selectedContacts, setSelectedContacts] = useState({}); // checkbox
+  const [selectedContacts, setSelectedContacts] = useState({});
 
   useEffect(() => {
     fetchEvangelises();
@@ -14,18 +14,17 @@ export default function Evangelisation() {
   }, []);
 
   const fetchEvangelises = async () => {
+    // Ne récupérer que les contacts non envoyés
     const { data, error } = await supabase
       .from("membres")
       .select("*")
-      .eq("statut", "evangelisé"); // uniquement les evangelisés
+      .eq("statut", "evangelisé");
     if (!error && data) setEvangelises(data);
   };
 
   const fetchCellules = async () => {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("cellule,responsable,telephone");
-    if (!error && data) setCellules(data);
+    const { data } = await supabase.from("cellules").select("cellule,responsable,telephone");
+    if (data) setCellules(data);
   };
 
   const handleCheckbox = (member) => {
@@ -37,38 +36,45 @@ export default function Evangelisation() {
     });
   };
 
-  const handleWhatsAppGroup = () => {
+  const handleWhatsAppGroup = async () => {
     if (!selectedCellule) {
       alert("Sélectionne d'abord une cellule.");
       return;
     }
 
-    Object.values(selectedContacts).forEach((member) => {
-      const prenomResponsable = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
-      const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
-      if (!telDigits) return;
+    const prenomResponsable = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
+    const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
+    if (!telDigits) return;
 
-      const message = `👋 Salut ${prenomResponsable},
-
-🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
-Voici ses infos :  
-
-- 👤 Nom : ${member.prenom} ${member.nom}  
-- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
-- 📧 Email : ${member.email || "—"}  
-- 🏙️ Ville : ${member.ville || "—"}  
-- 🙏 Besoin : ${member.besoin || "—"}  
-- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}  
-
-Merci pour ton cœur ❤️ et son amour ✨`;
-
-      window.open(
-        `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
-        "_blank"
-      );
+    // Construire le message pour tous les contacts sélectionnés
+    let message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé de nouvelles âmes à suivre:\n\n`;
+    Object.values(selectedContacts).forEach((member, index) => {
+      message += `- 👤 Nom : ${member.prenom} ${member.nom}\n`;
+      message += `- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}\n`;
+      message += `- 📧 Email : ${member.email || "—"}\n`;
+      message += `- 🏙️ Ville : ${member.ville || "—"}\n`;
+      message += `- 🙏 Besoin : ${member.besoin || "—"}\n`;
+      message += `- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\n`;
     });
 
+    // Ouvrir un seul lien WhatsApp avec tous les contacts
+    window.open(`https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`, "_blank");
+
+    // Marquer les contacts comme envoyés
+    await Promise.all(
+      Object.values(selectedContacts).map(async (member) => {
+        await supabase
+          .from("suivis")
+          .insert({
+            membre_id: member.id,
+            cellule_id: selectedCellule.id,
+            statut: "envoyé",
+          });
+      })
+    );
+
     setSelectedContacts({});
+    fetchEvangelises(); // Mettre à jour la liste pour ne plus afficher les contacts envoyés
   };
 
   return (
@@ -77,7 +83,6 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         Évangélisés à envoyer aux cellules
       </h1>
 
-      {/* Choix cellule en haut */}
       <div className="mb-4 w-full max-w-md mx-auto">
         <label className="block mb-2 font-semibold">Choisir une cellule :</label>
         <select
@@ -97,7 +102,6 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         </select>
       </div>
 
-      {/* Bouton WhatsApp groupé */}
       {Object.keys(selectedContacts).length > 0 && (
         <div className="mb-4 w-full max-w-md mx-auto">
           <button
@@ -109,7 +113,6 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         </div>
       )}
 
-      {/* Liste cartes evangelisés */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {evangelises.map((member) => (
           <div
@@ -126,7 +129,6 @@ Merci pour ton cœur ❤️ et son amour ✨`;
               </div>
             </div>
 
-            {/* Checkbox "Envoyer ce contact" */}
             <div className="mt-2 flex items-center">
               <input
                 type="checkbox"
@@ -137,7 +139,6 @@ Merci pour ton cœur ❤️ et son amour ✨`;
               <span>Envoyer ce contact</span>
             </div>
 
-            {/* Détails */}
             <div className="mt-2 text-sm text-gray-700 space-y-1">
               <p>Email : {member.email || "—"}</p>
               <p>Besoin : {member.besoin || "—"}</p>
@@ -151,3 +152,4 @@ Merci pour ton cœur ❤️ et son amour ✨`;
     </div>
   );
 }
+
