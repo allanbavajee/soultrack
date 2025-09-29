@@ -1,8 +1,10 @@
 // pages/evangelisation.js
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { useRouter } from "next/router";
 
 export default function Evangelisation() {
+  const router = useRouter();
   const [evangelises, setEvangelises] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState(null);
@@ -25,7 +27,7 @@ export default function Evangelisation() {
   const fetchCellules = async () => {
     const { data, error } = await supabase
       .from("cellules")
-      .select("cellule,responsable,telephone");
+      .select("id, cellule, responsable, telephone");
     if (!error && data) setCellules(data);
   };
 
@@ -38,43 +40,56 @@ export default function Evangelisation() {
     });
   };
 
-  const handleWhatsAppGroup = () => {
+  const handleWhatsAppGroup = async () => {
     if (!selectedCellule) {
       alert("Sélectionne d'abord une cellule.");
       return;
     }
 
-    Object.values(selectedContacts).forEach((member) => {
-      const prenomResponsable = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
-      const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
-      if (!telDigits) return;
+    const contactsToSend = Object.values(selectedContacts);
+    if (contactsToSend.length === 0) return;
 
-      const message = `👋 Salut ${prenomResponsable},
+    const prenomResponsable = selectedCellule.responsable.split(" ")[0] || "Frère/Soeur";
+    const telDigits = (selectedCellule.telephone || "").replace(/\D/g, "");
+    if (!telDigits) return;
 
-🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
-Voici ses infos :  
-
-- 👤 Nom : ${member.prenom} ${member.nom}  
-- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
-- 📧 Email : ${member.email || "—"}  
-- 🏙 Ville : ${member.ville || "—"}  
-- 🙏 Besoin : ${member.besoin || "—"}  
-- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}  
-
-Merci pour ton cœur ❤️ et son amour ✨`;
-
-      window.open(
-        `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
-        "_blank"
-      );
+    // Construire le message pour tous les contacts
+    let message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé de nouvelles âmes à suivre:\n\n`;
+    contactsToSend.forEach((member) => {
+      message += `- 👤 Nom : ${member.prenom} ${member.nom}\n`;
+      message += `- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}\n`;
+      message += `- 📧 Email : ${member.email || "—"}\n`;
+      message += `- 🏙 Ville : ${member.ville || "—"}\n`;
+      message += `- 🙏 Besoin : ${member.besoin || "—"}\n`;
+      message += `- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\n`;
     });
 
+    window.open(`https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`, "_blank");
+
+    // Marquer les contacts comme envoyés dans la table "suivis"
+    for (const member of contactsToSend) {
+      await supabase.from("suivis").insert({
+        membre_id: member.id,
+        cellule_id: selectedCellule.id,
+        statut: "envoyé",
+      });
+    }
+
+    // Retirer les contacts envoyés de la liste
+    setEvangelises((prev) => prev.filter((m) => !selectedContacts[m.id]));
     setSelectedContacts({});
-    fetchEvangelises();
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+      {/* Flèche retour */}
+      <button
+        className="text-orange-500 font-semibold mb-4"
+        onClick={() => router.back()}
+      >
+        ← Retour
+      </button>
+
       <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
         Évangélisés à envoyer aux cellules
       </h1>
@@ -92,7 +107,7 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         >
           <option value="">-- Sélectionner --</option>
           {cellules.map((c) => (
-            <option key={c.cellule} value={c.cellule}>
+            <option key={c.id} value={c.cellule}>
               {c.cellule} ({c.responsable})
             </option>
           ))}
@@ -158,3 +173,4 @@ Merci pour ton cœur ❤️ et son amour ✨`;
     </div>
   );
 }
+
