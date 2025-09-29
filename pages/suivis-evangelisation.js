@@ -1,93 +1,89 @@
-/* pages/suivis-evangelisation.js */
+// pages/suivis-evangelisation.js
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import toast, { Toaster } from "react-hot-toast";
 
 export default function SuivisEvangelisation() {
   const [suivis, setSuivis] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState("");
-  const [detailsVisible, setDetailsVisible] = useState(null);
-  const [newStatut, setNewStatut] = useState("");
+  const [editingStatus, setEditingStatus] = useState({}); // pour afficher le bouton valider
+  const [detailsOpen, setDetailsOpen] = useState({}); // pour afficher les détails
 
   useEffect(() => {
     fetchCellules();
-    if (selectedCellule) fetchSuivis(selectedCellule);
-  }, [selectedCellule]);
+    fetchSuivis();
+  }, []);
 
   const fetchCellules = async () => {
     const { data, error } = await supabase
       .from("cellules")
-      .select("id,cellule,responsable");
+      .select("id, cellule, responsable");
     if (!error && data) setCellules(data);
   };
 
-  const fetchSuivis = async (celluleId) => {
-    let query = supabase
+  const fetchSuivis = async () => {
+    const { data, error } = await supabase
       .from("suivis")
-      .select("id, statut, commentaire, membres: membre_id (*) , cellules: cellule_id (*)")
-      .eq("statut", "envoyé");
-
-    if (celluleId) query = query.eq("cellule_id", celluleId);
-
-    const { data, error } = await query;
+      .select(`
+        id,
+        statut,
+        commentaire,
+        created_at,
+        membre:membre_id (id, prenom, nom, telephone, email, ville, besoin, infos_supplementaires)
+      `)
+      .neq("statut", "actif"); // ne pas afficher les contacts déjà actifs
     if (!error && data) setSuivis(data);
   };
 
-  const handleValidate = async (suivi) => {
-    if (!newStatut) {
-      toast.error("Choisissez un statut avant de valider.");
-      return;
-    }
+  const handleChangeStatus = (suiviId, newStatus) => {
+    setSuivis((prev) =>
+      prev.map((s) => (s.id === suiviId ? { ...s, statut: newStatus } : s))
+    );
+    setEditingStatus((prev) => ({ ...prev, [suiviId]: true }));
+  };
 
+  const handleValidateStatus = async (suivi) => {
     // Mettre à jour le statut dans la table suivis
-    const { error: errSuivi } = await supabase
+    await supabase
       .from("suivis")
-      .update({ statut: newStatut })
+      .update({ statut: suivi.statut })
       .eq("id", suivi.id);
 
-    if (errSuivi) {
-      toast.error("Erreur lors de la mise à jour du statut");
-      return;
-    }
-
-    // Si actif, mettre aussi dans la table membres
-    if (newStatut === "actif") {
+    // Si le statut devient actif, mettre à jour la table membres
+    if (suivi.statut === "actif") {
       await supabase
         .from("membres")
         .update({ statut: "actif" })
-        .eq("id", suivi.membre_id);
+        .eq("id", suivi.membre.id);
+
+      // Retirer le suivi de la liste
       setSuivis((prev) => prev.filter((s) => s.id !== suivi.id));
-      toast.success("Contact validé et transféré dans la liste des membres actifs");
-    } else {
-      fetchSuivis(selectedCellule);
-      toast.success("Statut mis à jour avec succès");
     }
 
-    setDetailsVisible(null);
-    setNewStatut("");
+    // Cacher le bouton valider
+    setEditingStatus((prev) => ({ ...prev, [suivi.id]: false }));
   };
+
+  const filteredSuivis = selectedCellule
+    ? suivis.filter((s) => s.membre.cellule_id === selectedCellule)
+    : suivis;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <Toaster position="top-right" reverseOrder={false} />
-
-      {/* Titre et retour */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">
-          Suivi des évangélisés
-        </h1>
-      </div>
+      {/* Titre */}
+      <h1 className="text-3xl font-bold text-gray-800 text-center mb-6">
+        Suivi des évangélisés
+      </h1>
 
       {/* Filtre cellule */}
-      <div className="mb-4 w-full max-w-md">
+      <div className="mb-6 max-w-md mx-auto">
         <label className="block mb-2 font-semibold">Filtrer par cellule :</label>
         <select
           className="w-full p-2 border rounded-lg"
           value={selectedCellule}
           onChange={(e) => setSelectedCellule(e.target.value)}
         >
-          <option value="">-- Toutes --</option>
+          <option value="">-- Toutes les cellules --</option>
           {cellules.map((c) => (
             <option key={c.id} value={c.id}>
               {c.cellule} ({c.responsable})
@@ -96,88 +92,86 @@ export default function SuivisEvangelisation() {
         </select>
       </div>
 
-      {/* Table */}
+      {/* Tableau des suivis */}
       <div className="overflow-x-auto">
-        <table className="min-w-full table-auto border-collapse border border-gray-300">
+        <table className="min-w-full bg-white border rounded-lg">
           <thead>
             <tr className="bg-gray-200 text-center">
-              <th className="border px-4 py-2">Nom</th>
-              <th className="border px-4 py-2">Prénom</th>
-              <th className="border px-4 py-2">Cellule</th>
-              <th className="border px-4 py-2">Statut</th>
-              <th className="border px-4 py-2">Détails</th>
+              <th className="py-2 px-4 border">Nom</th>
+              <th className="py-2 px-4 border">Prénom</th>
+              <th className="py-2 px-4 border">Cellule</th>
+              <th className="py-2 px-4 border">Statut</th>
+              <th className="py-2 px-4 border">Détails</th>
             </tr>
           </thead>
           <tbody>
-            {suivis.map((s) => (
-              <tr key={s.id} className="text-center border">
-                <td className="border px-4 py-2">{s.membres.prenom}</td>
-                <td className="border px-4 py-2">{s.membres.nom}</td>
-                <td className="border px-4 py-2">{s.cellules.cellule}</td>
-                <td className="border px-4 py-2">{s.statut}</td>
-                <td className="border px-4 py-2">
+            {filteredSuivis.map((s) => (
+              <tr key={s.id} className="text-center border-b">
+                <td className="py-2 px-4 border">{s.membre.nom}</td>
+                <td className="py-2 px-4 border">{s.membre.prenom}</td>
+                <td className="py-2 px-4 border">
+                  {
+                    cellules.find((c) => c.id === s.membre.cellule_id)
+                      ?.cellule || "—"
+                  }
+                </td>
+                <td className="py-2 px-4 border">
+                  <select
+                    value={s.statut}
+                    onChange={(e) => handleChangeStatus(s.id, e.target.value)}
+                    className="border rounded px-2 py-1"
+                  >
+                    <option value="envoyé">Envoyé</option>
+                    <option value="en cours">En cours</option>
+                    <option value="refus">Refus</option>
+                    <option value="actif">Actif</option>
+                  </select>
+                  {editingStatus[s.id] && (
+                    <button
+                      onClick={() => handleValidateStatus(s)}
+                      className="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      Valider
+                    </button>
+                  )}
+                </td>
+                <td className="py-2 px-4 border">
                   <span
-                    className="text-blue-500 cursor-pointer hover:underline"
-                    onClick={() => setDetailsVisible(s.id === detailsVisible ? null : s.id)}
+                    className="text-blue-500 cursor-pointer underline"
+                    onClick={() =>
+                      setDetailsOpen((prev) => ({
+                        ...prev,
+                        [s.id]: !prev[s.id],
+                      }))
+                    }
                   >
                     Afficher
                   </span>
+                  {detailsOpen[s.id] && (
+                    <div className="mt-2 text-left bg-gray-100 p-2 rounded">
+                      <p>Nom : {s.membre.nom}</p>
+                      <p>Prénom : {s.membre.prenom}</p>
+                      <p>Téléphone : {s.membre.telephone}</p>
+                      <p>Email : {s.membre.email || "—"}</p>
+                      <p>Ville : {s.membre.ville || "—"}</p>
+                      <p>Besoin : {s.membre.besoin || "—"}</p>
+                      <p>Infos supplémentaires : {s.membre.infos_supplementaires || "—"}</p>
+                      <p>Commentaire : {s.commentaire || "—"}</p>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}
+            {filteredSuivis.length === 0 && (
+              <tr>
+                <td colSpan="5" className="py-4 text-center text-gray-500">
+                  Aucun suivi disponible
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
-
-      {/* Modal/Details */}
-      {detailsVisible && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-11/12 max-w-lg relative">
-            <button
-              onClick={() => setDetailsVisible(null)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 font-bold"
-            >
-              ✕
-            </button>
-            {suivis
-              .filter((s) => s.id === detailsVisible)
-              .map((s) => (
-                <div key={s.id} className="space-y-2">
-                  <p><strong>Nom :</strong> {s.membres.nom}</p>
-                  <p><strong>Prénom :</strong> {s.membres.prenom}</p>
-                  <p><strong>Téléphone :</strong> {s.membres.telephone}</p>
-                  <p><strong>Email :</strong> {s.membres.email || "—"}</p>
-                  <p><strong>Ville :</strong> {s.membres.ville || "—"}</p>
-                  <p><strong>Besoin :</strong> {s.membres.besoin || "—"}</p>
-                  <p><strong>Infos supplémentaires :</strong> {s.membres.infos_supplementaires || "—"}</p>
-
-                  {/* Changer le statut */}
-                  <div className="mt-4">
-                    <label className="block mb-1 font-semibold">Changer le statut :</label>
-                    <select
-                      className="border p-2 rounded-lg w-full"
-                      value={newStatut}
-                      onChange={(e) => setNewStatut(e.target.value)}
-                    >
-                      <option value="">-- Sélectionner --</option>
-                      <option value="en cours">En cours</option>
-                      <option value="actif">Actif</option>
-                      <option value="refus">Refus</option>
-                    </select>
-                    {newStatut && (
-                      <button
-                        onClick={() => handleValidate(s)}
-                        className="mt-2 w-full py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                      >
-                        Valider
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
