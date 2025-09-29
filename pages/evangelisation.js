@@ -7,21 +7,33 @@ export default function Evangelisation() {
   const [cellules, setCellules] = useState([]);
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [selectedContacts, setSelectedContacts] = useState({}); // checkbox
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchEvangelises();
     fetchCellules();
   }, []);
 
+  // Récupérer uniquement les contacts non encore envoyés
   const fetchEvangelises = async () => {
-    setLoading(true);
     const { data, error } = await supabase
       .from("membres")
       .select("*")
-      .eq("statut", "evangelisé"); // uniquement les evangelisés non envoyés
-    if (!error && data) setEvangelises(data);
-    setLoading(false);
+      .eq("statut", "evangelisé");
+    if (!error && data) {
+      // filtrer ceux déjà envoyés
+      const filtered = await Promise.all(
+        data.map(async (member) => {
+          const { data: suiviData } = await supabase
+            .from("suivis")
+            .select("*")
+            .eq("membre_id", member.id)
+            .eq("statut", "envoyé")
+            .single();
+          return suiviData ? null : member;
+        })
+      );
+      setEvangelises(filtered.filter(Boolean));
+    }
   };
 
   const fetchCellules = async () => {
@@ -42,7 +54,7 @@ export default function Evangelisation() {
 
   const handleWhatsAppGroup = async () => {
     if (!selectedCellule) {
-      alert("Sélectionne d'abord une cellule.");
+      alert("Sélectionnez d'abord une cellule.");
       return;
     }
 
@@ -65,32 +77,25 @@ Voici ses infos :
 
 Merci pour ton cœur ❤️ et son amour ✨`;
 
-      // Insérer dans la table suivis
-      const { error: insertError } = await supabase.from("suivis").insert([
-        {
-          membre_id: member.id,
-          cellule_id: selectedCellule.id,
-          statut: "envoyé",
-          created_at: new Date(),
-        },
-      ]);
+      // Ouvrir WhatsApp
+      window.open(
+        `https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
 
-      if (insertError) {
-        console.error("Erreur lors de l'ajout au suivi:", insertError.message);
-        continue;
-      }
-
-      window.open(`https://wa.me/${telDigits}?text=${encodeURIComponent(message)}`, "_blank");
+      // Ajouter dans la table suivis
+      await supabase.from("suivis").insert({
+        membre_id: member.id,
+        cellule_id: selectedCellule.id,
+        statut: "envoyé",
+        created_at: new Date(),
+      });
     }
 
-    // Retirer les contacts envoyés de la liste
-    setEvangelises((prev) =>
-      prev.filter((m) => !Object.keys(selectedContacts).includes(m.id))
-    );
+    // Vider la sélection et recharger la liste
     setSelectedContacts({});
+    fetchEvangelises();
   };
-
-  if (loading) return <p className="text-center mt-20 text-gray-600">Chargement...</p>;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
@@ -98,7 +103,7 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         Évangélisés à envoyer aux cellules
       </h1>
 
-      {/* Choix cellule en haut */}
+      {/* Choix cellule */}
       <div className="mb-4 w-full max-w-md mx-auto">
         <label className="block mb-2 font-semibold">Choisir une cellule :</label>
         <select
@@ -130,44 +135,34 @@ Merci pour ton cœur ❤️ et son amour ✨`;
         </div>
       )}
 
-      {/* Liste cartes evangelisés */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {evangelises.map((member) => (
-          <div
-            key={member.id}
-            className="bg-white w-full p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col"
-          >
-            <div className="flex justify-between items-start w-full">
-              <div className="w-full">
-                <h2 className="text-lg font-bold text-gray-800 mb-1">
-                  {member.prenom} {member.nom}
-                </h2>
-                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone}</p>
-                <p className="text-sm font-bold text-orange-500">Statut : {member.statut}</p>
-              </div>
-            </div>
-
-            {/* Checkbox "Envoyer ce contact" */}
-            <div className="mt-2 flex items-center">
-              <input
-                type="checkbox"
-                className="mr-2"
-                checked={!!selectedContacts[member.id]}
-                onChange={() => handleCheckbox(member)}
-              />
-              <span>Envoyer ce contact</span>
-            </div>
-
-            {/* Détails */}
-            <div className="mt-2 text-sm text-gray-700 space-y-1">
-              <p>Email : {member.email || "—"}</p>
-              <p>Besoin : {member.besoin || "—"}</p>
-              <p>Ville : {member.ville || "—"}</p>
-              <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
-              <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-            </div>
-          </div>
-        ))}
+      {/* Liste tableau */}
+      <div className="overflow-x-auto w-full">
+        <table className="min-w-full bg-white border rounded-lg">
+          <thead>
+            <tr className="text-center">
+              <th className="px-4 py-2 border">Nom</th>
+              <th className="px-4 py-2 border">Prénom</th>
+              <th className="px-4 py-2 border">Cellule</th>
+              <th className="px-4 py-2 border">Envoyer</th>
+            </tr>
+          </thead>
+          <tbody>
+            {evangelises.map((member) => (
+              <tr key={member.id} className="text-center border-b">
+                <td className="px-4 py-2">{member.nom}</td>
+                <td className="px-4 py-2">{member.prenom}</td>
+                <td className="px-4 py-2">{selectedCellule?.cellule || "-"}</td>
+                <td className="px-4 py-2">
+                  <input
+                    type="checkbox"
+                    checked={!!selectedContacts[member.id]}
+                    onChange={() => handleCheckbox(member)}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
