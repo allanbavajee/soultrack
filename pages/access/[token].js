@@ -9,28 +9,26 @@ export default function AccessTokenPage() {
   useEffect(() => {
     if (!token) return;
 
-    const validateToken = async () => {
-      try {
-        const res = await fetch(`/api/validate-token?token=${token}`);
-        
-        if (res.redirected) {
-          // Redirection automatique vers la page finale
-          window.location.href = res.url;
-        } else {
-          const data = await res.json();
-          alert(data.message || "Token invalide");
-          router.push("/"); // Redirection vers l'accueil si token invalide
+    // Appel à l'API pour valider le token
+    fetch(`/api/validate-token?token=${token}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.valid === false) {
+          alert("Lien invalide ou expiré !");
+          router.replace("/"); // redirige vers la page d'accueil si lien invalide
         }
-      } catch (err) {
-        console.error("Erreur lors de la validation du token :", err);
-        alert("Erreur serveur lors de la validation du lien");
-        router.push("/");
-      }
-    };
-
-    validateToken();
+        // Si valide, l'API redirige automatiquement, donc pas besoin de plus ici
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Erreur lors de la vérification du lien.");
+        router.replace("/");
+      });
   }, [token, router]);
 
-  // Rien n'est affiché, on ne voit pas la page intermédiaire
-  return null;
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-lg font-semibold">Vérification du lien...</p>
+    </div>
+  );
 }
