@@ -1,51 +1,74 @@
+// pages/acces.js
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { supabase } from "../lib/supabaseClient";
 
-export default function AccessPage() {
-  const router = useRouter();
-  const { token } = router.query;
-  const [role, setRole] = useState(null);
+export default function AccessPage({ token }) {
+  const [accessType, setAccessType] = useState(null);
+  const [valid, setValid] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Vérifier le token à la récupération de l'URL
   useEffect(() => {
-    if (!token) return;
+    const checkToken = async () => {
+      if (!token) {
+        setValid(false);
+        setLoading(false);
+        return;
+      }
 
-    // Liste des tokens valides (à stocker côté supabase dans la vraie vie)
-    const validTokens = {
-      "MEMBER123": "add_member",
-      "EVANG123": "add_evangelise",
+      const { data, error } = await supabase
+        .from("access_tokens")
+        .select("access_type, expires_at")
+        .eq("token", token)
+        .single();
+
+      if (error || !data) {
+        setValid(false);
+      } else {
+        const now = new Date();
+        const expires = new Date(data.expires_at);
+        if (now > expires) {
+          setValid(false);
+        } else {
+          setAccessType(data.access_type);
+          setValid(true);
+        }
+      }
+      setLoading(false);
     };
 
-    if (validTokens[token]) {
-      setRole(validTokens[token]);
-      localStorage.setItem("role_access", validTokens[token]);
-    } else {
-      setRole("invalid");
-    }
+    checkToken();
   }, [token]);
 
-  if (!token) return <p>Chargement...</p>;
-  if (role === "invalid") return <p>Token invalide ou expiré.</p>;
+  if (loading) return <p className="text-center mt-10">Chargement...</p>;
+  if (!valid) return <p className="text-center mt-10 text-red-600">Lien invalide ou expiré</p>;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-      <h1 className="text-3xl font-bold mb-6">Bienvenue sur la plateforme</h1>
-      {role === "add_member" && (
-        <button
-          className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600"
-          onClick={() => router.push("/add-member")}
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+      <h1 className="text-3xl font-bold mb-6">Accès spécial</h1>
+
+      {accessType === "ajouter_membre" && (
+        <a
+          href="/add-member" // lien vers la page ajouter membre
+          className="px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
         >
-          Ajouter un membre
-        </button>
+          ➕ Ajouter Membre
+        </a>
       )}
-      {role === "add_evangelise" && (
-        <button
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-          onClick={() => router.push("/add-evangelise")}
+
+      {accessType === "ajouter_evangeliser" && (
+        <a
+          href="/add-evangeliser" // lien vers la page ajouter evangeliser
+          className="px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition"
         >
-          Ajouter un évangélisé
-        </button>
+          ➕ Ajouter Evangeliser
+        </a>
       )}
     </div>
   );
+}
+
+// Récupération du token depuis l'URL
+export async function getServerSideProps(context) {
+  const token = context.query.token || null;
+  return { props: { token } };
 }
