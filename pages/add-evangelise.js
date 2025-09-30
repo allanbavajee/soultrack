@@ -1,6 +1,6 @@
 // pages/add-evangelise.js
 import { useState } from "react";
-import supabase from "../../lib/supabaseClient"; // ou "../lib/supabaseClient" selon le chemin
+import supabase from "../lib/supabaseClient"; // <- chemin corrigé
 import { useRouter } from "next/router";
 
 export default function AddEvangelise() {
