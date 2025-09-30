@@ -1,113 +1,108 @@
 // pages/admin/access-tokens.js
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
-import { v4 as uuidv4 } from "uuid";
 
-export default function AccessTokenAdmin() {
+// Fonction pour générer un UUID sans package externe
+function generateUUID() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0,
+      v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+export default function AccessTokens() {
   const [users, setUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState("");
-  const [accessType, setAccessType] = useState("ajouter_membre");
-  const [expiresAt, setExpiresAt] = useState("");
-  const [generatedLink, setGeneratedLink] = useState("");
+  const [tokens, setTokens] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchUsers();
+    fetchTokens();
   }, []);
 
+  // Récupérer tous les users pour générer des tokens
   const fetchUsers = async () => {
     const { data, error } = await supabase.from("profiles").select("id, username, role");
-    if (!error && data) setUsers(data);
+    if (!error) setUsers(data);
   };
 
-  const generateToken = async () => {
-    if (!selectedUser) return alert("Veuillez sélectionner un utilisateur");
+  // Récupérer tous les tokens existants
+  const fetchTokens = async () => {
+    const { data, error } = await supabase
+      .from("access_tokens")
+      .select("id, user_id, token, access_type");
+    if (!error) setTokens(data);
+  };
 
-    const token = uuidv4(); // Token unique
-    const expires = expiresAt ? new Date(expiresAt).toISOString() : null;
+  // Générer un token pour un user
+  const handleGenerateToken = async (userId, accessType) => {
+    setLoading(true);
+    const token = generateUUID();
 
-    const { error } = await supabase.from("access_tokens").insert([
+    const { data, error } = await supabase.from("access_tokens").insert([
       {
-        user_id: selectedUser,
+        user_id: userId,
         token,
         access_type: accessType,
-        expires_at: expires,
       },
     ]);
 
-    if (error) {
-      alert("Erreur lors de la génération du token : " + error.message);
+    if (!error) {
+      fetchTokens();
     } else {
-      const link = `${window.location.origin}/acces?token=${token}`;
-      setGeneratedLink(link);
+      alert("Erreur : " + error.message);
     }
-  };
-
-  const copyLink = () => {
-    navigator.clipboard.writeText(generatedLink);
-    alert("Lien copié !");
+    setLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-3xl font-bold text-center mb-6">Génération de tokens d'accès</h1>
+      <h1 className="text-3xl font-bold text-center mb-6">Gestion des Access Tokens</h1>
 
-      <div className="max-w-md mx-auto space-y-4 bg-white p-6 rounded-xl shadow-md">
-        <div>
-          <label className="block mb-1 font-semibold">Utilisateur :</label>
-          <select
-            value={selectedUser}
-            onChange={(e) => setSelectedUser(e.target.value)}
-            className="w-full border rounded-lg p-2"
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {users.map((user) => (
+          <div
+            key={user.id}
+            className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300"
           >
-            <option value="">-- Sélectionner un utilisateur --</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.username || u.role}
-              </option>
-            ))}
-          </select>
-        </div>
+            <h2 className="text-lg font-bold mb-2">{user.username || user.id}</h2>
+            <p className="mb-2">Role : {user.role}</p>
 
-        <div>
-          <label className="block mb-1 font-semibold">Type d'accès :</label>
-          <select
-            value={accessType}
-            onChange={(e) => setAccessType(e.target.value)}
-            className="w-full border rounded-lg p-2"
-          >
-            <option value="ajouter_membre">Ajouter Membre</option>
-            <option value="ajouter_evangeliser">Ajouter Evangeliser</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block mb-1 font-semibold">Date d'expiration (optionnelle) :</label>
-          <input
-            type="date"
-            value={expiresAt}
-            onChange={(e) => setExpiresAt(e.target.value)}
-            className="w-full border rounded-lg p-2"
-          />
-        </div>
-
-        <button
-          onClick={generateToken}
-          className="w-full py-2 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600"
-        >
-          Générer le lien
-        </button>
-
-        {generatedLink && (
-          <div className="mt-4">
-            <p className="break-all">{generatedLink}</p>
             <button
-              onClick={copyLink}
-              className="mt-2 py-1 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600"
+              disabled={loading}
+              onClick={() => handleGenerateToken(user.id, user.role)}
+              className="w-full py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600"
             >
-              Copier le lien
+              Générer un token
             </button>
           </div>
-        )}
+        ))}
+      </div>
+
+      <h2 className="text-2xl font-bold mt-8 mb-4">Tokens existants</h2>
+      <div className="overflow-x-auto">
+        <table className="table-auto w-full border-collapse border border-gray-300 text-center">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="border px-4 py-2">Utilisateur</th>
+              <th className="border px-4 py-2">Token</th>
+              <th className="border px-4 py-2">Type d'accès</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tokens.map((t) => {
+              const user = users.find((u) => u.id === t.user_id);
+              return (
+                <tr key={t.id}>
+                  <td className="border px-4 py-2">{user?.username || t.user_id}</td>
+                  <td className="border px-4 py-2">{t.token}</td>
+                  <td className="border px-4 py-2">{t.access_type}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
