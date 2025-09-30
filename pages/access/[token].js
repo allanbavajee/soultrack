@@ -1,46 +1,50 @@
 // pages/access/[token].js
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
+import { supabase } from "../../lib/supabaseClient";
 
 export default function AccessTokenPage() {
   const router = useRouter();
   const { token } = router.query;
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!token) return;
 
     const verifyToken = async () => {
       try {
-        const res = await fetch(`/api/validate-token?token=${token}`);
-        const data = await res.json();
+        const { data, error } = await supabase
+          .from("access_tokens")
+          .select("*")
+          .eq("token", token)
+          .single();
 
-        if (data.valid) {
-          // Redirection automatique selon le type d'accès
-          if (data.access_type === "ajouter_membre") {
-            router.replace("/add-member");
-          } else if (data.access_type === "ajouter_evangelise") {
-            router.replace("/add-evangelise");
-          } else {
-            setError("Type d'accès inconnu");
-          }
+        if (error || !data) {
+          alert("Lien invalide ou expiré !");
+          return router.push("/"); // retour à l'accueil
+        }
+
+        // Redirige selon le type d'accès
+        if (data.access_type === "ajouter_membre") {
+          router.replace("/add-member");
+        } else if (data.access_type === "ajouter_evangelise") {
+          router.replace("/add-evangelise");
         } else {
-          setError(data.message || "Token invalide");
+          alert("Type d'accès inconnu !");
+          router.push("/");
         }
       } catch (err) {
         console.error(err);
-        setError("Erreur serveur");
-      } finally {
-        setLoading(false);
+        alert("Erreur serveur, merci de réessayer.");
+        router.push("/");
       }
     };
 
     verifyToken();
   }, [token, router]);
 
-  if (loading) return <p className="text-center mt-20 text-lg">Vérification du lien...</p>;
-  if (error) return <p className="text-center mt-20 text-red-600">{error}</p>;
-
-  return null;
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <p className="text-gray-700 text-lg font-semibold">Vérification du lien...</p>
+    </div>
+  );
 }
