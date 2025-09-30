@@ -1,12 +1,11 @@
 // pages/api/validate-token.js
-/*import { supabase } from "../../lib/supabaseClient";*/
-import supabase from "../../lib/supabaseClient"; 
+import supabase from "../../lib/supabaseClient"; // <-- sans les {}
 
 export default async function handler(req, res) {
   const { token } = req.query;
 
   if (!token) {
-    return res.status(400).json({ valid: false, message: "Token manquant" });
+    return res.status(400).json({ error: "Token manquant" });
   }
 
   try {
@@ -17,17 +16,19 @@ export default async function handler(req, res) {
       .single();
 
     if (error || !data) {
-      console.error("Erreur Supabase:", error);
       return res.status(404).json({ valid: false, message: "Token invalide" });
     }
 
-    // Renvoie le type d'accès pour la page
-    res.status(200).json({
-      valid: true,
-      access_type: data.access_type
-    });
+    // Redirection selon le type d'accès
+    if (data.access_type === "ajouter_membre") {
+      return res.redirect(307, "/add-member");
+    } else if (data.access_type === "ajouter_evangelise") {
+      return res.redirect(307, "/add-evangelise");
+    } else {
+      return res.status(400).json({ valid: false, message: "Type d'accès inconnu" });
+    }
   } catch (err) {
-    console.error("Erreur serveur:", err);
-    res.status(500).json({ valid: false, message: "Erreur serveur" });
+    console.error(err);
+    return res.status(500).json({ valid: false, message: "Erreur serveur" });
   }
 }
