@@ -1,62 +1,96 @@
 // pages/generate-link.js
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { v4 as uuidv4 } from "uuid";
 
-export default function GenerateLink({ user }) {
-  const [role, setRole] = useState("add_member");
-  const [link, setLink] = useState("");
+// Fonction pour générer un UUID en JS natif
+function generateUUID() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0,
+      v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
-  const handleGenerate = async () => {
-    const token = uuidv4();
+export default function GenerateLink() {
+  const [selectedUser, setSelectedUser] = useState("");
+  const [accessType, setAccessType] = useState("add_member");
+  const [generatedLink, setGeneratedLink] = useState("");
 
+  const handleGenerateLink = async () => {
+    if (!selectedUser) return alert("Veuillez choisir un utilisateur");
+
+    const token = generateUUID();
+
+    // Insérer le token dans la table access_tokens
     const { error } = await supabase.from("access_tokens").insert([
       {
-        token,
-        role,
-        created_by: user.id,
-        expires_at: null, // ou ajoute une date si tu veux expiration
+        user_id: selectedUser,
+        token: token,
+        access_type: accessType,
       },
     ]);
 
-    if (!error) {
-      setLink(`${window.location.origin}/access/${token}`);
+    if (error) {
+      alert("Erreur lors de la génération du lien : " + error.message);
     } else {
-      alert("Erreur lors de la génération du lien");
+      const link = `${window.location.origin}/access?token=${token}`;
+      setGeneratedLink(link);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
-      <h1 className="text-2xl font-bold mb-4">Générer un lien d’accès</h1>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <h1 className="text-3xl font-bold text-center mb-6">Générer un lien d'accès</h1>
 
-      <div className="mb-4">
-        <label className="block mb-2 font-semibold">Type de lien :</label>
-        <select
-          className="border p-2 rounded-lg"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        >
-          <option value="add_member">Ajouter un membre</option>
-          <option value="add_evangelise">Ajouter un évangélisé</option>
-        </select>
-      </div>
-
-      <button
-        onClick={handleGenerate}
-        className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-      >
-        Générer le lien
-      </button>
-
-      {link && (
-        <div className="mt-4 text-center">
-          <p className="font-semibold">Lien généré :</p>
-          <a href={link} className="text-blue-600 underline" target="_blank">
-            {link}
-          </a>
+      <div className="max-w-md mx-auto space-y-4">
+        <div>
+          <label className="block mb-2 font-semibold">Utilisateur :</label>
+          <select
+            className="w-full p-2 border rounded-lg"
+            value={selectedUser}
+            onChange={(e) => setSelectedUser(e.target.value)}
+          >
+            <option value="">-- Choisir un utilisateur --</option>
+            <option value="7021fc57-bf07-48cb-8050-99d0db8e8e7d">Conseiller</option>
+            <option value="f9fc287b-a3fb-43d5-a1c4-ed4a316204b2">Evangeliste</option>
+            <option value="7eb31af6-b448-48d8-be81-16176bed2784">Lucie Des Jardins (Responsable)</option>
+            <option value="9e73c6e1-f03f-4dd5-b7eb-6c047bebe0e4">Clency Ravina (Responsable)</option>
+          </select>
         </div>
-      )}
+
+        <div>
+          <label className="block mb-2 font-semibold">Type d'accès :</label>
+          <select
+            className="w-full p-2 border rounded-lg"
+            value={accessType}
+            onChange={(e) => setAccessType(e.target.value)}
+          >
+            <option value="add_member">Ajouter membre</option>
+            <option value="add_evangelise">Ajouter evangelisé</option>
+          </select>
+        </div>
+
+        <button
+          onClick={handleGenerateLink}
+          className="w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
+        >
+          Générer le lien
+        </button>
+
+        {generatedLink && (
+          <div className="mt-4 p-4 bg-white rounded-lg shadow-md">
+            <p className="font-semibold mb-2">Lien généré :</p>
+            <a
+              href={generatedLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline break-all"
+            >
+              {generatedLink}
+            </a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
