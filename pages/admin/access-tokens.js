@@ -1,90 +1,114 @@
 // pages/admin/access-tokens.js
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
-import { v4 as uuidv4 } from "uuid";
 
 export default function AccessTokens() {
   const [tokens, setTokens] = useState([]);
-  const [newAccessType, setNewAccessType] = useState("add_member");
-  const [copied, setCopied] = useState("");
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState("");
+  const [accessType, setAccessType] = useState("ajouter_membre");
 
   useEffect(() => {
     fetchTokens();
+    fetchUsers();
   }, []);
 
   const fetchTokens = async () => {
-    const { data, error } = await supabase.from("access_tokens").select("*");
+    const { data, error } = await supabase
+      .from("access_tokens")
+      .select("id, user_id, token, access_type, created_at");
     if (!error) setTokens(data);
   };
 
-  const createToken = async () => {
-    const token = uuidv4();
-
-    const { error } = await supabase.from("access_tokens").insert([
-      { token, access_type: newAccessType },
-    ]);
-
-    if (!error) {
-      setTokens((prev) => [...prev, { token, access_type: newAccessType }]);
-    }
+  const fetchUsers = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, role, username, responsable");
+    if (!error) setUsers(data);
   };
 
-  const copyLink = (token) => {
-    const url = `${window.location.origin}/access?token=${token}`;
-    navigator.clipboard.writeText(url);
-    setCopied(token);
-    setTimeout(() => setCopied(""), 2000);
+  const generateToken = async () => {
+    if (!selectedUser) return alert("Veuillez sélectionner un utilisateur");
+
+    // Génération du token côté Supabase
+    const { data, error } = await supabase.rpc("generate_access_token", {
+      p_user_id: selectedUser,
+      p_access_type: accessType
+    });
+
+    if (error) return alert("Erreur : " + error.message);
+
+    fetchTokens();
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-3xl font-bold text-center mb-6">Gestion des Access Tokens</h1>
+    <div className="min-h-screen p-6 bg-gray-50">
+      <h1 className="text-3xl font-bold mb-6">Gestion des Access Tokens</h1>
 
-      <div className="max-w-md mx-auto mb-6 p-4 bg-white rounded-xl shadow-md space-y-4">
+      <div className="mb-6 max-w-md">
+        <label className="block mb-2 font-semibold">Sélectionner un utilisateur :</label>
         <select
-          value={newAccessType}
-          onChange={(e) => setNewAccessType(e.target.value)}
           className="w-full p-2 border rounded-lg"
+          value={selectedUser}
+          onChange={(e) => setSelectedUser(e.target.value)}
         >
-          <option value="add_member">Ajouter un membre</option>
-          <option value="add_evangelise">Ajouter un évangélisé</option>
+          <option value="">-- Choisir --</option>
+          {users.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.role} {u.username || ""} {u.responsable ? `(${u.responsable})` : ""}
+            </option>
+          ))}
         </select>
-
-        <button
-          onClick={createToken}
-          className="w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
-        >
-          Générer un token
-        </button>
       </div>
 
-      <div className="max-w-2xl mx-auto grid grid-cols-1 gap-4">
-        {tokens.map((t) => (
-          <div
-            key={t.token}
-            className="bg-white p-4 rounded-xl shadow-md flex justify-between items-center"
-          >
-            <div>
-              <p className="font-semibold">Type : {t.access_type}</p>
-              <p className="text-sm text-gray-500">Token : {t.token}</p>
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => copyLink(t.token)}
-                className="py-1 px-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-              >
-                {copied === t.token ? "Copié !" : "Copier le lien"}
-              </button>
-              <a
-                href={`/access?token=${t.token}`}
-                target="_blank"
-                className="py-1 px-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-              >
-                Accéder
-              </a>
-            </div>
-          </div>
-        ))}
+      <div className="mb-6 max-w-md">
+        <label className="block mb-2 font-semibold">Type d'accès :</label>
+        <select
+          className="w-full p-2 border rounded-lg"
+          value={accessType}
+          onChange={(e) => setAccessType(e.target.value)}
+        >
+          <option value="ajouter_membre">Ajouter Membre</option>
+          <option value="ajouter_evangelise">Ajouter Évangélisé</option>
+        </select>
+      </div>
+
+      <button
+        className="mb-6 px-4 py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
+        onClick={generateToken}
+      >
+        Générer un token
+      </button>
+
+      <h2 className="text-2xl font-semibold mb-4">Tokens existants :</h2>
+      <div className="overflow-x-auto">
+        <table className="table-auto w-full border-collapse border border-gray-300 text-center">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="border px-4 py-2">Utilisateur</th>
+              <th className="border px-4 py-2">Token</th>
+              <th className="border px-4 py-2">Type</th>
+              <th className="border px-4 py-2">Créé le</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tokens.map((t) => {
+              const user = users.find((u) => u.id === t.user_id);
+              return (
+                <tr key={t.id}>
+                  <td className="border px-4 py-2">
+                    {user ? `${user.role} ${user.username || ""}` : "—"}
+                  </td>
+                  <td className="border px-4 py-2">{t.token}</td>
+                  <td className="border px-4 py-2">{t.access_type}</td>
+                  <td className="border px-4 py-2">
+                    {new Date(t.created_at).toLocaleString()}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
