@@ -17,7 +17,7 @@ export default function Home() {
       </h2>
 
       {/* Cartes d'actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mt-10 justify-items-center">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full max-w-6xl mt-10 justify-items-center">
         {/* Membres & Suivis */}
         <Link
           href="/membres-hub"
@@ -43,6 +43,15 @@ export default function Home() {
         >
           <div className="text-5xl mb-4">📊</div>
           <h2 className="text-xl font-bold text-gray-800 text-center">Rapport</h2>
+        </Link>
+
+        {/* Access Tokens */}
+        <Link
+          href="/admin/access-tokens"
+          className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#9C27B0]"
+        >
+          <div className="text-5xl mb-4">🔑</div>
+          <h2 className="text-xl font-bold text-gray-800 text-center">Access Tokens</h2>
         </Link>
       </div>
 
