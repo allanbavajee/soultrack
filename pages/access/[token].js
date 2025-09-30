@@ -1,16 +1,17 @@
 // pages/access/[token].js
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../../lib/supabaseClient";
 
-export default function AccessTokenPage() {
+export default function AccessPage() {
   const router = useRouter();
   const { token } = router.query;
+  const [message, setMessage] = useState("Vérification du lien...");
 
   useEffect(() => {
     if (!token) return;
 
-    const verifyToken = async () => {
+    const validateToken = async () => {
       try {
         const { data, error } = await supabase
           .from("access_tokens")
@@ -19,32 +20,35 @@ export default function AccessTokenPage() {
           .single();
 
         if (error || !data) {
-          alert("Lien invalide ou expiré !");
-          return router.push("/"); // retour à l'accueil
+          setMessage("Lien invalide ou expiré. Vous allez être redirigé...");
+          setTimeout(() => router.replace("/"), 3000);
+          return;
         }
 
-        // Redirige selon le type d'accès
+        // Redirection automatique selon le type d'accès
         if (data.access_type === "ajouter_membre") {
-          router.replace("/add-member");
+          router.replace("/ajouter-membre");
         } else if (data.access_type === "ajouter_evangelise") {
-          router.replace("/add-evangelise");
+          router.replace("/ajouter-evangelise");
         } else {
-          alert("Type d'accès inconnu !");
-          router.push("/");
+          setMessage("Type d'accès inconnu. Redirection...");
+          setTimeout(() => router.replace("/"), 3000);
         }
       } catch (err) {
         console.error(err);
-        alert("Erreur serveur, merci de réessayer.");
-        router.push("/");
+        setMessage("Erreur serveur, merci de réessayer. Redirection...");
+        setTimeout(() => router.replace("/"), 3000);
       }
     };
 
-    verifyToken();
+    validateToken();
   }, [token, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <p className="text-gray-700 text-lg font-semibold">Vérification du lien...</p>
+    <div className="min-h-screen flex items-center justify-center bg-indigo-50 p-4">
+      <div className="bg-white p-8 rounded-3xl shadow-lg text-center">
+        <p className="text-gray-700 font-semibold text-lg">{message}</p>
+      </div>
     </div>
   );
 }
