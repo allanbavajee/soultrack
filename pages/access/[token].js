@@ -1,7 +1,6 @@
-// pages/access/[token].js
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { supabase } from "../../lib/supabaseClient";
+import supabase from "../../lib/supabaseClient"; // <- import corrigé
 
 export default function AccessPage() {
   const router = useRouter();
@@ -27,9 +26,9 @@ export default function AccessPage() {
 
         // Redirection automatique selon le type d'accès
         if (data.access_type === "ajouter_membre") {
-          router.replace("/ajouter-membre");
+          router.replace("/add-member");
         } else if (data.access_type === "ajouter_evangelise") {
-          router.replace("/ajouter-evangelise");
+          router.replace("/add-evangelise");
         } else {
           setMessage("Type d'accès inconnu. Redirection...");
           setTimeout(() => router.replace("/"), 3000);
