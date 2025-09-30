@@ -1,12 +1,9 @@
-// pages/api/validate-token.js
-import supabase from "../../lib/supabaseClient"; // <-- sans les {}
+import supabase from "../../lib/supabaseClient"; // <- reste correct si API est dans /pages/api
 
 export default async function handler(req, res) {
   const { token } = req.query;
 
-  if (!token) {
-    return res.status(400).json({ error: "Token manquant" });
-  }
+  if (!token) return res.status(400).json({ error: "Token manquant" });
 
   try {
     const { data, error } = await supabase
@@ -19,7 +16,6 @@ export default async function handler(req, res) {
       return res.status(404).json({ valid: false, message: "Token invalide" });
     }
 
-    // Redirection selon le type d'accès
     if (data.access_type === "ajouter_membre") {
       return res.redirect(307, "/add-member");
     } else if (data.access_type === "ajouter_evangelise") {
