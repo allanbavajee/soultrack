@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   const { token } = req.query;
 
   if (!token) {
-    return res.status(400).json({ error: "Token manquant" });
+    return res.status(400).send("Token manquant");
   }
 
   try {
@@ -16,19 +16,19 @@ export default async function handler(req, res) {
       .single();
 
     if (error || !data) {
-      return res.status(404).json({ valid: false, message: "Token invalide" });
+      return res.status(404).send("Token invalide");
     }
 
-    // Redirige vers la page selon le type d'accès
-    if (data.access_type === "ajouter_membre") {
-      return res.redirect(307, "/ajouter-membre");
-    } else if (data.access_type === "ajouter_evangelise") {
-      return res.redirect(307, "/ajouter-evangelise");
-    } else {
-      return res.status(400).json({ valid: false, message: "Type d'accès inconnu" });
-    }
+    // Redirection directe selon le type d'accès
+    const redirectUrl =
+      data.access_type === "ajouter_membre"
+        ? "/add-member"
+        : "/add-evangelise";
+
+    res.writeHead(307, { Location: redirectUrl });
+    res.end();
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ valid: false, message: "Erreur serveur" });
+    return res.status(500).send("Erreur serveur");
   }
 }
