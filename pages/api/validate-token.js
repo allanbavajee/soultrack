@@ -4,48 +4,37 @@ import { supabase } from "../../lib/supabaseClient";
 export default async function handler(req, res) {
   const { token } = req.query;
 
-  console.log("Token reçu :", token);
-
   if (!token) {
     return res.status(400).json({ error: "Token manquant" });
   }
 
   try {
-    // Requête pour récupérer le token
+    // Vérifie le token dans Supabase
     const { data, error } = await supabase
       .from("access_tokens")
       .select("*")
       .eq("token", token)
       .single();
 
-    console.log("Data :", data, "Error :", error);
-
     if (error) {
-      console.error("Erreur Supabase :", error);
-      return res.status(500).json({ valid: false, message: "Erreur serveur Supabase" });
+      console.error("Erreur Supabase:", error);
+      return res.status(500).json({ valid: false, message: error.message });
     }
 
     if (!data) {
-      return res.status(404).json({ valid: false, message: "Token invalide" });
+      return res.status(404).json({ valid: false, message: "Token introuvable" });
     }
 
-    // Détermination de la page selon le type d'accès
-    let redirectUrl = null;
+    // Redirige directement selon le type
     if (data.access_type === "ajouter_membre") {
-      redirectUrl = "/ajouter-membre";
+      return res.redirect(307, "/add-member");
     } else if (data.access_type === "ajouter_evangelise") {
-      redirectUrl = "/ajouter-evangelise";
+      return res.redirect(307, "/add-evangelise");
     } else {
       return res.status(400).json({ valid: false, message: "Type d'accès inconnu" });
     }
-
-    console.log("Redirection vers :", redirectUrl);
-
-    // Redirection vers la page finale
-    res.writeHead(307, { Location: redirectUrl });
-    res.end();
   } catch (err) {
-    console.error("Erreur serveur :", err);
-    return res.status(500).json({ valid: false, message: "Erreur serveur" });
+    console.error("Erreur catch:", err);
+    return res.status(500).json({ valid: false, message: err.message });
   }
 }
