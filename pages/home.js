@@ -52,7 +52,7 @@ export default function Home() {
     <div
       className="min-h-screen flex flex-col items-center justify-start p-6 gap-10"
       style={{
-        background: "linear-gradient(135deg, #FFF7ED 0%, #FFEBC1 50%, #FFF2D1 100%)",
+        background: "linear-gradient(135deg, #ffffff 0%, #dbe9ff 100%)", // blanc nuancé bleu
       }}
     >
       {/* Logos */}
@@ -112,6 +112,9 @@ export default function Home() {
             profile={profile}
             label="🚀 Envoyer l’appli – Nouveau membre"
             gradient="from-blue-400 to-cyan-500"
+            rounded="rounded-2xl"
+            shadow="shadow-md"
+            hover="hover:brightness-105"
           />
         )}
 
@@ -121,13 +124,21 @@ export default function Home() {
             profile={profile}
             label="🙌 Envoyer l’appli – Évangélisé"
             gradient="from-green-400 to-emerald-500"
+            rounded="rounded-2xl"
+            shadow="shadow-md"
+            hover="hover:brightness-105"
           />
         )}
 
         {/* Bouton Voir / Copier liens */}
         {profile.role === "Admin" && (
           <div className="mt-2">
-            <SendLinkPopup buttonColor="orange" />
+            <SendLinkPopup
+              buttonColor="from-orange-400 to-orange-500"
+              rounded="rounded-2xl"
+              shadow="shadow-md"
+              hover="hover:brightness-105"
+            />
           </div>
         )}
       </div>
