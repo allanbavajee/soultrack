@@ -1,44 +1,24 @@
-/*components/SendWhatsappButtons.js*/
 /* components/SendWhatsappButtons.js */
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function SendWhatsappButtons() {
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [people, setPeople] = useState([]);
-  const [selectedPerson, setSelectedPerson] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [activeButton, setActiveButton] = useState(""); // "ajouter_membre" ou "ajouter_evangelise"
-  const [showOptions, setShowOptions] = useState(false);
-
-  // Charger les personnes existantes dans la base
-  useEffect(() => {
-    const fetchPeople = async () => {
-      const { data, error } = await supabase
-        .from("profiles") // ⚠️ adapte selon ta table
-        .select("id, nom, prenom, telephone");
-
-      if (error) {
-        console.error("Erreur fetch people:", error);
-        return;
-      }
-      setPeople(data || []);
-    };
-
-    fetchPeople();
-  }, []);
+  const [showModal, setShowModal] = useState(false);
 
   const handleButtonClick = (accessType) => {
     setActiveButton(accessType);
-    setShowOptions(true); // Affiche les champs après clic
+    setShowModal(true); // Affiche le popup
     setErrorMsg(null);
   };
 
   const handleSend = async () => {
-    if (!phoneNumber && !selectedPerson) {
-      setErrorMsg("⚠️ Entre un numéro ou choisis une personne !");
+    if (!phoneNumber) {
+      setErrorMsg("⚠️ Entre un numéro WhatsApp !");
       return;
     }
 
@@ -46,17 +26,10 @@ export default function SendWhatsappButtons() {
     setErrorMsg(null);
 
     try {
-      let finalNumber = phoneNumber;
-      if (selectedPerson) {
-        const person = people.find((p) => p.id === selectedPerson);
-        if (person?.telephone) finalNumber = person.telephone;
-      }
-
       // Génération du token
-      const { data: token, error } = await supabase.rpc(
-        "generate_access_token",
-        { p_access_type: activeButton }
-      );
+      const { data: token, error } = await supabase.rpc("generate_access_token", {
+        p_access_type: activeButton,
+      });
 
       if (error) {
         console.error("Erreur RPC :", error.message);
@@ -71,16 +44,15 @@ export default function SendWhatsappButtons() {
           ? `Bonjour 👋, clique ici pour ajouter un membre : ${link}`
           : `Bonjour 🙌, clique ici pour ajouter une personne évangélisée : ${link}`;
 
-      const cleanNumber = finalNumber.replace(/\D/g, "");
+      const cleanNumber = phoneNumber.replace(/\D/g, "");
       window.open(
         `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`,
         "_blank"
       );
 
-      // Réinitialiser les champs et fermer l’interface
+      // Réinitialiser les champs et fermer le popup
       setPhoneNumber("");
-      setSelectedPerson("");
-      setShowOptions(false);
+      setShowModal(false);
       setActiveButton("");
     } catch (err) {
       console.error("Erreur JS :", err);
@@ -109,44 +81,46 @@ export default function SendWhatsappButtons() {
         📲 Envoyer l’appli – Évangélisé
       </button>
 
-      {/* Interface options (apparaît après clic sur un bouton) */}
-      {showOptions && (
-        <div className="flex flex-col gap-3 mt-4 items-center w-full max-w-md">
-          <select
-            value={selectedPerson}
-            onChange={(e) => setSelectedPerson(e.target.value)}
-            className="border rounded-xl px-4 py-2 w-full"
-          >
-            <option value="">-- Choisir une personne existante --</option>
-            {people.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nom} {p.prenom} ({p.telephone})
-              </option>
-            ))}
-          </select>
+      {/* Popup / Modal */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white rounded-2xl p-6 w-80 shadow-lg flex flex-col gap-4 relative">
+            {/* Bouton fermer */}
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 font-bold text-lg"
+            >
+              ×
+            </button>
 
-          <input
-            type="text"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            placeholder="Numéro WhatsApp (ex: 23052345678)"
-            className="border rounded-xl px-4 py-2 w-full"
-          />
+            <h3 className="text-lg font-semibold text-center">
+              {activeButton === "ajouter_membre"
+                ? "Envoyer lien – Nouveau membre"
+                : "Envoyer lien – Évangélisé"}
+            </h3>
 
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={loading}
-            className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200 w-full"
-          >
-            {loading ? "Envoi..." : "Envoyer le lien"}
-          </button>
+            <input
+              type="text"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="Numéro WhatsApp (ex: 23052345678)"
+              className="border rounded-xl px-4 py-2 w-full"
+            />
 
-          {errorMsg && <p className="text-red-500 mt-2">{errorMsg}</p>}
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={loading}
+              className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200"
+            >
+              {loading ? "Envoi..." : "Envoyer le lien"}
+            </button>
+
+            {errorMsg && <p className="text-red-500 mt-2 text-center">{errorMsg}</p>}
+          </div>
         </div>
       )}
     </div>
   );
 }
-
-
