@@ -26,7 +26,6 @@ export default function SendWhatsappButtons() {
     setErrorMsg(null);
 
     try {
-      // Génération du token
       const { data: token, error } = await supabase.rpc("generate_access_token", {
         p_access_type: activeButton,
       });
@@ -50,7 +49,6 @@ export default function SendWhatsappButtons() {
         "_blank"
       );
 
-      // Réinitialiser les champs et fermer le popup
       setPhoneNumber("");
       setShowModal(false);
       setActiveButton("");
@@ -76,25 +74,25 @@ export default function SendWhatsappButtons() {
       <button
         type="button"
         onClick={() => handleButtonClick("ajouter_evangelise")}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200"
+        className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200"
       >
         📲 Envoyer l’appli – Évangélisé
       </button>
 
-      {/* Popup / Modal */}
+      {/* Popup / Modal vert WhatsApp */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white rounded-2xl p-6 w-80 shadow-lg flex flex-col gap-4 relative">
+          <div className="bg-[#25D366] rounded-2xl p-6 w-80 shadow-lg flex flex-col gap-4 relative">
             {/* Bouton fermer */}
             <button
               type="button"
               onClick={() => setShowModal(false)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 font-bold text-lg"
+              className="absolute top-3 right-3 text-white font-bold text-lg"
             >
               ×
             </button>
 
-            <h3 className="text-lg font-semibold text-center">
+            <h3 className="text-lg font-semibold text-center text-white">
               {activeButton === "ajouter_membre"
                 ? "Envoyer lien – Nouveau membre"
                 : "Envoyer lien – Évangélisé"}
@@ -112,7 +110,7 @@ export default function SendWhatsappButtons() {
               type="button"
               onClick={handleSend}
               disabled={loading}
-              className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200"
+              className="bg-white hover:bg-gray-200 text-[#25D366] font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200"
             >
               {loading ? "Envoi..." : "Envoyer le lien"}
             </button>
