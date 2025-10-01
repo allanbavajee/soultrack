@@ -1,122 +1,53 @@
-// pages/admin/access-tokens.js
+// pages/access/[token].js
 import { useEffect, useState } from "react";
-import supabase from "../../lib/supabaseClient"; // chemin relatif
-import SendWhatsappButton from "../../components/SendWhatsappButton"; // chemin relatif
+import { useRouter } from "next/router";
+import supabase from "../../lib/supabaseClient";
 
-export default function AccessTokens() {
-  const [tokens, setTokens] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState("");
-  const [accessType, setAccessType] = useState("ajouter_membre");
+export default function AccessPage() {
+  const router = useRouter();
+  const { token } = router.query;
+  const [message, setMessage] = useState("Vérification du lien...");
 
   useEffect(() => {
-    fetchTokens();
-    fetchUsers();
-  }, []);
+    if (!token) return;
 
-  const fetchTokens = async () => {
-    const { data, error } = await supabase
-      .from("access_tokens")
-      .select("id, user_id, token, access_type, created_at");
-    if (!error) setTokens(data);
-  };
+    const validateToken = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("access_tokens")
+          .select("*")
+          .eq("token", token)
+          .single();
 
-  const fetchUsers = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, role, username, responsable");
-    if (!error) setUsers(data);
-  };
+        if (error || !data) {
+          setMessage("Lien invalide ou expiré. Redirection...");
+          setTimeout(() => router.replace("/"), 3000);
+          return;
+        }
 
-  const generateToken = async () => {
-    if (!selectedUser) return alert("Veuillez sélectionner un utilisateur");
+        // Redirection automatique selon le type d'accès
+        if (data.access_type === "ajouter_membre") {
+          router.replace("/ajouter-membre");
+        } else if (data.access_type === "ajouter_evangelise") {
+          router.replace("/ajouter-evangelise");
+        } else {
+          setMessage("Type d'accès inconnu. Redirection...");
+          setTimeout(() => router.replace("/"), 3000);
+        }
+      } catch (err) {
+        console.error(err);
+        setMessage("Erreur serveur, merci de réessayer. Redirection...");
+        setTimeout(() => router.replace("/"), 3000);
+      }
+    };
 
-    const { data, error } = await supabase.rpc("generate_access_token", {
-      p_user_id: selectedUser,
-      p_access_type: accessType,
-    });
-
-    if (error) return alert("Erreur : " + error.message);
-
-    fetchTokens();
-  };
+    validateToken();
+  }, [token, router]);
 
   return (
-    <div className="min-h-screen p-6 bg-gray-50">
-      <h1 className="text-3xl font-bold mb-6">Gestion des Access Tokens</h1>
-
-      {/* Sélecteur utilisateur */}
-      <div className="mb-6 max-w-md">
-        <label className="block mb-2 font-semibold">Sélectionner un utilisateur :</label>
-        <select
-          className="w-full p-2 border rounded-lg"
-          value={selectedUser}
-          onChange={(e) => setSelectedUser(e.target.value)}
-        >
-          <option value="">-- Choisir --</option>
-          {users.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.role} {u.username || ""} {u.responsable ? `(${u.responsable})` : ""}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Type d'accès */}
-      <div className="mb-6 max-w-md">
-        <label className="block mb-2 font-semibold">Type d'accès :</label>
-        <select
-          className="w-full p-2 border rounded-lg"
-          value={accessType}
-          onChange={(e) => setAccessType(e.target.value)}
-        >
-          <option value="ajouter_membre">Ajouter Membre</option>
-          <option value="ajouter_evangelise">Ajouter Évangélisé</option>
-        </select>
-      </div>
-
-      {/* Bouton génération */}
-      <button
-        className="mb-6 px-4 py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
-        onClick={generateToken}
-      >
-        Générer un token
-      </button>
-
-      {/* Liste des tokens */}
-      <h2 className="text-2xl font-semibold mb-4">Tokens existants :</h2>
-      <div className="overflow-x-auto">
-        <table className="table-auto w-full border-collapse border border-gray-300 text-center">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border px-4 py-2">Utilisateur</th>
-              <th className="border px-4 py-2">Token</th>
-              <th className="border px-4 py-2">Type</th>
-              <th className="border px-4 py-2">Créé le</th>
-              <th className="border px-4 py-2">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tokens.map((t) => {
-              const user = users.find((u) => u.id === t.user_id);
-              return (
-                <tr key={t.id}>
-                  <td className="border px-4 py-2">
-                    {user ? `${user.role} ${user.username || ""}` : "—"}
-                  </td>
-                  <td className="border px-4 py-2">{t.token}</td>
-                  <td className="border px-4 py-2">{t.access_type}</td>
-                  <td className="border px-4 py-2">
-                    {new Date(t.created_at).toLocaleString()}
-                  </td>
-                  <td className="border px-4 py-2">
-                    <SendWhatsappButton token={t.token} />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-100 to-indigo-50 p-4">
+      <div className="bg-white p-8 rounded-3xl shadow-lg text-center max-w-md">
+        <p className="text-gray-700 font-semibold text-lg">{message}</p>
       </div>
     </div>
   );
