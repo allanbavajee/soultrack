@@ -10,19 +10,15 @@ export default function Home() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      // 🔹 Forcer l’ID selon le rôle que tu veux tester
-      // Exemple : Admin
-      const userId = "11111111-1111-1111-1111-111111111111";
-
+      // 🔹 ID forcé pour test (remplacer par l’ID connecté en prod)
+      const userId = "11111111-1111-1111-1111-111111111111"; // Admin
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
-
       if (!error && data) setProfile(data);
     };
-
     fetchProfile();
   }, []);
 
@@ -43,35 +39,48 @@ export default function Home() {
         Tu es précieux, tu es attendu, tu es aimé
       </h2>
 
-      {/* Cartes et boutons selon profil */}
+      {/* Cartes et boutons */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mt-10 justify-items-center">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <>
-            <Link href="/membres-hub" className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#4285F4]">
+          <div className="flex flex-col items-center">
+            <Link
+              href="/membres-hub"
+              className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#4285F4]"
+            >
               <div className="text-5xl mb-4">👤</div>
               <h2 className="text-xl font-bold text-gray-800 text-center">Membres & Suivis</h2>
             </Link>
-            <SendWhatsappButtons type="ajouter_membre" />
-          </>
+            <div className="mt-4">
+              <SendWhatsappButtons type="ajouter_membre" profile={profile} />
+            </div>
+          </div>
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <>
-            <Link href="/evangelisation-hub" className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#34a853]">
+          <div className="flex flex-col items-center">
+            <Link
+              href="/evangelisation-hub"
+              className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#34a853]"
+            >
               <div className="text-5xl mb-4">🙌</div>
               <h2 className="text-xl font-bold text-gray-800 text-center">Évangélisation</h2>
             </Link>
-            <SendWhatsappButtons type="ajouter_evangelise" />
-          </>
+            <div className="mt-4">
+              <SendWhatsappButtons type="ajouter_evangelise" profile={profile} />
+            </div>
+          </div>
         )}
 
         {profile.role === "Admin" && (
-          <>
-            <Link href="/rapport" className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#ea4335]">
+          <div className="flex flex-col items-center">
+            <Link
+              href="/rapport"
+              className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#ea4335]"
+            >
               <div className="text-5xl mb-4">📊</div>
               <h2 className="text-xl font-bold text-gray-800 text-center">Rapport</h2>
             </Link>
-          </>
+          </div>
         )}
       </div>
 
