@@ -52,7 +52,7 @@ export default function Home() {
     <div
       className="min-h-screen flex flex-col items-center justify-start p-6 gap-10"
       style={{
-        background: "linear-gradient(135deg, #e0f7fa 0%, #f1f5f9 50%, #f0f4f8 100%)",
+        background: "linear-gradient(135deg, #FFF7ED 0%, #FFEBC1 50%, #FFF2D1 100%)",
       }}
     >
       {/* Logos */}
@@ -61,59 +61,72 @@ export default function Home() {
         <img src="/icc.logo.png" alt="ICC Logo" className="w-24 h-24" />
       </div>
 
-      {/* Slogan */}
-      <h2 className="mt-4 text-2xl md:text-3xl font-bold text-center text-gray-700 tracking-wide">
-        ✨ Bienvenue sur SoulTrack ✨
-        <br />
-        Suivez, accompagnez et aimez comme Christ nous a aimés.
-      </h2>
+      {/* Titre */}
+      <h1 className="text-4xl font-bold text-gray-800 font-handwriting text-center">
+        SoulTrack
+      </h1>
 
-      {/* Boutons principaux (cartes) */}
-      <div className="flex flex-col md:flex-row gap-6 w-full max-w-4xl justify-center mt-8">
+      {/* Message d’accompagnement */}
+      <p className="text-center text-gray-700 max-w-xl p-4 rounded-2xl bg-yellow-50 shadow-md">
+        Suivez, accompagnez et aimons comme Christ nous a aimés. ❤️
+      </p>
+
+      {/* Cartes principales */}
+      <div className="flex flex-col md:flex-row gap-6 w-full max-w-5xl justify-center mt-6">
         {/* Suivis des membres */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <button className="flex flex-col items-center justify-center w-64 h-40 rounded-3xl shadow-lg bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500 transition-all duration-200 text-white font-bold text-lg">
-            👤 Suivis des membres
-          </button>
+          <div className="flex-1 flex flex-col items-center">
+            <div className="w-64 h-40 bg-white rounded-3xl border-4 border-blue-500 shadow-md flex flex-col items-center justify-center text-gray-800 font-bold text-lg hover:shadow-xl transition-all duration-200">
+              👤 Suivis des membres
+            </div>
+          </div>
         )}
 
         {/* Évangélisation */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <button className="flex flex-col items-center justify-center w-64 h-40 rounded-3xl shadow-lg bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-600 hover:to-emerald-500 transition-all duration-200 text-white font-bold text-lg">
-            🙌 Évangélisation
-          </button>
+          <div className="flex-1 flex flex-col items-center">
+            <div className="w-64 h-40 bg-white rounded-3xl border-4 border-green-500 shadow-md flex flex-col items-center justify-center text-gray-800 font-bold text-lg hover:shadow-xl transition-all duration-200">
+              🙌 Évangélisation
+            </div>
+          </div>
         )}
 
         {/* Rapport */}
         {profile.role === "Admin" && (
-          <button className="flex flex-col items-center justify-center w-64 h-40 rounded-3xl shadow-lg bg-gradient-to-r from-red-500 to-orange-400 hover:from-red-600 hover:to-orange-500 transition-all duration-200 text-white font-bold text-lg">
-            📊 Rapport
-          </button>
+          <div className="flex-1 flex flex-col items-center">
+            <div className="w-64 h-40 bg-white rounded-3xl border-4 border-red-500 shadow-md flex flex-col items-center justify-center text-gray-800 font-bold text-lg hover:shadow-xl transition-all duration-200">
+              📊 Rapport
+            </div>
+          </div>
         )}
       </div>
 
       {/* Boutons Envoyer l’appli */}
       <div className="flex flex-col gap-4 w-full max-w-md mt-6">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendWhatsappButtons type="ajouter_membre" profile={profile} label="🚀 Envoyer l’appli – Nouveau membre" />
+          <SendWhatsappButtons
+            type="ajouter_membre"
+            profile={profile}
+            label="🚀 Envoyer l’appli – Nouveau membre"
+            gradient="from-blue-400 to-cyan-500"
+          />
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendWhatsappButtons type="ajouter_evangelise" profile={profile} label="🙌 Envoyer l’appli – Évangélisé" />
+          <SendWhatsappButtons
+            type="ajouter_evangelise"
+            profile={profile}
+            label="🙌 Envoyer l’appli – Évangélisé"
+            gradient="from-green-400 to-emerald-500"
+          />
         )}
 
+        {/* Bouton Voir / Copier liens */}
         {profile.role === "Admin" && (
           <div className="mt-2">
             <SendLinkPopup buttonColor="orange" />
           </div>
         )}
-      </div>
-
-      {/* Message d'amour */}
-      <div className="mt-10 p-6 rounded-3xl shadow-lg max-w-2xl text-center bg-white/70 backdrop-blur-sm">
-        <p className="text-lg font-semibold text-gray-700">
-          ❤️ Aimons-nous les uns les autres, comme Christ nous a aimés.
-        </p>
       </div>
     </div>
   );
