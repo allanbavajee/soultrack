@@ -43,9 +43,12 @@ export default function Home() {
 
   if (!profile) {
     return (
-      <p className="text-center mt-10 text-red-500">
-        Aucun profil trouvé. Connecte-toi pour accéder à la plateforme.
-      </p>
+      <div className="text-center mt-10">
+        <p className="text-red-500">Aucun profil trouvé. Connecte-toi pour accéder à la plateforme.</p>
+        <a href="/login" className="mt-4 inline-block text-green-600 font-bold underline">
+          Aller à la page de connexion
+        </a>
+      </div>
     );
   }
 
