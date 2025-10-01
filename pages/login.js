@@ -42,14 +42,11 @@ export default function Login() {
         return;
       }
 
-      // Redirection selon rôle
-      if (profile.role === "ResponsableIntegration") {
-        router.push(`/index?userId=${profile.id}`);
-      } else if (profile.role === "ResponsableEvangelisation") {
-        router.push(`/index?userId=${profile.id}`);
-      } else if (profile.role === "Admin") {
-        router.push(`/index?userId=${profile.id}`);
-      }
+      // Connexion réussie → stockage temporaire du user dans Supabase Auth
+      await supabase.auth.setSession({ user: { id: profile.id } });
+
+      // Redirection vers index
+      router.push("/index");
     } catch (err) {
       console.error(err);
       setError("Erreur inattendue");
