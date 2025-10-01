@@ -1,7 +1,6 @@
 /* components/SendLinkPopup.js */
 "use client";
 import { useState } from "react";
-import { Copy, Share2, X } from "lucide-react";
 
 export default function SendLinkPopup() {
   const [show, setShow] = useState(false);
@@ -37,9 +36,9 @@ export default function SendLinkPopup() {
           <div className="bg-white rounded-3xl p-6 w-full max-w-md flex flex-col gap-4 relative shadow-xl">
             <button
               onClick={() => setShow(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl"
             >
-              <X size={20} />
+              ❌
             </button>
 
             <h3 className="text-lg font-semibold text-gray-800 text-center mb-2">
@@ -59,13 +58,13 @@ export default function SendLinkPopup() {
                     onClick={() => copyToClipboard(link)}
                     className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-all"
                   >
-                    <Copy size={16} />
+                    📋
                   </button>
                   <button
                     onClick={() => shareLink(link)}
                     className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-all"
                   >
-                    <Share2 size={16} />
+                    📤
                   </button>
                 </div>
               </div>
