@@ -51,10 +51,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-green-50 to-blue-50 p-6">
-      <div className="bg-white p-10 rounded-3xl shadow-2xl shadow-indigo-100 w-full max-w-md flex flex-col items-center">
-        {/* Titre stylé */}
-        <h1 className="text-5xl font-handwriting text-indigo-700 mb-3 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
+      <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
+        {/* Titre */}
+        <h1 className="text-5xl font-handwriting text-green-800 mb-3 text-center">
           SoulTrack
         </h1>
 
@@ -62,7 +62,7 @@ export default function LoginPage() {
         <p className="text-center text-gray-700 mb-6">
           Bienvenue sur la plateforme de suivi et d’accompagnement spirituel de l’église.
           <br />
-          <span className="italic font-semibold mt-2 block text-indigo-600">
+          <span className="italic font-semibold mt-2 block text-green-600">
             "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
           </span>
         </p>
@@ -74,7 +74,7 @@ export default function LoginPage() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
             required
           />
 
@@ -83,7 +83,7 @@ export default function LoginPage() {
             placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
             required
           />
 
