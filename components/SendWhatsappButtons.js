@@ -1,19 +1,19 @@
 /*components/SendWhatsappButtons.js*/
 "use client";
 import { useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import supabase from "../lib/supabaseClient"; // ✅ default export, pas d’accolades
 
 export default function SendWhatsappButtons({ phoneNumber }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
 
-  // Fonction générique pour générer et envoyer un token
+  // Fonction pour générer un token et envoyer via WhatsApp
   const handleSend = async (accessType) => {
     setLoading(true);
     setErrorMsg(null);
 
     try {
-      // Appel de la fonction SQL Supabase
+      // ✅ Appel RPC vers la fonction SQL Supabase
       const { data: token, error } = await supabase.rpc("generate_access_token", {
         p_access_type: accessType,
       });
@@ -24,7 +24,7 @@ export default function SendWhatsappButtons({ phoneNumber }) {
         return;
       }
 
-      // Construire le lien SoulTrack
+      // Construire le lien SoulTrack avec le token
       const link = `https://soultrack-beta.vercel.app/access/${token}`;
 
       // Construire le message WhatsApp
@@ -70,4 +70,3 @@ export default function SendWhatsappButtons({ phoneNumber }) {
     </div>
   );
 }
-
