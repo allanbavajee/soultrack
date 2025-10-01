@@ -50,98 +50,100 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-start p-6 gap-10"
+      className="min-h-screen flex flex-col items-center justify-between p-6 gap-10"
       style={{
-        background: "linear-gradient(135deg, #ffffff 0%, #dbe9ff 100%)", // blanc nuancé bleu
+        background: "linear-gradient(135deg, #dbe9ff 0%, #a3c1e0 100%)", // bleu un peu plus foncé
       }}
     >
-      {/* Logos */}
-      <div className="flex flex-row items-center justify-center gap-6 mt-6">
-        <img src="/soul.logo.png" alt="SoulTrack Logo" className="w-24 h-24" />
-        <img src="/icc.logo.png" alt="ICC Logo" className="w-24 h-24" />
-      </div>
+      <div className="flex flex-col items-center w-full gap-6">
+        {/* Logos */}
+        <div className="flex flex-row items-center justify-center gap-6 mt-6">
+          <img src="/soul.logo.png" alt="SoulTrack Logo" className="w-24 h-24" />
+          <img src="/icc.logo.png" alt="ICC Logo" className="w-24 h-24" />
+        </div>
 
-      {/* Titre */}
-      <h1 className="text-4xl font-bold text-gray-800 font-handwriting text-center">
-        SoulTrack
-      </h1>
+        {/* Titre */}
+        <h1 className="text-4xl font-bold text-gray-800 font-handwriting text-center">
+          SoulTrack
+        </h1>
 
-      {/* Message d’accompagnement */}
-      <p className="text-center text-gray-700 max-w-xl p-4 rounded-2xl bg-yellow-50 shadow-md">
-        Suivez, accompagnez et aimons comme Christ nous a aimés. ❤️
-      </p>
-
-      {/* Cartes principales */}
-      <div className="flex flex-col md:flex-row gap-6 w-full max-w-5xl justify-center mt-6">
-        {/* Suivis des membres */}
-        {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <div className="flex-1 flex flex-col items-center">
-            <div className="w-52 h-32 bg-white rounded-3xl shadow-md flex flex-col justify-between items-center border-t-4 border-blue-500 p-4 hover:shadow-xl transition-all duration-200">
-              <div className="text-5xl">👤</div>
-              <div className="text-lg font-bold text-gray-800">Suivis des membres</div>
+        {/* Cartes principales */}
+        <div className="flex flex-col md:flex-row gap-6 w-full max-w-5xl justify-center mt-6">
+          {/* Suivis des membres */}
+          {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
+            <div className="flex-1 flex flex-col items-center">
+              <div className="w-52 h-32 bg-white rounded-3xl shadow-md flex flex-col justify-between items-center border-t-4 border-blue-500 p-4 hover:shadow-xl transition-all duration-200">
+                <div className="text-5xl">👤</div>
+                <div className="text-lg font-bold text-gray-800">Suivis des membres</div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Évangélisation */}
-        {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <div className="flex-1 flex flex-col items-center">
-            <div className="w-52 h-32 bg-white rounded-3xl shadow-md flex flex-col justify-between items-center border-t-4 border-green-500 p-4 hover:shadow-xl transition-all duration-200">
-              <div className="text-5xl">🙌</div>
-              <div className="text-lg font-bold text-gray-800">Évangélisation</div>
+          {/* Évangélisation */}
+          {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
+            <div className="flex-1 flex flex-col items-center">
+              <div className="w-52 h-32 bg-white rounded-3xl shadow-md flex flex-col justify-between items-center border-t-4 border-green-500 p-4 hover:shadow-xl transition-all duration-200">
+                <div className="text-5xl">🙌</div>
+                <div className="text-lg font-bold text-gray-800">Évangélisation</div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Rapport */}
-        {profile.role === "Admin" && (
-          <div className="flex-1 flex flex-col items-center">
-            <div className="w-52 h-32 bg-white rounded-3xl shadow-md flex flex-col justify-between items-center border-t-4 border-red-500 p-4 hover:shadow-xl transition-all duration-200">
-              <div className="text-5xl">📊</div>
-              <div className="text-lg font-bold text-gray-800">Rapport</div>
+          {/* Rapport */}
+          {profile.role === "Admin" && (
+            <div className="flex-1 flex flex-col items-center">
+              <div className="w-52 h-32 bg-white rounded-3xl shadow-md flex flex-col justify-between items-center border-t-4 border-red-500 p-4 hover:shadow-xl transition-all duration-200">
+                <div className="text-5xl">📊</div>
+                <div className="text-lg font-bold text-gray-800">Rapport</div>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      {/* Boutons Envoyer l’appli */}
-      <div className="flex flex-col gap-4 w-full max-w-md mt-6">
-        {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendWhatsappButtons
-            type="ajouter_membre"
-            profile={profile}
-            label="🚀 Envoyer l’appli – Nouveau membre"
-            gradient="from-blue-400 to-cyan-500"
-            rounded="rounded-2xl"
-            shadow="shadow-md"
-            hover="hover:brightness-105"
-          />
-        )}
-
-        {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendWhatsappButtons
-            type="ajouter_evangelise"
-            profile={profile}
-            label="🙌 Envoyer l’appli – Évangélisé"
-            gradient="from-green-400 to-emerald-500"
-            rounded="rounded-2xl"
-            shadow="shadow-md"
-            hover="hover:brightness-105"
-          />
-        )}
-
-        {/* Bouton Voir / Copier liens */}
-        {profile.role === "Admin" && (
-          <div className="mt-2">
-            <SendLinkPopup
-              buttonColor="from-orange-400 to-orange-500"
+        {/* Boutons Envoyer l’appli */}
+        <div className="flex flex-col gap-4 w-full max-w-md mt-6">
+          {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
+            <SendWhatsappButtons
+              type="ajouter_membre"
+              profile={profile}
+              label="🚀 Envoyer l’appli – Nouveau membre"
+              gradient="from-blue-400 to-cyan-500" // dégradé style login
               rounded="rounded-2xl"
               shadow="shadow-md"
               hover="hover:brightness-105"
             />
-          </div>
-        )}
+          )}
+
+          {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
+            <SendWhatsappButtons
+              type="ajouter_evangelise"
+              profile={profile}
+              label="🙌 Envoyer l’appli – Évangélisé"
+              gradient="from-green-400 to-emerald-500" // dégradé style login
+              rounded="rounded-2xl"
+              shadow="shadow-md"
+              hover="hover:brightness-105"
+            />
+          )}
+
+          {/* Bouton Voir / Copier liens */}
+          {profile.role === "Admin" && (
+            <div className="mt-2">
+              <SendLinkPopup
+                buttonColor="from-orange-400 to-orange-500"
+                rounded="rounded-2xl"
+                shadow="shadow-md"
+                hover="hover:brightness-105"
+              />
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Message d'amour tout en bas */}
+      <p className="text-center text-gray-800 mt-6">
+        ❤️ Suivez, accompagnez et aimons comme Christ nous a aimés.
+      </p>
     </div>
   );
 }
