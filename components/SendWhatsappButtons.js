@@ -1,7 +1,6 @@
 /* components/SendWhatsappButtons.js */
 "use client";
 import { useState } from "react";
-import { X } from "lucide-react";
 import supabase from "../lib/supabaseClient";
 
 export default function SendWhatsappButtons({ type, profile }) {
@@ -28,7 +27,6 @@ export default function SendWhatsappButtons({ type, profile }) {
       const token = data?.token;
       if (!token) throw new Error("Token introuvable.");
 
-      // Générer lien
       const link = `https://soultrack-beta.vercel.app/access/${token}`;
 
       // Ouvrir WhatsApp
@@ -55,12 +53,12 @@ export default function SendWhatsappButtons({ type, profile }) {
 
       {showPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl p-6 w-80 relative flex flex-col gap-4">
+          <div className="bg-white rounded-3xl p-6 w-80 relative flex flex-col gap-4 shadow-lg">
             <button
               onClick={() => setShowPopup(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl"
             >
-              <X size={20} />
+              ❌
             </button>
 
             <h3 className="text-lg font-semibold text-gray-800 text-center">Saisir le numéro WhatsApp</h3>
