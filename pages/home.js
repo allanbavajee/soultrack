@@ -52,13 +52,13 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-start p-6"
+      className="min-h-screen flex flex-col items-center justify-start p-6 gap-10"
       style={{
         background: "linear-gradient(135deg, #f0f9ff 0%, #e2e8f0 50%, #f8fafc 100%)",
       }}
     >
       {/* Logos */}
-      <div className="flex flex-col md:flex-row items-center justify-center mt-8 gap-6">
+      <div className="flex flex-row items-center justify-center gap-6 mt-6">
         <Image src="/soul.logo.png" alt="SoulTrack Logo" width={90} height={90} />
         <Image src="/icc.logo.png" alt="ICC Logo" width={90} height={90} />
       </div>
@@ -69,17 +69,16 @@ export default function Home() {
       </h2>
 
       {/* Cartes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl mt-10 justify-items-center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl justify-items-center">
         {/* Membres & Suivis */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <div className="flex flex-col items-center h-full">
-            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-md hover:shadow-2xl transition-all duration-300 border-t-4 border-blue-500">
-              <Link href="/membres-hub" className="flex flex-col items-center">
-                <div className="text-5xl mb-4">👤</div>
-                <h2 className="text-xl font-bold text-gray-800 text-center">Membres & Suivis</h2>
-              </Link>
-              <div className="mt-4 w-full">
-                <SendWhatsappButtons type="ajouter_membre" profile={profile} />
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-400 p-[2px] rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300">
+              <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl">
+                <Link href="/membres-hub" className="flex flex-col items-center">
+                  <div className="text-5xl mb-4">👤</div>
+                  <h2 className="text-xl font-bold text-gray-800 text-center">Suivis des membres</h2>
+                </Link>
               </div>
             </div>
           </div>
@@ -88,37 +87,52 @@ export default function Home() {
         {/* Évangélisation */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <div className="flex flex-col items-center h-full">
-            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-md hover:shadow-2xl transition-all duration-300 border-t-4 border-green-500">
-              <Link href="/evangelisation-hub" className="flex flex-col items-center">
-                <div className="text-5xl mb-4">🙌</div>
-                <h2 className="text-xl font-bold text-gray-800 text-center">Évangélisation</h2>
-              </Link>
-              <div className="mt-4 w-full">
-                <SendWhatsappButtons type="ajouter_evangelise" profile={profile} />
+            <div className="bg-gradient-to-r from-green-500 to-emerald-400 p-[2px] rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300">
+              <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl">
+                <Link href="/evangelisation-hub" className="flex flex-col items-center">
+                  <div className="text-5xl mb-4">🙌</div>
+                  <h2 className="text-xl font-bold text-gray-800 text-center">Évangélisation</h2>
+                </Link>
               </div>
             </div>
           </div>
         )}
 
-        {/* Rapport - Admin uniquement */}
+        {/* Rapport */}
         {profile.role === "Admin" && (
           <div className="flex flex-col items-center h-full">
-            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-md hover:shadow-2xl transition-all duration-300 border-t-4 border-red-500">
-              <Link href="/rapport" className="flex flex-col items-center">
-                <div className="text-5xl mb-4">📊</div>
-                <h2 className="text-xl font-bold text-gray-800 text-center">Rapport</h2>
-              </Link>
+            <div className="bg-gradient-to-r from-red-500 to-orange-400 p-[2px] rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300">
+              <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl">
+                <Link href="/rapport" className="flex flex-col items-center">
+                  <div className="text-5xl mb-4">📊</div>
+                  <h2 className="text-xl font-bold text-gray-800 text-center">Rapport</h2>
+                </Link>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Popup pour liens permanents - uniquement Admin */}
-      {profile.role === "Admin" && (
-        <div className="mt-6 w-full flex justify-center">
-          <SendLinkPopup />
-        </div>
-      )}
+      {/* Boutons envoyer l’appli */}
+      <div className="flex flex-col gap-4 w-full max-w-md mt-6">
+        {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
+          <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-2xl transition-all duration-200">
+            🚀 Envoyer l’appli – Nouveau membre
+          </button>
+        )}
+
+        {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
+          <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-2xl transition-all duration-200">
+            🙌 Envoyer l’appli – Évangélisé
+          </button>
+        )}
+
+        {profile.role === "Admin" && (
+          <div className="mt-2">
+            <SendLinkPopup />
+          </div>
+        )}
+      </div>
 
       {/* Message d'amour */}
       <div className="mt-10 p-6 rounded-3xl shadow-lg max-w-2xl text-center bg-white/70 backdrop-blur-sm">
