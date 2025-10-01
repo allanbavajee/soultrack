@@ -51,7 +51,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-start p-6">
       {/* Logos */}
       <div className="flex flex-col md:flex-row items-center justify-center mt-8 gap-6">
         <Image src="/soul.logo.png" alt="SoulTrack Logo" width={90} height={90} />
@@ -65,61 +65,53 @@ export default function Home() {
 
       {/* Cartes */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mt-10 justify-items-center">
-        {/* Carte Membres & Suivis */}
+        {/* Membres & Suivis */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <div className="flex flex-col items-center">
-            <Link
-              href="/membres-hub"
-              className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#4285F4]"
-            >
-              <div className="text-5xl mb-4">👤</div>
-              <h2 className="text-xl font-bold text-gray-800 text-center">Membres & Suivis</h2>
-            </Link>
-            <div className="mt-4">
-              {profile.role === "ResponsableIntegration" && (
+          <div className="flex flex-col items-center h-full">
+            <div className="flex flex-col items-center justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#4285F4]">
+              <Link href="/membres-hub" className="flex flex-col items-center">
+                <div className="text-5xl mb-4">👤</div>
+                <h2 className="text-xl font-bold text-gray-800 text-center">Membres & Suivis</h2>
+              </Link>
+              <div className="mt-4 w-full">
                 <SendWhatsappButtons type="ajouter_membre" profile={profile} />
-              )}
-              {profile.role === "Admin" && <SendWhatsappButtons type="ajouter_membre" profile={profile} />}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Carte Évangélisation */}
+        {/* Évangélisation */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <div className="flex flex-col items-center">
-            <Link
-              href="/evangelisation-hub"
-              className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#34a853]"
-            >
-              <div className="text-5xl mb-4">🙌</div>
-              <h2 className="text-xl font-bold text-gray-800 text-center">Évangélisation</h2>
-            </Link>
-            <div className="mt-4">
-              {profile.role === "ResponsableEvangelisation" && (
+          <div className="flex flex-col items-center h-full">
+            <div className="flex flex-col items-center justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#34a853]">
+              <Link href="/evangelisation-hub" className="flex flex-col items-center">
+                <div className="text-5xl mb-4">🙌</div>
+                <h2 className="text-xl font-bold text-gray-800 text-center">Évangélisation</h2>
+              </Link>
+              <div className="mt-4 w-full">
                 <SendWhatsappButtons type="ajouter_evangelise" profile={profile} />
-              )}
-              {profile.role === "Admin" && <SendWhatsappButtons type="ajouter_evangelise" profile={profile} />}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Carte Rapport - Admin uniquement */}
+        {/* Rapport - Admin uniquement */}
         {profile.role === "Admin" && (
-          <div className="flex flex-col items-center">
-            <Link
-              href="/rapport"
-              className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#ea4335]"
-            >
-              <div className="text-5xl mb-4">📊</div>
-              <h2 className="text-xl font-bold text-gray-800 text-center">Rapport</h2>
-            </Link>
+          <div className="flex flex-col items-center h-full">
+            <div className="flex flex-col items-center justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#ea4335]">
+              <Link href="/rapport" className="flex flex-col items-center">
+                <div className="text-5xl mb-4">📊</div>
+                <h2 className="text-xl font-bold text-gray-800 text-center">Rapport</h2>
+              </Link>
+              {/* Aucun bouton WhatsApp ici pour le rapport */}
+            </div>
           </div>
         )}
       </div>
 
       {/* Popup pour liens permanents - uniquement Admin */}
       {profile.role === "Admin" && (
-        <div className="mt-6">
+        <div className="mt-6 w-full flex justify-center">
           <SendLinkPopup />
         </div>
       )}
