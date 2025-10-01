@@ -1,54 +1,63 @@
-// pages/access/[token].js
+/* pages/access/[token].js */
+"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";
 
 export default function AccessPage() {
   const router = useRouter();
-  const { token } = router.query;
-  const [message, setMessage] = useState("Vérification du lien...");
+  const { token } = router.query; // Récupère le token depuis l'URL
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     if (!token) return;
 
-    const validateToken = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("access_tokens")
-          .select("*")
-          .eq("token", token)
-          .single();
+    const verifyToken = async () => {
+      setLoading(true);
 
-        if (error || !data) {
-          setMessage("Lien invalide ou expiré. Redirection...");
-          setTimeout(() => router.replace("/"), 3000);
-          return;
-        }
+      // Vérifier si le token existe dans Supabase
+      const { data, error } = await supabase
+        .from("access_tokens")
+        .select("*")
+        .eq("token", token)
+        .single();
 
-        // Redirection automatique selon le type d'accès
-        if (data.access_type === "ajouter_membre") {
-          router.replace("/ajouter-membre");
-        } else if (data.access_type === "ajouter_evangelise") {
-          router.replace("/ajouter-evangelise");
-        } else {
-          setMessage("Type d'accès inconnu. Redirection...");
-          setTimeout(() => router.replace("/"), 3000);
-        }
-      } catch (err) {
-        console.error(err);
-        setMessage("Erreur serveur, merci de réessayer. Redirection...");
-        setTimeout(() => router.replace("/"), 3000);
+      if (error || !data) {
+        setErrorMsg("Lien invalide ou expiré.");
+        setLoading(false);
+        return;
+      }
+
+      // Vérifier l'expiration
+      const now = new Date();
+      if (data.expires_at && new Date(data.expires_at) < now) {
+        setErrorMsg("Lien expiré.");
+        setLoading(false);
+        return;
+      }
+
+      // Redirection selon le type de token
+      if (data.access_type === "ajouter_membre") {
+        router.replace("/add-member");
+      } else if (data.access_type === "ajouter_evangelise") {
+        router.replace("/add-evangelise");
+      } else {
+        setErrorMsg("Type de token inconnu.");
+        setLoading(false);
       }
     };
 
-    validateToken();
+    verifyToken();
   }, [token, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-100 to-indigo-50 p-4">
-      <div className="bg-white p-8 rounded-3xl shadow-lg text-center max-w-md">
-        <p className="text-gray-700 font-semibold text-lg">{message}</p>
-      </div>
+    <div className="flex items-center justify-center min-h-screen">
+      {loading ? (
+        <p className="text-gray-700 text-lg">Vérification du lien...</p>
+      ) : (
+        <p className="text-red-500 text-lg">{errorMsg}</p>
+      )}
     </div>
   );
 }
