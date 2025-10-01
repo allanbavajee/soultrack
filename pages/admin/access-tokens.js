@@ -1,6 +1,7 @@
 // pages/admin/access-tokens.js
 import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
+import supabase from "../../lib/supabaseClient";
+import SendWhatsappButton from "../../components/SendWhatsappButton";
 
 export default function AccessTokens() {
   const [tokens, setTokens] = useState([]);
@@ -30,10 +31,9 @@ export default function AccessTokens() {
   const generateToken = async () => {
     if (!selectedUser) return alert("Veuillez sélectionner un utilisateur");
 
-    // Génération du token côté Supabase
     const { data, error } = await supabase.rpc("generate_access_token", {
       p_user_id: selectedUser,
-      p_access_type: accessType
+      p_access_type: accessType,
     });
 
     if (error) return alert("Erreur : " + error.message);
@@ -45,8 +45,11 @@ export default function AccessTokens() {
     <div className="min-h-screen p-6 bg-gray-50">
       <h1 className="text-3xl font-bold mb-6">Gestion des Access Tokens</h1>
 
+      {/* Sélection utilisateur */}
       <div className="mb-6 max-w-md">
-        <label className="block mb-2 font-semibold">Sélectionner un utilisateur :</label>
+        <label className="block mb-2 font-semibold">
+          Sélectionner un utilisateur :
+        </label>
         <select
           className="w-full p-2 border rounded-lg"
           value={selectedUser}
@@ -55,12 +58,14 @@ export default function AccessTokens() {
           <option value="">-- Choisir --</option>
           {users.map((u) => (
             <option key={u.id} value={u.id}>
-              {u.role} {u.username || ""} {u.responsable ? `(${u.responsable})` : ""}
+              {u.role} {u.username || ""}{" "}
+              {u.responsable ? `(${u.responsable})` : ""}
             </option>
           ))}
         </select>
       </div>
 
+      {/* Type d'accès */}
       <div className="mb-6 max-w-md">
         <label className="block mb-2 font-semibold">Type d'accès :</label>
         <select
@@ -73,6 +78,7 @@ export default function AccessTokens() {
         </select>
       </div>
 
+      {/* Générer token */}
       <button
         className="mb-6 px-4 py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
         onClick={generateToken}
@@ -80,6 +86,7 @@ export default function AccessTokens() {
         Générer un token
       </button>
 
+      {/* Liste des tokens */}
       <h2 className="text-2xl font-semibold mb-4">Tokens existants :</h2>
       <div className="overflow-x-auto">
         <table className="table-auto w-full border-collapse border border-gray-300 text-center">
@@ -89,6 +96,7 @@ export default function AccessTokens() {
               <th className="border px-4 py-2">Token</th>
               <th className="border px-4 py-2">Type</th>
               <th className="border px-4 py-2">Créé le</th>
+              <th className="border px-4 py-2">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -103,6 +111,9 @@ export default function AccessTokens() {
                   <td className="border px-4 py-2">{t.access_type}</td>
                   <td className="border px-4 py-2">
                     {new Date(t.created_at).toLocaleString()}
+                  </td>
+                  <td className="border px-4 py-2">
+                    <SendWhatsappButton token={t.token} />
                   </td>
                 </tr>
               );
