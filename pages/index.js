@@ -1,129 +1,96 @@
 /* pages/index.js */
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import SendWhatsappButtons from "../components/SendWhatsappButtons";
-import SendLinkPopup from "../components/SendLinkPopup";
 
-export default function Home() {
-  const [profile, setProfile] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      // Récupère l'utilisateur connecté via Supabase Auth
-      const { data: { user }, error } = await supabase.auth.getUser();
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-      if (!user || error) {
-        setLoadingProfile(false);
+    try {
+      // Vérifier l'utilisateur dans la table profiles
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", email)
+        .single();
+
+      if (error || !profile) {
+        setError("Utilisateur introuvable");
+        setLoading(false);
         return;
       }
 
-      // Récupère le profil complet
-      const { data, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+      // Vérifier le mot de passe via RPC ou fonction custom
+      const { data: checkPassword } = await supabase.rpc("verify_password", {
+        p_password: password,
+        p_hash: profile.password_hash,
+      });
 
-      if (!profileError && data) {
-        setProfile(data);
+      if (!checkPassword || checkPassword[0].verify !== true) {
+        setError("Mot de passe incorrect");
+        setLoading(false);
+        return;
       }
 
-      setLoadingProfile(false);
-    };
+      // Stocker l'ID du profil dans localStorage pour la session
+      localStorage.setItem("userId", profile.id);
 
-    fetchProfile();
-  }, []);
-
-  if (loadingProfile) {
-    return <p className="text-center mt-10 text-gray-600">Chargement du profil...</p>;
-  }
-
-  if (!profile) {
-    return (
-      <div className="text-center mt-10">
-        <p className="text-red-500">Aucun profil trouvé. Connecte-toi pour accéder à la plateforme.</p>
-        <a href="/login" className="mt-4 inline-block text-green-600 font-bold underline">
-          Aller à la page de connexion
-        </a>
-      </div>
-    );
-  }
+      // Rediriger vers la page Home
+      router.push("/home");
+    } catch (err) {
+      console.error(err);
+      setError("Erreur inattendue");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
-      {/* Logos */}
-      <div className="flex flex-col md:flex-row items-center justify-center mt-8 gap-6">
-        <Image src="/soul.logo.png" alt="SoulTrack Logo" width={90} height={90} />
-        <Image src="/icc.logo.png" alt="ICC Logo" width={90} height={90} />
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-8 rounded-3xl shadow-lg flex flex-col gap-6 w-full max-w-md"
+      >
+        <h2 className="text-2xl font-bold text-center">Connexion SoulTrack</h2>
 
-      {/* Slogan */}
-      <h2 className="mt-4 text-2xl md:text-3xl font-handwriting text-center text-gray-800">
-        Tu es précieux, tu es attendu, tu es aimé
-      </h2>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="border rounded-xl px-4 py-2 w-full"
+          required
+        />
 
-      {/* Cartes et boutons */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mt-10 justify-items-center">
-        {/* Membres & Suivis */}
-        {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <div className="flex flex-col items-center">
-            <Link
-              href="/membres-hub"
-              className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#4285F4]"
-            >
-              <div className="text-5xl mb-4">👤</div>
-              <h2 className="text-xl font-bold text-gray-800 text-center">Membres & Suivis</h2>
-            </Link>
-            <div className="mt-4">
-              <SendWhatsappButtons type="ajouter_membre" profile={profile} />
-            </div>
-          </div>
-        )}
+        <input
+          type="password"
+          placeholder="Mot de passe"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="border rounded-xl px-4 py-2 w-full"
+          required
+        />
 
-        {/* Évangélisation */}
-        {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <div className="flex flex-col items-center">
-            <Link
-              href="/evangelisation-hub"
-              className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#34a853]"
-            >
-              <div className="text-5xl mb-4">🙌</div>
-              <h2 className="text-xl font-bold text-gray-800 text-center">Évangélisation</h2>
-            </Link>
-            <div className="mt-4">
-              <SendWhatsappButtons type="ajouter_evangelise" profile={profile} />
-            </div>
-          </div>
-        )}
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-2xl transition-all duration-200"
+        >
+          {loading ? "Connexion..." : "Se connecter"}
+        </button>
 
-        {/* Rapport - Admin uniquement */}
-        {profile.role === "Admin" && (
-          <div className="flex flex-col items-center">
-            <Link
-              href="/rapport"
-              className="bg-white p-6 w-64 h-52 rounded-3xl shadow-lg flex flex-col items-center justify-center hover:shadow-2xl transition-all duration-200 border-t-4 border-[#ea4335]"
-            >
-              <div className="text-5xl mb-4">📊</div>
-              <h2 className="text-xl font-bold text-gray-800 text-center">Rapport</h2>
-            </Link>
-          </div>
-        )}
-      </div>
-
-      {/* Popup pour liens permanents */}
-      <div className="mt-6">
-        <SendLinkPopup />
-      </div>
-
-      {/* Message d'amour */}
-      <div className="mt-10 p-6 rounded-3xl shadow-md max-w-2xl text-center text-gray-800">
-        <p className="text-lg font-handwriting font-semibold">
-          ❤️ Aimons-nous les uns les autres, comme Christ nous a aimés.
-        </p>
-      </div>
+        {error && <p className="text-red-500 text-center">{error}</p>}
+      </form>
     </div>
   );
 }
