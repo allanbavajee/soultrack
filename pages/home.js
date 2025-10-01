@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import { User, BookOpen, BarChart3, Send } from "lucide-react";
 
 export default function HomePage() {
   const router = useRouter();
@@ -12,7 +11,7 @@ export default function HomePage() {
   useEffect(() => {
     const userId = localStorage.getItem("userId");
     if (!userId) {
-      router.push("/login");
+      router.push("/");
       return;
     }
 
@@ -25,7 +24,7 @@ export default function HomePage() {
 
       if (error || !data) {
         localStorage.removeItem("userId");
-        router.push("/login");
+        router.push("/");
       } else {
         setProfile(data);
       }
@@ -46,7 +45,7 @@ export default function HomePage() {
     <div
       className="min-h-screen flex flex-col items-center justify-start p-10 gap-10"
       style={{
-        background: "linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)", // fond nuancé
+        background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #dbeafe 100%)", // Bleu nuancé
       }}
     >
       {/* Titre */}
@@ -57,15 +56,19 @@ export default function HomePage() {
       {/* Cartes principales */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
         <div className="bg-white shadow-lg rounded-2xl p-6 text-center hover:shadow-xl transition flex flex-col items-center gap-3">
-          <User size={40} className="text-indigo-500" />
-          <h2 className="text-xl font-semibold text-slate-700">Suivis des membres</h2>
+          <span className="text-4xl">👤</span>
+          <h2 className="text-xl font-semibold text-slate-700">
+            Suivis des membres
+          </h2>
         </div>
         <div className="bg-white shadow-lg rounded-2xl p-6 text-center hover:shadow-xl transition flex flex-col items-center gap-3">
-          <BookOpen size={40} className="text-green-500" />
-          <h2 className="text-xl font-semibold text-slate-700">Évangélisation</h2>
+          <span className="text-4xl">📖</span>
+          <h2 className="text-xl font-semibold text-slate-700">
+            Évangélisation
+          </h2>
         </div>
         <div className="bg-white shadow-lg rounded-2xl p-6 text-center hover:shadow-xl transition flex flex-col items-center gap-3">
-          <BarChart3 size={40} className="text-rose-500" />
+          <span className="text-4xl">📊</span>
           <h2 className="text-xl font-semibold text-slate-700">Rapport</h2>
         </div>
       </div>
@@ -79,7 +82,7 @@ export default function HomePage() {
             boxShadow: "0 6px 18px rgba(139,92,246,0.25)",
           }}
         >
-          <Send size={20} /> Envoyer l’appli – Nouveau membre
+          🚀 Envoyer l’appli – Nouveau membre
         </button>
 
         <button
@@ -89,7 +92,7 @@ export default function HomePage() {
             boxShadow: "0 6px 18px rgba(249,115,22,0.25)",
           }}
         >
-          <Send size={20} /> Envoyer l’appli – Évangélisé
+          🙌 Envoyer l’appli – Évangélisé
         </button>
       </div>
 
@@ -97,11 +100,11 @@ export default function HomePage() {
       <button
         className="flex items-center justify-center gap-2 text-white font-bold py-3 rounded-2xl transition-all duration-200 mt-6"
         style={{
-          background: "linear-gradient(90deg,#64748b,#475569)", // gris → slate
+          background: "linear-gradient(90deg,#64748b,#475569)", // Gris → Slate
           boxShadow: "0 6px 18px rgba(71,85,105,0.25)",
         }}
       >
-        <Send size={20} /> Voir / Copier liens…
+        📎 Voir / Copier liens…
       </button>
     </div>
   );
