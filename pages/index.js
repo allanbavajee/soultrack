@@ -54,7 +54,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
         {/* Titre */}
-        <h1 className="text-5xl font-handwriting text-green-800 mb-3 text-center">
+        <h1 className="text-5xl font-handwriting text-black-800 mb-3 text-center">
           SoulTrack
         </h1>
 
