@@ -3,16 +3,14 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SendWhatsappButtons() {
+export default function SendWhatsappButtons({ type }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
-  const [activeButton, setActiveButton] = useState(""); // "ajouter_membre" ou "ajouter_evangelise"
   const [showModal, setShowModal] = useState(false);
 
-  const handleButtonClick = (accessType) => {
-    setActiveButton(accessType);
-    setShowModal(true); // Affiche le popup
+  const handleButtonClick = () => {
+    setShowModal(true);
     setErrorMsg(null);
   };
 
@@ -27,7 +25,7 @@ export default function SendWhatsappButtons() {
 
     try {
       const { data: token, error } = await supabase.rpc("generate_access_token", {
-        p_access_type: activeButton,
+        p_access_type: type,
       });
 
       if (error) {
@@ -39,7 +37,7 @@ export default function SendWhatsappButtons() {
 
       const link = `https://soultrack-beta.vercel.app/access/${token}`;
       const message =
-        activeButton === "ajouter_membre"
+        type === "ajouter_membre"
           ? `Bonjour 👋, clique ici pour ajouter un membre : ${link}`
           : `Bonjour 🙌, clique ici pour ajouter une personne évangélisée : ${link}`;
 
@@ -51,7 +49,6 @@ export default function SendWhatsappButtons() {
 
       setPhoneNumber("");
       setShowModal(false);
-      setActiveButton("");
     } catch (err) {
       console.error("Erreur JS :", err);
       setErrorMsg("Erreur inattendue");
@@ -62,28 +59,21 @@ export default function SendWhatsappButtons() {
 
   return (
     <div className="flex flex-col gap-4 items-center">
-      {/* Boutons principaux */}
+      {/* Bouton principal */}
       <button
         type="button"
-        onClick={() => handleButtonClick("ajouter_membre")}
+        onClick={handleButtonClick}
         className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200"
       >
-        📲 Envoyer l’appli – Nouveau membre
+        {type === "ajouter_membre"
+          ? "📲 Envoyer l’appli – Nouveau membre"
+          : "📲 Envoyer l’appli – Évangélisé"}
       </button>
 
-      <button
-        type="button"
-        onClick={() => handleButtonClick("ajouter_evangelise")}
-        className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200"
-      >
-        📲 Envoyer l’appli – Évangélisé
-      </button>
-
-      {/* Popup / Modal vert WhatsApp */}
+      {/* Popup vert WhatsApp */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
           <div className="bg-[#25D366] rounded-2xl p-6 w-80 shadow-lg flex flex-col gap-4 relative">
-            {/* Bouton fermer */}
             <button
               type="button"
               onClick={() => setShowModal(false)}
@@ -93,7 +83,7 @@ export default function SendWhatsappButtons() {
             </button>
 
             <h3 className="text-lg font-semibold text-center text-white">
-              {activeButton === "ajouter_membre"
+              {type === "ajouter_membre"
                 ? "Envoyer lien – Nouveau membre"
                 : "Envoyer lien – Évangélisé"}
             </h3>
