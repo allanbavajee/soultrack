@@ -1,108 +1,83 @@
 /* components/SendWhatsappButtons.js */
 "use client";
 import { useState } from "react";
+import { X } from "lucide-react";
 import supabase from "../lib/supabaseClient";
 
 export default function SendWhatsappButtons({ type, profile }) {
+  const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-
-  const handleButtonClick = () => {
-    setShowModal(true);
-    setErrorMsg(null);
-  };
+  const [sending, setSending] = useState(false);
 
   const handleSend = async () => {
     if (!phoneNumber) {
-      setErrorMsg("⚠️ Entre un numéro WhatsApp !");
+      alert("Veuillez saisir un numéro de téléphone.");
       return;
     }
 
-    setLoading(true);
-    setErrorMsg(null);
+    setSending(true);
 
     try {
-      const { data: token, error } = await supabase.rpc("generate_access_token", {
+      // Appel RPC Supabase pour générer token
+      const { data, error } = await supabase.rpc("generate_access_token", {
         p_access_type: type,
       });
 
-      if (error) {
-        setErrorMsg("Erreur lors de la génération du token");
-        setLoading(false);
-        return;
-      }
+      if (error) throw error;
 
+      const token = data?.token;
+      if (!token) throw new Error("Token introuvable.");
+
+      // Générer lien
       const link = `https://soultrack-beta.vercel.app/access/${token}`;
-      const message =
-        type === "ajouter_membre"
-          ? `Bonjour 👋, clique ici pour ajouter un membre : ${link}`
-          : `Bonjour 🙌, clique ici pour ajouter une personne évangélisée : ${link}`;
 
-      const cleanNumber = phoneNumber.replace(/\D/g, "");
-      window.open(
-        `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`,
-        "_blank"
-      );
+      // Ouvrir WhatsApp
+      window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(link)}`, "_blank");
 
       setPhoneNumber("");
-      setShowModal(false);
+      setShowPopup(false);
     } catch (err) {
       console.error(err);
-      setErrorMsg("Erreur inattendue");
+      alert("Erreur lors de l'envoi du lien.");
     } finally {
-      setLoading(false);
+      setSending(false);
     }
   };
 
   return (
-    <div className="flex flex-col gap-4 items-center">
-      {/* Bouton principal moderne */}
+    <div className="flex flex-col items-center w-full">
       <button
-        type="button"
-        onClick={handleButtonClick}
-        className="flex items-center gap-2 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white font-bold px-6 py-3 rounded-3xl shadow-lg transform hover:-translate-y-1 hover:shadow-2xl transition-all duration-200"
+        onClick={() => setShowPopup(true)}
+        className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl transition-all duration-200 w-full"
       >
-        📲 {type === "ajouter_membre" ? "Envoyer l’appli – Nouveau membre" : "Envoyer l’appli – Évangélisé"}
+        {type === "ajouter_membre" ? "Envoyer l'appli – Nouveau membre" : "Envoyer l'appli – Évangélisé"}
       </button>
 
-      {/* Popup */}
-      {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-gray-100 rounded-2xl p-6 w-80 shadow-lg flex flex-col gap-4 items-center relative">
+      {showPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-3xl p-6 w-80 relative flex flex-col gap-4">
             <button
-              type="button"
-              onClick={() => setShowModal(false)}
-              className="absolute top-3 right-3 text-gray-800 font-bold text-lg"
+              onClick={() => setShowPopup(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
             >
-              ×
+              <X size={20} />
             </button>
 
-            <h3 className="text-lg font-semibold text-center text-gray-800">
-              {type === "ajouter_membre"
-                ? "Envoyer lien – Nouveau membre"
-                : "Envoyer lien – Évangélisé"}
-            </h3>
-
+            <h3 className="text-lg font-semibold text-gray-800 text-center">Saisir le numéro WhatsApp</h3>
             <input
-              type="text"
+              type="tel"
+              placeholder="+230XXXXXXXX"
+              className="border p-2 rounded w-full text-center"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="Numéro WhatsApp (ex: 23052345678)"
-              className="border rounded-xl px-4 py-2 w-full"
             />
-
             <button
-              type="button"
               onClick={handleSend}
-              disabled={loading}
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200 w-full"
+              disabled={sending}
+              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl transition-all duration-200 w-full"
             >
-              {loading ? "Envoi..." : "Envoyer le lien"}
+              {sending ? "Envoi..." : "Envoyer"}
             </button>
-
-            {errorMsg && <p className="text-red-500 mt-2 text-center">{errorMsg}</p>}
           </div>
         </div>
       )}
