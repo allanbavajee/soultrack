@@ -68,7 +68,7 @@ export default function Home() {
         {/* Membres & Suivis */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <div className="flex flex-col items-center h-full">
-            <div className="flex flex-col items-center justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#4285F4]">
+            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#4285F4]">
               <Link href="/membres-hub" className="flex flex-col items-center">
                 <div className="text-5xl mb-4">👤</div>
                 <h2 className="text-xl font-bold text-gray-800 text-center">Membres & Suivis</h2>
@@ -83,7 +83,7 @@ export default function Home() {
         {/* Évangélisation */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <div className="flex flex-col items-center h-full">
-            <div className="flex flex-col items-center justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#34a853]">
+            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#34a853]">
               <Link href="/evangelisation-hub" className="flex flex-col items-center">
                 <div className="text-5xl mb-4">🙌</div>
                 <h2 className="text-xl font-bold text-gray-800 text-center">Évangélisation</h2>
@@ -98,12 +98,11 @@ export default function Home() {
         {/* Rapport - Admin uniquement */}
         {profile.role === "Admin" && (
           <div className="flex flex-col items-center h-full">
-            <div className="flex flex-col items-center justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#ea4335]">
+            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#ea4335]">
               <Link href="/rapport" className="flex flex-col items-center">
                 <div className="text-5xl mb-4">📊</div>
                 <h2 className="text-xl font-bold text-gray-800 text-center">Rapport</h2>
               </Link>
-              {/* Aucun bouton WhatsApp ici pour le rapport */}
             </div>
           </div>
         )}
