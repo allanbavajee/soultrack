@@ -9,11 +9,13 @@ export default function SendWhatsappButtons({ type }) {
   const [errorMsg, setErrorMsg] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
+  // Affiche le popup
   const handleButtonClick = () => {
     setShowModal(true);
     setErrorMsg(null);
   };
 
+  // Envoi du lien WhatsApp
   const handleSend = async () => {
     if (!phoneNumber) {
       setErrorMsg("⚠️ Entre un numéro WhatsApp !");
@@ -24,6 +26,7 @@ export default function SendWhatsappButtons({ type }) {
     setErrorMsg(null);
 
     try {
+      // Génère le token selon le type passé
       const { data: token, error } = await supabase.rpc("generate_access_token", {
         p_access_type: type,
       });
@@ -41,12 +44,16 @@ export default function SendWhatsappButtons({ type }) {
           ? `Bonjour 👋, clique ici pour ajouter un membre : ${link}`
           : `Bonjour 🙌, clique ici pour ajouter une personne évangélisée : ${link}`;
 
+      // Supprime les caractères non numériques pour WhatsApp
       const cleanNumber = phoneNumber.replace(/\D/g, "");
+
+      // Ouvre WhatsApp dans un nouvel onglet
       window.open(
         `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`,
         "_blank"
       );
 
+      // Réinitialise le formulaire
       setPhoneNumber("");
       setShowModal(false);
     } catch (err) {
@@ -74,6 +81,7 @@ export default function SendWhatsappButtons({ type }) {
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
           <div className="bg-[#25D366] rounded-2xl p-6 w-80 shadow-lg flex flex-col gap-4 relative">
+            {/* Bouton fermer */}
             <button
               type="button"
               onClick={() => setShowModal(false)}
@@ -82,12 +90,14 @@ export default function SendWhatsappButtons({ type }) {
               ×
             </button>
 
+            {/* Titre */}
             <h3 className="text-lg font-semibold text-center text-white">
               {type === "ajouter_membre"
                 ? "Envoyer lien – Nouveau membre"
                 : "Envoyer lien – Évangélisé"}
             </h3>
 
+            {/* Saisie du numéro */}
             <input
               type="text"
               value={phoneNumber}
@@ -96,6 +106,7 @@ export default function SendWhatsappButtons({ type }) {
               className="border rounded-xl px-4 py-2 w-full"
             />
 
+            {/* Bouton envoyer */}
             <button
               type="button"
               onClick={handleSend}
@@ -105,6 +116,7 @@ export default function SendWhatsappButtons({ type }) {
               {loading ? "Envoi..." : "Envoyer le lien"}
             </button>
 
+            {/* Message d'erreur */}
             {errorMsg && <p className="text-red-500 mt-2 text-center">{errorMsg}</p>}
           </div>
         </div>
