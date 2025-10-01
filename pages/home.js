@@ -51,7 +51,12 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-start p-6">
+    <div
+      className="min-h-screen flex flex-col items-center justify-start p-6"
+      style={{
+        background: "linear-gradient(135deg, #f0f9ff 0%, #e2e8f0 50%, #f8fafc 100%)",
+      }}
+    >
       {/* Logos */}
       <div className="flex flex-col md:flex-row items-center justify-center mt-8 gap-6">
         <Image src="/soul.logo.png" alt="SoulTrack Logo" width={90} height={90} />
@@ -59,16 +64,16 @@ export default function Home() {
       </div>
 
       {/* Slogan */}
-      <h2 className="mt-4 text-2xl md:text-3xl font-handwriting text-center text-gray-800">
-        Tu es précieux, tu es attendu, tu es aimé
+      <h2 className="mt-4 text-2xl md:text-3xl font-semibold text-center text-gray-700 tracking-wide">
+        ✨ Tu es précieux, tu es attendu, tu es aimé ✨
       </h2>
 
       {/* Cartes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mt-10 justify-items-center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl mt-10 justify-items-center">
         {/* Membres & Suivis */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <div className="flex flex-col items-center h-full">
-            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#4285F4]">
+            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-md hover:shadow-2xl transition-all duration-300 border-t-4 border-blue-500">
               <Link href="/membres-hub" className="flex flex-col items-center">
                 <div className="text-5xl mb-4">👤</div>
                 <h2 className="text-xl font-bold text-gray-800 text-center">Membres & Suivis</h2>
@@ -83,7 +88,7 @@ export default function Home() {
         {/* Évangélisation */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <div className="flex flex-col items-center h-full">
-            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#34a853]">
+            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-md hover:shadow-2xl transition-all duration-300 border-t-4 border-green-500">
               <Link href="/evangelisation-hub" className="flex flex-col items-center">
                 <div className="text-5xl mb-4">🙌</div>
                 <h2 className="text-xl font-bold text-gray-800 text-center">Évangélisation</h2>
@@ -98,7 +103,7 @@ export default function Home() {
         {/* Rapport - Admin uniquement */}
         {profile.role === "Admin" && (
           <div className="flex flex-col items-center h-full">
-            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#ea4335]">
+            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-md hover:shadow-2xl transition-all duration-300 border-t-4 border-red-500">
               <Link href="/rapport" className="flex flex-col items-center">
                 <div className="text-5xl mb-4">📊</div>
                 <h2 className="text-xl font-bold text-gray-800 text-center">Rapport</h2>
@@ -116,8 +121,8 @@ export default function Home() {
       )}
 
       {/* Message d'amour */}
-      <div className="mt-10 p-6 rounded-3xl shadow-md max-w-2xl text-center text-gray-800">
-        <p className="text-lg font-handwriting font-semibold">
+      <div className="mt-10 p-6 rounded-3xl shadow-lg max-w-2xl text-center bg-white/70 backdrop-blur-sm">
+        <p className="text-lg font-semibold text-gray-700">
           ❤️ Aimons-nous les uns les autres, comme Christ nous a aimés.
         </p>
       </div>
