@@ -5,10 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 import SendWhatsappButtons from "../components/SendWhatsappButtons";
+import SendLinkPopup from "../components/SendLinkPopup";
 
 export default function Home() {
   const router = useRouter();
-  const { userId } = router.query; // 🔹 récupère userId depuis l'URL
+  const { userId } = router.query; // Récupère userId depuis l’URL
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
@@ -90,6 +91,11 @@ export default function Home() {
             </Link>
           </div>
         )}
+      </div>
+
+      {/* Popup pour liens permanents */}
+      <div className="mt-6">
+        <SendLinkPopup />
       </div>
 
       {/* Message d'amour */}
