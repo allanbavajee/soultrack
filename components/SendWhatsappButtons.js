@@ -1,3 +1,4 @@
+/*components/SendWhatsappButtons.js*/
 "use client";
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
@@ -69,3 +70,4 @@ export default function SendWhatsappButtons({ phoneNumber }) {
     </div>
   );
 }
+
