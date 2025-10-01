@@ -1,6 +1,5 @@
 /* pages/index.js */
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
 import Link from "next/link";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
@@ -8,28 +7,42 @@ import SendWhatsappButtons from "../components/SendWhatsappButtons";
 import SendLinkPopup from "../components/SendLinkPopup";
 
 export default function Home() {
-  const router = useRouter();
-  const { userId } = router.query; // Récupère userId depuis l’URL
   const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
-    if (!userId) return;
-
     const fetchProfile = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
+      // On récupère le profil de l'utilisateur connecté
+      const { data: user } = await supabase.auth.getUser();
 
-      if (!error && data) setProfile(data);
+      if (user && user.user) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.user.id)
+          .single();
+
+        if (!error && data) {
+          setProfile(data);
+        }
+      }
+
+      setLoadingProfile(false);
     };
 
     fetchProfile();
-  }, [userId]);
+  }, []);
+
+  if (loadingProfile) {
+    return <p className="text-center mt-10 text-gray-600">Chargement du profil...</p>;
+  }
 
   if (!profile) {
-    return <p className="text-center mt-10 text-red-500">Chargement du profil...</p>;
+    return (
+      <p className="text-center mt-10 text-red-500">
+        Aucun profil trouvé. Connecte-toi pour accéder à la plateforme.
+      </p>
+    );
   }
 
   return (
