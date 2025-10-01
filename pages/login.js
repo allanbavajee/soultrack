@@ -1,10 +1,10 @@
-/* pages/login.js */
+/* pages/index.js */
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 
-export default function Login() {
+export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +17,7 @@ export default function Login() {
     setError(null);
 
     try {
-      // Vérification du profil dans Supabase
+      // Vérifier l'utilisateur dans la table profiles
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("*")
@@ -30,7 +30,7 @@ export default function Login() {
         return;
       }
 
-      // Vérification mot de passe
+      // Vérifier le mot de passe via la fonction RPC verify_password
       const { data: checkPassword } = await supabase.rpc("verify_password", {
         p_password: password,
         p_hash: profile.password_hash,
@@ -42,11 +42,11 @@ export default function Login() {
         return;
       }
 
-      // Connexion réussie → stockage temporaire du user dans Supabase Auth
-      await supabase.auth.setSession({ user: { id: profile.id } });
+      // Stocker l'ID du profil dans localStorage
+      localStorage.setItem("userId", profile.id);
 
-      // Redirection vers index
-      router.push("/index");
+      // Rediriger vers la vraie page index
+      router.push("/home");
     } catch (err) {
       console.error(err);
       setError("Erreur inattendue");
