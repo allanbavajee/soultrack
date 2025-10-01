@@ -76,8 +76,9 @@ export default function Home() {
         {/* Suivis des membres */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <div className="flex-1 flex flex-col items-center">
-            <div className="w-64 h-40 bg-white rounded-3xl border-4 border-blue-500 shadow-md flex flex-col items-center justify-center text-gray-800 font-bold text-lg hover:shadow-xl transition-all duration-200">
-              👤 Suivis des membres
+            <div className="w-52 h-32 bg-white rounded-3xl shadow-md flex flex-col justify-between items-center border-t-4 border-blue-500 p-4 hover:shadow-xl transition-all duration-200">
+              <div className="text-5xl">👤</div>
+              <div className="text-lg font-bold text-gray-800">Suivis des membres</div>
             </div>
           </div>
         )}
@@ -85,8 +86,9 @@ export default function Home() {
         {/* Évangélisation */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <div className="flex-1 flex flex-col items-center">
-            <div className="w-64 h-40 bg-white rounded-3xl border-4 border-green-500 shadow-md flex flex-col items-center justify-center text-gray-800 font-bold text-lg hover:shadow-xl transition-all duration-200">
-              🙌 Évangélisation
+            <div className="w-52 h-32 bg-white rounded-3xl shadow-md flex flex-col justify-between items-center border-t-4 border-green-500 p-4 hover:shadow-xl transition-all duration-200">
+              <div className="text-5xl">🙌</div>
+              <div className="text-lg font-bold text-gray-800">Évangélisation</div>
             </div>
           </div>
         )}
@@ -94,8 +96,9 @@ export default function Home() {
         {/* Rapport */}
         {profile.role === "Admin" && (
           <div className="flex-1 flex flex-col items-center">
-            <div className="w-64 h-40 bg-white rounded-3xl border-4 border-red-500 shadow-md flex flex-col items-center justify-center text-gray-800 font-bold text-lg hover:shadow-xl transition-all duration-200">
-              📊 Rapport
+            <div className="w-52 h-32 bg-white rounded-3xl shadow-md flex flex-col justify-between items-center border-t-4 border-red-500 p-4 hover:shadow-xl transition-all duration-200">
+              <div className="text-5xl">📊</div>
+              <div className="text-lg font-bold text-gray-800">Rapport</div>
             </div>
           </div>
         )}
