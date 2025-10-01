@@ -52,7 +52,7 @@ export default function Home() {
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-10"
       style={{
-        background: "linear-gradient(135deg, #dbe9ff 0%, #a3c1e0 100%)", // bleu un peu plus foncé
+        background: "linear-gradient(135deg, #9fc5f8 0%, #6da3d9 100%)", // bleu un peu plus foncé
       }}
     >
       <div className="flex flex-col items-center w-full gap-6">
@@ -74,7 +74,7 @@ export default function Home() {
             <div className="flex-1 flex flex-col items-center">
               <div className="w-52 h-32 bg-white rounded-3xl shadow-md flex flex-col justify-between items-center border-t-4 border-blue-500 p-4 hover:shadow-xl transition-all duration-200">
                 <div className="text-5xl">👤</div>
-                <div className="text-lg font-bold text-gray-800">Suivis des membres</div>
+                <div className="text-lg font-bold text-gray-800 text-center">Suivis des membres</div>
               </div>
             </div>
           )}
@@ -84,7 +84,7 @@ export default function Home() {
             <div className="flex-1 flex flex-col items-center">
               <div className="w-52 h-32 bg-white rounded-3xl shadow-md flex flex-col justify-between items-center border-t-4 border-green-500 p-4 hover:shadow-xl transition-all duration-200">
                 <div className="text-5xl">🙌</div>
-                <div className="text-lg font-bold text-gray-800">Évangélisation</div>
+                <div className="text-lg font-bold text-gray-800 text-center">Évangélisation</div>
               </div>
             </div>
           )}
@@ -94,7 +94,7 @@ export default function Home() {
             <div className="flex-1 flex flex-col items-center">
               <div className="w-52 h-32 bg-white rounded-3xl shadow-md flex flex-col justify-between items-center border-t-4 border-red-500 p-4 hover:shadow-xl transition-all duration-200">
                 <div className="text-5xl">📊</div>
-                <div className="text-lg font-bold text-gray-800">Rapport</div>
+                <div className="text-lg font-bold text-gray-800 text-center">Rapport</div>
               </div>
             </div>
           )}
