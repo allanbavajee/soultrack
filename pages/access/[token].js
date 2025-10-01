@@ -1,7 +1,7 @@
 // pages/admin/access-tokens.js
 import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
-import SendWhatsappButton from "@/components/SendWhatsappButton";
+import supabase from "../../lib/supabaseClient"; // chemin relatif
+import SendWhatsappButton from "../../components/SendWhatsappButton"; // chemin relatif
 
 export default function AccessTokens() {
   const [tokens, setTokens] = useState([]);
@@ -45,7 +45,7 @@ export default function AccessTokens() {
     <div className="min-h-screen p-6 bg-gray-50">
       <h1 className="text-3xl font-bold mb-6">Gestion des Access Tokens</h1>
 
-      {/* Sélection utilisateur */}
+      {/* Sélecteur utilisateur */}
       <div className="mb-6 max-w-md">
         <label className="block mb-2 font-semibold">Sélectionner un utilisateur :</label>
         <select
@@ -75,6 +75,7 @@ export default function AccessTokens() {
         </select>
       </div>
 
+      {/* Bouton génération */}
       <button
         className="mb-6 px-4 py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
         onClick={generateToken}
@@ -82,16 +83,17 @@ export default function AccessTokens() {
         Générer un token
       </button>
 
-      {/* Tableau des tokens */}
+      {/* Liste des tokens */}
       <h2 className="text-2xl font-semibold mb-4">Tokens existants :</h2>
       <div className="overflow-x-auto">
         <table className="table-auto w-full border-collapse border border-gray-300 text-center">
           <thead>
             <tr className="bg-gray-200">
               <th className="border px-4 py-2">Utilisateur</th>
-              <th className="border px-4 py-2">Lien</th>
+              <th className="border px-4 py-2">Token</th>
               <th className="border px-4 py-2">Type</th>
               <th className="border px-4 py-2">Créé le</th>
+              <th className="border px-4 py-2">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -102,12 +104,13 @@ export default function AccessTokens() {
                   <td className="border px-4 py-2">
                     {user ? `${user.role} ${user.username || ""}` : "—"}
                   </td>
-                  <td className="border px-4 py-2">
-                    <SendWhatsappButton token={t.token} />
-                  </td>
+                  <td className="border px-4 py-2">{t.token}</td>
                   <td className="border px-4 py-2">{t.access_type}</td>
                   <td className="border px-4 py-2">
                     {new Date(t.created_at).toLocaleString()}
+                  </td>
+                  <td className="border px-4 py-2">
+                    <SendWhatsappButton token={t.token} />
                   </td>
                 </tr>
               );
