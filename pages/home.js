@@ -58,7 +58,7 @@ export default function Home() {
     >
       {/* Logos */}
       <div className="flex flex-row items-center justify-center gap-6 mt-4">
-        <Image src="/soul.logo.png" alt="SoulTrack Logo" width={90} height={90} />
+        <Image src="/soul.logo.png" alt="SoulTrack Logo" width={100} height={90} />
         <Image src="/icc.logo.png" alt="ICC Logo" width={90} height={90} />
       </div>
 
