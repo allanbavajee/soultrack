@@ -1,19 +1,17 @@
 /*components/SendWhatsappButtons.js*/
 "use client";
 import { useState } from "react";
-import supabase from "../lib/supabaseClient"; // ✅ default export, pas d’accolades
+import supabase from "../lib/supabaseClient";
 
 export default function SendWhatsappButtons({ phoneNumber }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
 
-  // Fonction pour générer un token et envoyer via WhatsApp
   const handleSend = async (accessType) => {
     setLoading(true);
     setErrorMsg(null);
 
     try {
-      // ✅ Appel RPC vers la fonction SQL Supabase
       const { data: token, error } = await supabase.rpc("generate_access_token", {
         p_access_type: accessType,
       });
@@ -24,20 +22,18 @@ export default function SendWhatsappButtons({ phoneNumber }) {
         return;
       }
 
-      // Construire le lien SoulTrack avec le token
       const link = `https://soultrack-beta.vercel.app/access/${token}`;
 
-      // Construire le message WhatsApp
       const message =
         accessType === "ajouter_membre"
           ? `Bonjour 👋, clique ici pour ajouter un membre : ${link}`
           : `Bonjour 🙌, clique ici pour ajouter une personne évangélisée : ${link}`;
 
-      // Redirection vers WhatsApp
+      // ✅ Format du numéro pour WhatsApp
+      const cleanNumber = phoneNumber.replace(/\D/g, "");
+
       window.open(
-        `https://wa.me/${phoneNumber.replace("+", "")}?text=${encodeURIComponent(
-          message
-        )}`,
+        `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`,
         "_blank"
       );
     } catch (err) {
@@ -51,6 +47,7 @@ export default function SendWhatsappButtons({ phoneNumber }) {
   return (
     <div className="flex flex-col gap-4 items-center">
       <button
+        type="button"
         onClick={() => handleSend("ajouter_membre")}
         disabled={loading}
         className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200"
@@ -59,6 +56,7 @@ export default function SendWhatsappButtons({ phoneNumber }) {
       </button>
 
       <button
+        type="button"
         onClick={() => handleSend("ajouter_evangelise")}
         disabled={loading}
         className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200"
