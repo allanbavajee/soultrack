@@ -54,7 +54,7 @@ export default function Home() {
     <div
       className="min-h-screen flex flex-col items-center justify-start p-6 gap-10"
       style={{
-        background: "linear-gradient(135deg, #f0f9ff 0%, #e2e8f0 50%, #f8fafc 100%)",
+        background: "linear-gradient(135deg, #e0f7fa 0%, #f1f5f9 50%, #f0f4f8 100%)",
       }}
     >
       {/* Logos */}
@@ -64,8 +64,10 @@ export default function Home() {
       </div>
 
       {/* Slogan */}
-      <h2 className="mt-4 text-2xl md:text-3xl font-semibold text-center text-gray-700 tracking-wide">
-        ✨ Tu es précieux, tu es attendu, tu es aimé ✨
+      <h2 className="mt-4 text-2xl md:text-3xl font-bold text-center text-gray-700 tracking-wide">
+        ✨ Bienvenue sur SoulTrack ✨
+        <br />
+        Suivez, accompagnez et aimez comme Christ nous a aimés.
       </h2>
 
       {/* Cartes */}
@@ -73,12 +75,13 @@ export default function Home() {
         {/* Membres & Suivis */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <div className="flex flex-col items-center h-full">
-            <div className="bg-gradient-to-r from-blue-500 to-cyan-400 p-[2px] rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300">
-              <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl">
-                <Link href="/membres-hub" className="flex flex-col items-center">
-                  <div className="text-5xl mb-4">👤</div>
+            <div className="bg-gradient-to-r from-blue-400 to-cyan-400 p-[2px] rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 w-64">
+              <div className="flex flex-col justify-between bg-white p-6 h-64 rounded-3xl">
+                <Link href="/membres-hub" className="flex flex-col items-center mb-4">
+                  <div className="text-5xl mb-2">👤</div>
                   <h2 className="text-xl font-bold text-gray-800 text-center">Suivis des membres</h2>
                 </Link>
+                <SendWhatsappButtons type="ajouter_membre" profile={profile} />
               </div>
             </div>
           </div>
@@ -87,12 +90,13 @@ export default function Home() {
         {/* Évangélisation */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <div className="flex flex-col items-center h-full">
-            <div className="bg-gradient-to-r from-green-500 to-emerald-400 p-[2px] rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300">
-              <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl">
-                <Link href="/evangelisation-hub" className="flex flex-col items-center">
-                  <div className="text-5xl mb-4">🙌</div>
+            <div className="bg-gradient-to-r from-green-400 to-emerald-400 p-[2px] rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 w-64">
+              <div className="flex flex-col justify-between bg-white p-6 h-64 rounded-3xl">
+                <Link href="/evangelisation-hub" className="flex flex-col items-center mb-4">
+                  <div className="text-5xl mb-2">🙌</div>
                   <h2 className="text-xl font-bold text-gray-800 text-center">Évangélisation</h2>
                 </Link>
+                <SendWhatsappButtons type="ajouter_evangelise" profile={profile} />
               </div>
             </div>
           </div>
@@ -101,10 +105,10 @@ export default function Home() {
         {/* Rapport */}
         {profile.role === "Admin" && (
           <div className="flex flex-col items-center h-full">
-            <div className="bg-gradient-to-r from-red-500 to-orange-400 p-[2px] rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300">
-              <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl">
+            <div className="bg-gradient-to-r from-red-400 to-orange-400 p-[2px] rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 w-64">
+              <div className="flex flex-col justify-between bg-white p-6 h-64 rounded-3xl">
                 <Link href="/rapport" className="flex flex-col items-center">
-                  <div className="text-5xl mb-4">📊</div>
+                  <div className="text-5xl mb-2">📊</div>
                   <h2 className="text-xl font-bold text-gray-800 text-center">Rapport</h2>
                 </Link>
               </div>
@@ -116,13 +120,13 @@ export default function Home() {
       {/* Boutons envoyer l’appli */}
       <div className="flex flex-col gap-4 w-full max-w-md mt-6">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-2xl transition-all duration-200">
-            🚀 Envoyer l’appli – Nouveau membre
+          <button className="bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-bold py-3 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
+            👤 Envoyer l’appli – Nouveau membre
           </button>
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-2xl transition-all duration-200">
+          <button className="bg-gradient-to-r from-green-500 to-emerald-400 text-white font-bold py-3 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
             🙌 Envoyer l’appli – Évangélisé
           </button>
         )}
