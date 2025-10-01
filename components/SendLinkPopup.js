@@ -1,47 +1,75 @@
 /* components/SendLinkPopup.js */
 "use client";
 import { useState } from "react";
+import { Copy, Share2, X } from "lucide-react";
 
 export default function SendLinkPopup() {
   const [show, setShow] = useState(false);
+  const adminLinks = {
+    integration: "https://soultrack-beta.vercel.app/home?admin=integration",
+    evangelisation: "https://soultrack-beta.vercel.app/home?admin=evangelisation",
+  };
+
+  const copyToClipboard = (link) => {
+    navigator.clipboard.writeText(link);
+    alert("Lien copié !");
+  };
+
+  const shareLink = (link) => {
+    if (navigator.share) {
+      navigator.share({ title: "Lien SoulTrack", url: link });
+    } else {
+      alert("Partage non supporté sur cet appareil");
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center w-full">
       <button
-        onClick={() => setShow(true)}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-2 rounded-xl shadow-md transition-all duration-200"
+        onClick={() => setShow(!show)}
+        className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-2xl transition-all duration-200"
       >
         Voir / Copier liens responsables
       </button>
 
       {show && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white rounded-2xl p-6 w-80 shadow-lg flex flex-col gap-4 items-center relative">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md flex flex-col gap-4 relative shadow-xl">
             <button
               onClick={() => setShow(false)}
-              className="absolute top-3 right-3 text-gray-800 font-bold text-lg"
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
             >
-              ×
+              <X size={20} />
             </button>
 
-            <h3 className="text-lg font-semibold text-center text-gray-800">
-              Liens permanents responsables
+            <h3 className="text-lg font-semibold text-gray-800 text-center mb-2">
+              Liens permanents des responsables
             </h3>
 
-            <div className="flex flex-col gap-2 w-full">
-              <input
-                type="text"
-                readOnly
-                value="https://soultrack-beta.vercel.app/index?userId=7021fc57-bf07-48cb-8050-99d0db8e8e7d"
-                className="border rounded-xl px-4 py-2 w-full text-center"
-              />
-              <input
-                type="text"
-                readOnly
-                value="https://soultrack-beta.vercel.app/index?userId=f9fc287b-a3fb-43d5-a1c4-ed4a316204b2"
-                className="border rounded-xl px-4 py-2 w-full text-center"
-              />
-            </div>
+            {Object.entries(adminLinks).map(([role, link]) => (
+              <div
+                key={role}
+                className="flex justify-between items-center border p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all"
+              >
+                <span className="text-gray-800 font-medium">
+                  {role === "integration" ? "Integration" : "Évangélisation"}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => copyToClipboard(link)}
+                    className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-all"
+                  >
+                    <Copy size={16} />
+                  </button>
+                  <button
+                    onClick={() => shareLink(link)}
+                    className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-all"
+                  >
+                    <Share2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
