@@ -58,49 +58,46 @@ export default function SendWhatsappButtons({ type, profile }) {
 
   return (
     <div className="flex flex-col gap-4 items-center">
+      {/* Bouton principal moderne */}
       <button
         type="button"
         onClick={handleButtonClick}
-        className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200"
+        className="flex items-center gap-2 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white font-bold px-6 py-3 rounded-3xl shadow-lg transform hover:-translate-y-1 hover:shadow-2xl transition-all duration-200"
       >
-        {type === "ajouter_membre"
-          ? "📲 Envoyer l’appli – Nouveau membre"
-          : "📲 Envoyer l’appli – Évangélisé"}
+        📲 {type === "ajouter_membre" ? "Envoyer l’appli – Nouveau membre" : "Envoyer l’appli – Évangélisé"}
       </button>
 
+      {/* Popup */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-[#25D366] rounded-2xl p-6 w-80 shadow-lg flex flex-col gap-4 relative">
+          <div className="bg-gray-100 rounded-2xl p-6 w-80 shadow-lg flex flex-col gap-4 items-center relative">
             <button
               type="button"
               onClick={() => setShowModal(false)}
-              className="absolute top-3 right-3 text-white font-bold text-lg"
+              className="absolute top-3 right-3 text-gray-800 font-bold text-lg"
             >
               ×
             </button>
 
-            <h3 className="text-lg font-semibold text-center text-white">
+            <h3 className="text-lg font-semibold text-center text-gray-800">
               {type === "ajouter_membre"
                 ? "Envoyer lien – Nouveau membre"
                 : "Envoyer lien – Évangélisé"}
             </h3>
 
-            {/* Admin peut choisir le numéro */}
-            {(profile.role === "Admin" || profile.role === "ResponsableIntegration" || profile.role === "ResponsableEvangelisation") && (
-              <input
-                type="text"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="Numéro WhatsApp (ex: 23052345678)"
-                className="border rounded-xl px-4 py-2 w-full"
-              />
-            )}
+            <input
+              type="text"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="Numéro WhatsApp (ex: 23052345678)"
+              className="border rounded-xl px-4 py-2 w-full"
+            />
 
             <button
               type="button"
               onClick={handleSend}
               disabled={loading}
-              className="bg-white hover:bg-gray-200 text-[#25D366] font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200"
+              className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-2xl shadow-md transition-all duration-200 w-full"
             >
               {loading ? "Envoi..." : "Envoyer le lien"}
             </button>
