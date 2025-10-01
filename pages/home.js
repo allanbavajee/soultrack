@@ -1,17 +1,22 @@
 /* pages/home.js */
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
+import SendWhatsappButtons from "../components/SendWhatsappButtons";
+import SendLinkPopup from "../components/SendLinkPopup";
 
-export default function HomePage() {
+export default function Home() {
   const router = useRouter();
   const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
     if (!userId) {
-      router.push("/");
+      router.push("/"); // pas connecté → login
       return;
     }
 
@@ -22,90 +27,100 @@ export default function HomePage() {
         .eq("id", userId)
         .single();
 
-      if (error || !data) {
-        localStorage.removeItem("userId");
-        router.push("/");
-      } else {
-        setProfile(data);
-      }
+      if (!error && data) setProfile(data);
+      setLoadingProfile(false);
     };
 
     fetchProfile();
   }, [router]);
 
+  if (loadingProfile) {
+    return <p className="text-center mt-10 text-gray-600">Chargement du profil...</p>;
+  }
+
   if (!profile) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p className="text-gray-600">Chargement du profil...</p>
+      <div className="text-center mt-10 text-red-500">
+        Profil introuvable. Connecte-toi.
+        <br />
+        <a href="/" className="text-green-600 font-bold underline mt-2 inline-block">
+          Retour à la connexion
+        </a>
       </div>
     );
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-start p-10 gap-10"
-      style={{
-        background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #dbeafe 100%)", // Bleu nuancé
-      }}
-    >
-      {/* Titre */}
-      <h1 className="text-4xl font-extrabold text-slate-800">
-        Bienvenue, {profile.responsable || profile.role}
-      </h1>
-
-      {/* Cartes principales */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
-        <div className="bg-white shadow-lg rounded-2xl p-6 text-center hover:shadow-xl transition flex flex-col items-center gap-3">
-          <span className="text-4xl">👤</span>
-          <h2 className="text-xl font-semibold text-slate-700">
-            Suivis des membres
-          </h2>
-        </div>
-        <div className="bg-white shadow-lg rounded-2xl p-6 text-center hover:shadow-xl transition flex flex-col items-center gap-3">
-          <span className="text-4xl">📖</span>
-          <h2 className="text-xl font-semibold text-slate-700">
-            Évangélisation
-          </h2>
-        </div>
-        <div className="bg-white shadow-lg rounded-2xl p-6 text-center hover:shadow-xl transition flex flex-col items-center gap-3">
-          <span className="text-4xl">📊</span>
-          <h2 className="text-xl font-semibold text-slate-700">Rapport</h2>
-        </div>
+    <div className="min-h-screen bg-white flex flex-col items-center justify-start p-6">
+      {/* Logos */}
+      <div className="flex flex-col md:flex-row items-center justify-center mt-8 gap-6">
+        <Image src="/soul.logo.png" alt="SoulTrack Logo" width={90} height={90} />
+        <Image src="/icc.logo.png" alt="ICC Logo" width={90} height={90} />
       </div>
 
-      {/* Boutons envoyer l’appli */}
-      <div className="flex flex-col gap-4 w-full max-w-md">
-        <button
-          className="flex items-center justify-center gap-2 text-white font-bold py-3 rounded-2xl transition-all duration-200"
-          style={{
-            background: "linear-gradient(90deg,#6366f1,#8b5cf6)", // Indigo → Violet
-            boxShadow: "0 6px 18px rgba(139,92,246,0.25)",
-          }}
-        >
-          🚀 Envoyer l’appli – Nouveau membre
-        </button>
+      {/* Slogan */}
+      <h2 className="mt-4 text-2xl md:text-3xl font-handwriting text-center text-gray-800">
+        Tu es précieux, tu es attendu, tu es aimé
+      </h2>
 
-        <button
-          className="flex items-center justify-center gap-2 text-white font-bold py-3 rounded-2xl transition-all duration-200"
-          style={{
-            background: "linear-gradient(90deg,#f97316,#facc15)", // Orange → Jaune
-            boxShadow: "0 6px 18px rgba(249,115,22,0.25)",
-          }}
-        >
-          🙌 Envoyer l’appli – Évangélisé
-        </button>
+      {/* Cartes */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mt-10 justify-items-center">
+        {/* Membres & Suivis */}
+        {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
+          <div className="flex flex-col items-center h-full">
+            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#4285F4]">
+              <Link href="/membres-hub" className="flex flex-col items-center">
+                <div className="text-5xl mb-4">👤</div>
+                <h2 className="text-xl font-bold text-gray-800 text-center">Membres & Suivis</h2>
+              </Link>
+              <div className="mt-4 w-full">
+                <SendWhatsappButtons type="ajouter_membre" profile={profile} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Évangélisation */}
+        {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
+          <div className="flex flex-col items-center h-full">
+            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#34a853]">
+              <Link href="/evangelisation-hub" className="flex flex-col items-center">
+                <div className="text-5xl mb-4">🙌</div>
+                <h2 className="text-xl font-bold text-gray-800 text-center">Évangélisation</h2>
+              </Link>
+              <div className="mt-4 w-full">
+                <SendWhatsappButtons type="ajouter_evangelise" profile={profile} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rapport - Admin uniquement */}
+        {profile.role === "Admin" && (
+          <div className="flex flex-col items-center h-full">
+            <div className="flex flex-col justify-between bg-white p-6 w-64 h-64 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-200 border-t-4 border-[#ea4335]">
+              <Link href="/rapport" className="flex flex-col items-center">
+                <div className="text-5xl mb-4">📊</div>
+                <h2 className="text-xl font-bold text-gray-800 text-center">Rapport</h2>
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Bouton Voir / Copier */}
-      <button
-        className="flex items-center justify-center gap-2 text-white font-bold py-3 rounded-2xl transition-all duration-200 mt-6"
-        style={{
-          background: "linear-gradient(90deg,#64748b,#475569)", // Gris → Slate
-          boxShadow: "0 6px 18px rgba(71,85,105,0.25)",
-        }}
-      >
-        📎 Voir / Copier liens…
-      </button>
+      {/* Popup pour liens permanents - uniquement Admin */}
+      {profile.role === "Admin" && (
+        <div className="mt-6 w-full flex justify-center">
+          <SendLinkPopup />
+        </div>
+      )}
+
+      {/* Message d'amour */}
+      <div className="mt-10 p-6 rounded-3xl shadow-md max-w-2xl text-center text-gray-800">
+        <p className="text-lg font-handwriting font-semibold">
+          ❤️ Aimons-nous les uns les autres, comme Christ nous a aimés.
+        </p>
+      </div>
     </div>
   );
 }
