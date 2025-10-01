@@ -1,26 +1,31 @@
 /* pages/index.js */
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import Link from "next/link";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 import SendWhatsappButtons from "../components/SendWhatsappButtons";
 
 export default function Home() {
+  const router = useRouter();
+  const { userId } = router.query; // 🔹 récupère userId depuis l'URL
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
+    if (!userId) return;
+
     const fetchProfile = async () => {
-      // 🔹 ID forcé pour test (remplacer par l’ID connecté en prod)
-      const userId = "11111111-1111-1111-1111-111111111111"; // Admin
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
+
       if (!error && data) setProfile(data);
     };
+
     fetchProfile();
-  }, []);
+  }, [userId]);
 
   if (!profile) {
     return <p className="text-center mt-10 text-red-500">Chargement du profil...</p>;
@@ -41,6 +46,7 @@ export default function Home() {
 
       {/* Cartes et boutons */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mt-10 justify-items-center">
+        {/* Membres & Suivis */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <div className="flex flex-col items-center">
             <Link
@@ -56,6 +62,7 @@ export default function Home() {
           </div>
         )}
 
+        {/* Évangélisation */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <div className="flex flex-col items-center">
             <Link
@@ -71,6 +78,7 @@ export default function Home() {
           </div>
         )}
 
+        {/* Rapport - Admin uniquement */}
         {profile.role === "Admin" && (
           <div className="flex flex-col items-center">
             <Link
