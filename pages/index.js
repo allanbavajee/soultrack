@@ -12,19 +12,23 @@ export default function Home() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      // On récupère le profil de l'utilisateur connecté
-      const { data: user } = await supabase.auth.getUser();
+      // Récupère l'utilisateur connecté via Supabase Auth
+      const { data: { user }, error } = await supabase.auth.getUser();
 
-      if (user && user.user) {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.user.id)
-          .single();
+      if (!user || error) {
+        setLoadingProfile(false);
+        return;
+      }
 
-        if (!error && data) {
-          setProfile(data);
-        }
+      // Récupère le profil complet
+      const { data, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (!profileError && data) {
+        setProfile(data);
       }
 
       setLoadingProfile(false);
