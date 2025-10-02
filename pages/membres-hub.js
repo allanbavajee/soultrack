@@ -28,32 +28,32 @@ export default function MembresHub() {
       </h1>
 
       {/* Cartes principales */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-items-center w-full max-w-5xl">
+      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl">
         {/* Ajouter un membre */}
         <Link
           href="/add-member"
-          className="bg-white p-6 w-64 h-48 rounded-xl shadow-md flex flex-col items-center justify-center hover:shadow-xl transition-all duration-200 border-t-4 border-[#4285F4]"
+          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#4285F4] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
         >
           <div className="text-5xl mb-2">➕</div>
-          <h2 className="text-xl font-bold text-gray-800 text-center">Ajouter un membre</h2>
+          <div className="text-lg font-bold text-gray-800 text-center">Ajouter un membre</div>
         </Link>
 
         {/* Liste des membres */}
         <Link
           href="/list-members"
-          className="bg-white p-6 w-64 h-48 rounded-xl shadow-md flex flex-col items-center justify-center hover:shadow-xl transition-all duration-200 border-t-4 border-[#34a853]"
+          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
         >
           <div className="text-5xl mb-2">👥</div>
-          <h2 className="text-xl font-bold text-gray-800 text-center">Liste des membres</h2>
+          <div className="text-lg font-bold text-gray-800 text-center">Liste des membres</div>
         </Link>
 
         {/* Suivis des membres */}
         <Link
           href="/suivis-membres"
-          className="bg-white p-6 w-64 h-48 rounded-xl shadow-md flex flex-col items-center justify-center hover:shadow-xl transition-all duration-200 border-t-4 border-[#ff9800]"
+          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
         >
           <div className="text-5xl mb-2">📋</div>
-          <h2 className="text-xl font-bold text-gray-800 text-center">Suivis des membres</h2>
+          <div className="text-lg font-bold text-gray-800 text-center">Suivis des membres</div>
         </Link>
       </div>
 
