@@ -1,6 +1,4 @@
-/* components/SendLinkPopup.js */
-"use client";
-
+/*components/SendLinkPopup.js*/
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
@@ -24,45 +22,29 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
     fetchToken();
   }, [type]);
 
-  if (!token) {
-    return (
-      <button
-        className={`w-full py-3 rounded-2xl text-white font-bold ${buttonColor} cursor-not-allowed`}
-        disabled
-      >
-        {label} - Token introuvable
-      </button>
-    );
-  }
+  const handleSend = async () => {
+    if (!token) return alert("Token introuvable.");
 
-  const handleSend = () => {
-    let message = "";
-    let clickableText = "";
-    
-    if (type === "ajouter_membre") {
-      message = "Voici le lien pour ajouter un nouveau membre :";
-      clickableText = "👉 Ajouter nouveau membre";
-    } else if (type === "ajouter_evangelise") {
-      message = "Voici le lien pour ajouter un nouveau évangélisé :";
-      clickableText = "👉 Ajouter nouveau évangélisé";
-    } else {
-      message = "Voici le lien SoulTrack :";
-      clickableText = "👉 Accéder à l'application";
-    }
+    // Construire le lien complet
+    const fullLink = `${window.location.origin}/access/${token}`;
 
-    const link = `https://soultrack-beta.vercel.app/access/${token}`;
+    // Optionnel : raccourcir l'URL avec Bitly ou autre
+    // Exemple simple sans API externe
+    const displayText =
+      type === "ajouter_membre"
+        ? "Ajouter nouveau membre"
+        : "Ajouter nouveau évangélisé";
 
-    // Formater le texte final pour WhatsApp avec le texte cliquable
-    const fullMessage = `${message} ${clickableText}`;
-    
-    // WhatsApp URL encode
-    const encodedMessage = encodeURIComponent(fullMessage);
+    const message = `Voici le lien pour ${
+      type === "ajouter_membre" ? "ajouter un nouveau membre" : "ajouter un nouveau évangélisé"
+    } : 👉 ${displayText} ${fullLink}`;
+
+    const encodedMessage = encodeURIComponent(message);
 
     if (phone.trim() === "") {
-      // Laisser vide → ouvrir WhatsApp et choisir contact
+      // WhatsApp ouvre la liste de contacts
       window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
     } else {
-      // Envoyer directement à un numéro
       const cleanedPhone = phone.replace(/\D/g, "");
       window.open(`https://wa.me/${cleanedPhone}?text=${encodedMessage}`, "_blank");
     }
@@ -103,7 +85,7 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
               </button>
               <button
                 onClick={handleSend}
-                className={`px-4 py-2 rounded-xl text-white font-bold bg-gradient-to-r ${buttonColor}`}
+                className="px-4 py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
               >
                 Envoyer
               </button>
