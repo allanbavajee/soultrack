@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import SendLinkPopup from "../components/SendLinkPopup";
+import SendWhatsappButtons from "../components/SendWhatsappButtons";
 
 export default function Home() {
   const router = useRouter();
@@ -35,7 +35,7 @@ export default function Home() {
   }, [router]);
 
   if (loadingProfile) {
-    return <p className="text-center mt-10 text-gray-600">Chargement du profil...</p>;
+    return <p className="text-center mt-10 text-gray-300">Chargement du profil...</p>;
   }
 
   if (!profile) {
@@ -53,7 +53,9 @@ export default function Home() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-10"
-      style={{ background: "linear-gradient(135deg, #F8F8F9 0%, #111439 100%)" }}
+      style={{
+        background: "linear-gradient(135deg, #F8F8F9 0%, #111439 100%)",
+      }}
     >
       {/* Logo */}
       <div className="mt-6">
@@ -61,9 +63,7 @@ export default function Home() {
       </div>
 
       {/* Titre SoulTrack */}
-      <h1 className="text-4xl font-handwriting text-white text-center mt-4">
-        SoulTrack
-      </h1>
+      <h1 className="text-4xl font-handwriting text-white text-center mt-4">SoulTrack</h1>
 
       {/* Cartes principales */}
       <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mt-6">
@@ -101,29 +101,20 @@ export default function Home() {
       {/* Boutons avec popup */}
       <div className="flex flex-col gap-4 mt-6 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendLinkPopup
-            label="Envoyer l'appli – Nouveau membre"
-            type="ajouter_membre"
-            buttonColor="from-blue-400 via-blue-500 to-blue-600"
-          />
+          <SendWhatsappButtons type="ajouter_membre" />
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendLinkPopup
-            label="Envoyer l'appli – Évangélisé"
-            type="ajouter_evangelise"
-            buttonColor="from-green-400 via-green-500 to-green-600"
-          />
-        )}
-
-        {profile.role === "Admin" && (
-          <SendLinkPopup
-            label="Voir / Copier liens…"
-            type="admin_links"
-            buttonColor="from-orange-400 via-orange-500 to-orange-600"
-          />
+          <SendWhatsappButtons type="ajouter_evangelise" />
         )}
       </div>
+
+      {/* Bouton Voir / Copier liens - Admin uniquement */}
+      {profile.role === "Admin" && (
+        <div className="mt-4 w-full max-w-md">
+          <SendWhatsappButtons type="admin_links" />
+        </div>
+      )}
 
       {/* Message en bas */}
       <div className="mt-auto mb-4 text-center text-white text-lg">
