@@ -6,7 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import SendWhatsappButtons from "../components/SendWhatsappButtons";
+import SendWhatsappButtons from "../components/SendWhatsappButtons"; // ajout
+import SendLinkPopup from "../components/SendLinkPopup";
 
 export default function Home() {
   const router = useRouter();
@@ -67,7 +68,6 @@ export default function Home() {
 
       {/* Cartes principales */}
       <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mt-6">
-        {/* Suivis des membres */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <Link href="/membres-hub" className="flex-1">
             <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
@@ -77,7 +77,6 @@ export default function Home() {
           </Link>
         )}
 
-        {/* Évangélisation */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <Link href="/evangelisation-hub" className="flex-1">
             <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
@@ -87,7 +86,6 @@ export default function Home() {
           </Link>
         )}
 
-        {/* Rapport - Admin uniquement */}
         {profile.role === "Admin" && (
           <Link href="/rapport" className="flex-1">
             <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
@@ -98,7 +96,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* Boutons envoyer l'appli / popup */}
+      {/* Boutons SendWhatsappButtons */}
       <div className="flex flex-col gap-4 mt-6 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <SendWhatsappButtons type="ajouter_membre" />
@@ -106,6 +104,13 @@ export default function Home() {
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <SendWhatsappButtons type="ajouter_evangelise" />
+        )}
+
+        {profile.role === "Admin" && (
+          <SendLinkPopup
+            label="Voir / Copier liens…"
+            buttonColor="from-orange-400 via-orange-500 to-orange-600"
+          />
         )}
       </div>
 
