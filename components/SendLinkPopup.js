@@ -1,98 +1,107 @@
 /*components/SendLinkPopup.js*/
+/* components/SendLinkPopup.js */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SendLinkPopup({ label, type, onClose }) {
+export default function SendLinkPopup({ label, type, buttonColor }) {
+  const [showPopup, setShowPopup] = useState(false);
   const [phone, setPhone] = useState("");
-  const [sending, setSending] = useState(false);
+  const [token, setToken] = useState(null);
 
-  const handleSend = async () => {
-    setSending(true);
+  // Récupération dynamique du token depuis Supabase
+  useEffect(() => {
+    const fetchToken = async () => {
+      const { data, error } = await supabase
+        .from("access_tokens")
+        .select("*")
+        .eq("access_type", type)
+        .limit(1)
+        .single();
 
-    try {
-      let link = "";
+      if (!error && data) setToken(data.token);
+    };
 
-      if (type === "ajouter_membre" || type === "ajouter_evangelise") {
-        // Demande à Supabase de générer un token
-        const { data, error } = await supabase.rpc("generate_access_token", {
-          p_access_type: type,
-        });
+    fetchToken();
+  }, [type]);
 
-        if (error) throw error;
-        const token = data?.token;
-        if (!token) throw new Error("Token introuvable.");
-
-        link = `https://soultrack-beta.vercel.app/access/${token}`;
-      } else if (type === "voir_copier") {
-        // Lien simple pour accès normal
-        link = "https://soultrack-beta.vercel.app/";
-      }
-
-      // Message personnalisé selon le type
-      let message = "";
-      if (type === "ajouter_membre") {
-        message = `Voici le lien pour ajouter un nouveau membre : 👉 ${link}`;
-      } else if (type === "ajouter_evangelise") {
-        message = `Voici le lien pour ajouter un nouveau évangélisé : 👉 ${link}`;
-      } else {
-        message = `Voici le lien pour accéder à SoulTrack : 👉 ${link}`;
-      }
-
-      const encodedMessage = encodeURIComponent(message);
-
-      if (phone.trim() === "") {
-        // Ouvre WhatsApp pour choisir un contact existant
-        window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
-      } else {
-        // Nettoie le numéro avant envoi
-        const cleanedPhone = phone.replace(/\D/g, "");
-        window.open(`https://wa.me/${cleanedPhone}?text=${encodedMessage}`, "_blank");
-      }
-
-      setPhone("");
-      onClose();
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de l'envoi du lien.");
-    } finally {
-      setSending(false);
+  const handleSend = () => {
+    if (!token) {
+      alert("Token introuvable. Vérifie la table Supabase.");
+      return;
     }
+
+    let message = "";
+    let linkPath = "";
+
+    if (type === "ajouter_membre") {
+      message = "Voici le lien pour ajouter un nouveau membre :";
+      linkPath = "/add-member";
+    } else if (type === "ajouter_evangelise") {
+      message = "Voici le lien pour ajouter un nouveau évangélisé :";
+      linkPath = "/add-evangelise";
+    }
+
+    // Texte cliquable avec token
+    const clickableText = `👉 ${label.includes("Nouveau membre") ? "Ajouter nouveau membre" : "Ajouter nouveau évangélisé"}`;
+    const fullMessage = `${message} ${clickableText} ${window.location.origin}${linkPath}`;
+
+    const encodedMessage = encodeURIComponent(fullMessage);
+
+    if (phone.trim() === "") {
+      // Choix du contact existant sur WhatsApp
+      window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
+    } else {
+      // Envoi direct au numéro saisi
+      const cleanedPhone = phone.replace(/\D/g, "");
+      window.open(`https://wa.me/${cleanedPhone}?text=${encodedMessage}`, "_blank");
+    }
+
+    setShowPopup(false);
+    setPhone("");
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-lg flex flex-col gap-4">
-        <h3 className="text-lg font-bold">{label}</h3>
-        <p className="text-sm text-gray-700">
-          Laissez vide pour sélectionner un contact existant sur WhatsApp
-        </p>
+    <div className="relative w-full">
+      <button
+        onClick={() => setShowPopup(true)}
+        className={`w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r ${buttonColor} transition-all duration-200`}
+      >
+        {label}
+      </button>
 
-        <input
-          type="text"
-          placeholder="Numéro WhatsApp avec indicatif"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className="border rounded-xl px-3 py-2 w-full"
-        />
-
-        <div className="flex justify-end gap-2 mt-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-gray-300 text-gray-800 font-bold"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={handleSend}
-            disabled={sending}
-            className="px-4 py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
-          >
-            {sending ? "Envoi..." : "Envoyer"}
-          </button>
+      {showPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-lg flex flex-col gap-4">
+            <h3 className="text-lg font-bold">{label}</h3>
+            <p className="text-sm text-gray-700">
+              Laissez vide pour sélectionner un contact existant sur WhatsApp
+            </p>
+            <input
+              type="text"
+              placeholder="Numéro WhatsApp avec indicatif"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="border rounded-xl px-3 py-2 w-full text-center"
+            />
+            <div className="flex justify-end gap-2 mt-2">
+              <button
+                onClick={() => setShowPopup(false)}
+                className="px-4 py-2 rounded-xl bg-gray-300 text-gray-800 font-bold"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleSend}
+                className="px-4 py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
+              >
+                Envoyer
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
