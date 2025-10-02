@@ -53,7 +53,7 @@ export default function Home() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-10"
-      style={{ background: "linear-gradient(135deg, #92EFFD 0%, #2E3192 100%)" }}
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       {/* Logo */}
       <div className="mt-6">
@@ -104,7 +104,7 @@ export default function Home() {
           <SendLinkPopup
             label="Envoyer l'appli – Nouveau membre"
             type="ajouter_membre"
-            buttonColor="from-[#2E3192] to-[#2E3192]"
+            buttonColor="from-[#09203F] to-[#537895]"
           />
         )}
 
@@ -112,7 +112,7 @@ export default function Home() {
           <SendLinkPopup
             label="Envoyer l'appli – Évangélisé"
             type="ajouter_evangelise"
-            buttonColor="from-[#38EF7D] to-[#2E3192]"
+            buttonColor="from-[#09203F] to-[#537895]"
           />
         )}
 
@@ -120,7 +120,7 @@ export default function Home() {
           <SendLinkPopup
             label="Voir / Copier liens…"
             type="voir_copier"
-            buttonColor="from-[#C33764] to-[#2E3192]"
+            buttonColor="from-[#FF5F6D] to-[#FFC371]"
           />
         )}
       </div>
