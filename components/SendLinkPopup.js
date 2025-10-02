@@ -87,4 +87,3 @@ export default function SendLinkPopup({ type, onClose, label }) {
   );
 }
 
-
