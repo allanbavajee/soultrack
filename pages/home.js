@@ -105,7 +105,6 @@ export default function Home() {
             label="Envoyer l'appli – Nouveau membre"
             type="ajouter_membre"
             buttonColor="from-blue-400 via-blue-500 to-blue-600"
-            customText="👉 Ajouter nouveau membre"
           />
         )}
 
@@ -114,16 +113,14 @@ export default function Home() {
             label="Envoyer l'appli – Évangélisé"
             type="ajouter_evangelise"
             buttonColor="from-green-400 via-green-500 to-green-600"
-            customText="👉 Ajouter nouveau évangélisé"
           />
         )}
 
         {profile.role === "Admin" && (
           <SendLinkPopup
             label="Voir / Copier liens…"
-            type="admin_all"
+            type="admin_links"
             buttonColor="from-orange-400 via-orange-500 to-orange-600"
-            customText="👉 Voir tous les liens"
           />
         )}
       </div>
