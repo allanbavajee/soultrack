@@ -1,5 +1,4 @@
 /* pages/home.js */
-/* pages/home.js */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -104,18 +103,16 @@ export default function Home() {
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <SendLinkPopup
             label="Envoyer l'appli – Nouveau membre"
-            type="ajouter_membre"
             buttonColor="from-blue-400 via-blue-500 to-blue-600"
-            profile={profile}
+            responsables={[]} // pas utilisé ici
           />
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <SendLinkPopup
             label="Envoyer l'appli – Évangélisé"
-            type="ajouter_evangelise"
             buttonColor="from-green-400 via-green-500 to-green-600"
-            profile={profile}
+            responsables={[]} // pas utilisé ici
           />
         )}
 
@@ -123,7 +120,10 @@ export default function Home() {
           <SendLinkPopup
             label="Voir / Copier liens…"
             buttonColor="from-orange-400 via-orange-500 to-orange-600"
-            profile={profile}
+            responsables={[
+              { name: "Clency Ravina", email: "clency.c@soultrack.org", label: "Ajouter nouveau évangélisé" },
+              { name: "Lucie Des Jardins", email: "lucie.d@soultrack.org", label: "Ajouter nouveau membre" },
+            ]}
           />
         )}
       </div>
@@ -135,5 +135,3 @@ export default function Home() {
     </div>
   );
 }
-
-
