@@ -54,7 +54,7 @@ export default function Home() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-10"
-      style={{ background: "linear-gradient(135deg, #1BFFFF 0%, #2E3192 100%)" }}
+      style={{ background: "linear-gradient(135deg, #92EFFD 0%, #2E3192 100%)" }}
     >
       {/* Logos */}
       <div className="flex flex-row items-center justify-center gap-6 mt-4">
