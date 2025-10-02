@@ -1,95 +1,108 @@
 /* components/SendWhatsappButtons.js */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function SendWhatsappButtons({ type }) {
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [phone, setPhone] = useState("");
   const [showPopup, setShowPopup] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    const fetchToken = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("access_token")
-          .select("*")
-          .eq("access_type", type)
-          .limit(1)
-          .single();
+  const handleSend = async (manualNumber) => {
+    setLoading(true);
+    setMessage("");
 
-        if (error || !data) {
-          setError("Token introuvable. Vérifie la table Supabase.");
-        } else {
-          setToken(data.token);
-        }
-      } catch (err) {
-        console.error(err);
-        setError("Erreur lors de la récupération du token.");
-      } finally {
+    try {
+      // Récupérer un token disponible dans Supabase
+      const { data: tokenData, error } = await supabase
+        .from("access_tokens")          // <-- table correcte
+        .select("*")
+        .eq("access_type", type)
+        .is("user_id", null)           // token non utilisé
+        .limit(1)
+        .single();
+
+      if (error || !tokenData) {
+        setMessage("Token introuvable. Vérifie la table Supabase.");
         setLoading(false);
+        return;
       }
-    };
 
-    fetchToken();
-  }, [type]);
+      const token = tokenData.token;
+      const link = `https://soultrack-beta.vercel.app/access/${token}`;
 
-  const handleSend = () => {
-    if (!token) return;
-    if (!phoneNumber) {
-      alert("Merci de saisir un numéro WhatsApp valide !");
-      return;
+      const number = manualNumber || phone;
+      if (!number) {
+        setMessage("Veuillez saisir un numéro WhatsApp.");
+        setLoading(false);
+        return;
+      }
+
+      // Lien WhatsApp
+      const whatsappUrl = `https://wa.me/${number.replace(/\D/g, "")}?text=${encodeURIComponent(
+        `Voici votre lien SoulTrack : ${link}`
+      )}`;
+
+      // Ouvrir WhatsApp
+      window.open(whatsappUrl, "_blank");
+
+      // Marquer le token comme utilisé
+      await supabase
+        .from("access_tokens")
+        .update({ user_id: "temporary" }) // optionnel : mettre l'ID du destinataire si connu
+        .eq("id", tokenData.id);
+
+      setMessage("Lien envoyé avec succès !");
+      setPhone("");
+      setShowPopup(false);
+    } catch (err) {
+      console.error(err);
+      setMessage("Erreur lors de l'envoi.");
+    } finally {
+      setLoading(false);
     }
-
-    const url = `https://soultrack-beta.vercel.app/access/${token}`;
-    const whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-      `Bonjour ! Accède directement à SoulTrack : ${url}`
-    )}`;
-
-    window.open(whatsappLink, "_blank");
-    setShowPopup(false);
-    setPhoneNumber("");
   };
 
   return (
     <div>
       <button
-        className="w-full py-3 px-4 rounded-2xl font-bold text-white bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 hover:from-blue-500 hover:via-blue-600 hover:to-blue-700 transition-all duration-200"
+        className={`w-full py-3 rounded-xl text-white font-bold bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 hover:from-blue-500 hover:to-blue-700 transition-all duration-200`}
         onClick={() => setShowPopup(true)}
-        disabled={loading || !!error}
       >
-        {loading ? "Chargement..." : type === "ajouter_membre" ? "Envoyer l'appli – Nouveau membre" : "Envoyer l'appli – Évangélisé"}
+        {type === "ajouter_membre" ? "Envoyer l'appli – Nouveau membre" : "Envoyer l'appli – Évangélisé"}
       </button>
 
-      {error && <p className="text-red-500 mt-2">{error}</p>}
-
       {showPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl p-6 w-80 flex flex-col gap-4 shadow-lg">
-            <h3 className="text-lg font-bold text-gray-800 text-center">Envoyer le lien via WhatsApp</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl w-80 flex flex-col gap-4 shadow-lg">
+            <h3 className="text-lg font-bold text-gray-800">Envoyer le lien WhatsApp</h3>
+
             <input
-              type="tel"
-              placeholder="Numéro WhatsApp (ex: 230XXXXXXX)"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              className="border rounded-xl px-4 py-2 w-full"
+              type="text"
+              placeholder="Numéro WhatsApp (+230...)"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="border rounded-xl px-3 py-2 w-full"
             />
+
             <button
-              onClick={handleSend}
-              className="py-3 px-4 rounded-2xl font-bold text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:from-green-500 hover:via-green-600 hover:to-green-700 transition-all duration-200"
+              onClick={() => handleSend()}
+              disabled={loading}
+              className="py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:from-green-500 hover:to-green-700 transition-all duration-200"
             >
-              Envoyer
+              {loading ? "Envoi..." : "Envoyer"}
             </button>
+
             <button
               onClick={() => setShowPopup(false)}
-              className="mt-2 py-2 px-4 rounded-xl font-bold text-gray-700 border border-gray-300 hover:bg-gray-100 transition-all duration-200"
+              className="py-2 mt-2 text-center text-gray-700 hover:text-gray-900 transition-colors"
             >
               Annuler
             </button>
+
+            {message && <p className="text-center text-red-500">{message}</p>}
           </div>
         </div>
       )}
