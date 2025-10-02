@@ -1,4 +1,3 @@
-/*components/SendLinkPopup.js*/
 /* components/SendLinkPopup.js */
 "use client";
 
@@ -10,8 +9,10 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
   const [phone, setPhone] = useState("");
   const [token, setToken] = useState(null);
 
-  // Récupération dynamique du token depuis Supabase
+  // Récupération du token seulement si ce n'est pas "voir_copier"
   useEffect(() => {
+    if (type === "voir_copier") return;
+
     const fetchToken = async () => {
       const { data, error } = await supabase
         .from("access_tokens")
@@ -27,40 +28,42 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
   }, [type]);
 
   const handleSend = () => {
-    if (!token) {
-      alert("Token introuvable. Vérifie la table Supabase.");
-      return;
-    }
-
     let message = "";
-    let linkPath = "";
+    let waUrl = "";
 
     if (type === "ajouter_membre") {
-      message = "Voici le lien pour ajouter un nouveau membre :";
-      linkPath = "/add-member";
+      message = `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre`;
+      waUrl = `https://wa.me/${phone.trim() || ''}?text=${encodeURIComponent(
+        message + ' ' + window.location.origin + '/access/' + token
+      )}`;
     } else if (type === "ajouter_evangelise") {
-      message = "Voici le lien pour ajouter un nouveau évangélisé :";
-      linkPath = "/add-evangelise";
+      message = `Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé`;
+      waUrl = `https://wa.me/${phone.trim() || ''}?text=${encodeURIComponent(
+        message + ' ' + window.location.origin + '/access/' + token
+      )}`;
+    } else if (type === "voir_copier") {
+      message = `Voici le lien pour accéder à l'application : 👉 Accéder à l'application`;
+      waUrl = `https://wa.me/${phone.trim() || ''}?text=${encodeURIComponent(
+        message + ' https://soultrack-beta.vercel.app/'
+      )}`;
     }
 
-    // Texte cliquable avec token
-    const clickableText = `👉 ${label.includes("Nouveau membre") ? "Ajouter nouveau membre" : "Ajouter nouveau évangélisé"}`;
-    const fullMessage = `${message} ${clickableText} ${window.location.origin}${linkPath}`;
-
-    const encodedMessage = encodeURIComponent(fullMessage);
-
-    if (phone.trim() === "") {
-      // Choix du contact existant sur WhatsApp
-      window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
-    } else {
-      // Envoi direct au numéro saisi
-      const cleanedPhone = phone.replace(/\D/g, "");
-      window.open(`https://wa.me/${cleanedPhone}?text=${encodedMessage}`, "_blank");
-    }
-
+    window.open(waUrl, "_blank");
     setShowPopup(false);
     setPhone("");
   };
+
+  // Si bouton nécessite un token et qu'il est introuvable
+  if ((type === "ajouter_membre" || type === "ajouter_evangelise") && !token) {
+    return (
+      <button
+        className={`w-full py-3 rounded-2xl text-white font-bold ${buttonColor} cursor-not-allowed`}
+        disabled
+      >
+        {label} - Token introuvable
+      </button>
+    );
+  }
 
   return (
     <div className="relative w-full">
@@ -75,15 +78,17 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-lg flex flex-col gap-4">
             <h3 className="text-lg font-bold">{label}</h3>
-            <p className="text-sm text-gray-700">
-              Laissez vide pour sélectionner un contact existant sur WhatsApp
-            </p>
+            {type !== "voir_copier" && (
+              <p className="text-sm text-gray-700">
+                Laissez vide pour sélectionner un contact existant sur WhatsApp
+              </p>
+            )}
             <input
               type="text"
               placeholder="Numéro WhatsApp avec indicatif"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="border rounded-xl px-3 py-2 w-full text-center"
+              className="border rounded-xl px-3 py-2 w-full"
             />
             <div className="flex justify-end gap-2 mt-2">
               <button
@@ -105,4 +110,3 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
     </div>
   );
 }
-
