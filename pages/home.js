@@ -16,7 +16,7 @@ export default function Home() {
   useEffect(() => {
     const userId = localStorage.getItem("userId");
     if (!userId) {
-      router.push("/"); // pas connecté → login
+      router.push("/");
       return;
     }
 
@@ -53,21 +53,18 @@ export default function Home() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-10"
-      style={{ background: "linear-gradient(135deg, #1BFFFF 0%, #2E3192 100%)" }}
+      style={{ background: "linear-gradient(135deg, #F8F8F9 0%, #111439 100%)" }}
     >
-      {/* Logo */}
       <div className="mt-6">
         <Image src="/soul.logo.png" alt="SoulTrack Logo" width={100} height={100} />
       </div>
 
-      {/* Titre SoulTrack */}
       <h1 className="text-4xl font-handwriting text-white text-center mt-4">
         SoulTrack
       </h1>
 
       {/* Cartes principales */}
       <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mt-6">
-        {/* Suivis des membres */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <Link href="/membres-hub" className="flex-1">
             <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
@@ -76,8 +73,6 @@ export default function Home() {
             </div>
           </Link>
         )}
-
-        {/* Évangélisation */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <Link href="/evangelisation-hub" className="flex-1">
             <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
@@ -86,8 +81,6 @@ export default function Home() {
             </div>
           </Link>
         )}
-
-        {/* Rapport - Admin uniquement */}
         {profile.role === "Admin" && (
           <Link href="/rapport" className="flex-1">
             <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
@@ -100,29 +93,7 @@ export default function Home() {
 
       {/* Boutons avec popup */}
       <div className="flex flex-col gap-4 mt-6 w-full max-w-md">
-        {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendLinkPopup
-            label="Envoyer l'appli – Nouveau membre"
-            type="ajouter_membre"
-            buttonColor="from-blue-400 via-blue-500 to-blue-600"
-          />
-        )}
-
-        {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendLinkPopup
-            label="Envoyer l'appli – Évangélisé"
-            type="ajouter_evangelise"
-            buttonColor="from-green-400 via-green-500 to-green-600"
-          />
-        )}
-
-        {profile.role === "Admin" && (
-          <SendLinkPopup
-            label="Voir / Copier liens…"
-            type="admin"
-            buttonColor="from-orange-400 via-orange-500 to-orange-600"
-          />
-        )}
+        <SendLinkPopup label="Voir / Copier liens…" profile={profile} buttonColor="from-orange-400 via-orange-500 to-orange-600" />
       </div>
 
       {/* Message en bas */}
@@ -132,3 +103,4 @@ export default function Home() {
     </div>
   );
 }
+
