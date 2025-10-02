@@ -53,7 +53,7 @@ export default function Home() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-10"
-      style={{ background: "linear-gradient(135deg, #F8F8F9 0%, #111439 100%)" }}
+      style={{ background: "linear-gradient(135deg, #92EFFD 0%, #2E3192 100%)" }}
     >
       {/* Logo */}
       <div className="mt-6">
