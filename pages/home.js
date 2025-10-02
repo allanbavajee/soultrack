@@ -1,5 +1,4 @@
 /* pages/home.js */
-/* pages/home.js */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -54,7 +53,7 @@ export default function Home() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-10"
-      style={{ background: "linear-gradient(135deg, #F8F8F9 0%, #111439 100%)" }}
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       {/* Logo */}
       <div className="mt-6">
@@ -121,7 +120,7 @@ export default function Home() {
           <SendLinkPopup
             label="Voir / Copier liens…"
             type="voir_copier"
-            buttonColor="from-orange-400 via-orange-500 to-orange-600"
+            buttonColor="from-#C33764  to-#1D2671"
           />
         )}
       </div>
