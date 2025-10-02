@@ -6,7 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import SendWhatsappButtons from "../components/SendWhatsappButtons";
 import SendLinkPopup from "../components/SendLinkPopup";
 
 export default function Home() {
@@ -54,12 +53,11 @@ export default function Home() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-10"
-      style={{ background: "linear-gradient(135deg, #92EFFD 0%, #2E3192 100%)" }}
+      style={{ background: "linear-gradient(135deg, #F8F8F9 0%, #111439 100%)" }}
     >
-      {/* Logos */}
-      <div className="flex flex-row items-center justify-center gap-6 mt-4">
-        <Image src="/soul.logo.png" alt="SoulTrack Logo" width={100} height={90} />
-        <Image src="/icc.logo.png" alt="ICC Logo" width={90} height={90} />
+      {/* Logo */}
+      <div className="mt-6">
+        <Image src="/soul.logo.png" alt="SoulTrack Logo" width={100} height={100} />
       </div>
 
       {/* Titre SoulTrack */}
@@ -100,38 +98,26 @@ export default function Home() {
         )}
       </div>
 
-      {/* Boutons Envoyer l'appli */}
+      {/* Boutons avec popup */}
       <div className="flex flex-col gap-4 mt-6 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendWhatsappButtons
-            type="ajouter_membre"
-            profile={profile}
+          <SendLinkPopup
             label="Envoyer l'appli – Nouveau membre"
-            gradient="from-blue-400 to-blue-500"
-            rounded="rounded-2xl"
-            shadow="shadow-md"
-            hover="hover:brightness-105"
+            buttonColor="from-blue-400 via-blue-500 to-blue-600"
           />
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendWhatsappButtons
-            type="ajouter_evangelise"
-            profile={profile}
+          <SendLinkPopup
             label="Envoyer l'appli – Évangélisé"
-            gradient="from-green-400 to-green-500"
-            rounded="rounded-2xl"
-            shadow="shadow-md"
-            hover="hover:brightness-105"
+            buttonColor="from-green-400 via-green-500 to-green-600"
           />
         )}
 
         {profile.role === "Admin" && (
           <SendLinkPopup
-            buttonColor="from-orange-400 to-orange-500"
-            rounded="rounded-2xl"
-            shadow="shadow-md"
-            hover="hover:brightness-105"
+            label="Voir / Copier liens…"
+            buttonColor="from-orange-400 via-orange-500 to-orange-600"
           />
         )}
       </div>
