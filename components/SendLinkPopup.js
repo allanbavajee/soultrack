@@ -1,48 +1,19 @@
 /*components/SendLinkPopup.js*/
 "use client";
 
-import { useState, useEffect } from "react";
-import supabase from "../lib/supabaseClient";
+import { useState } from "react";
 
-export default function SendLinkPopup({ label, type, buttonColor }) {
+export default function SendLinkPopup({ label }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phone, setPhone] = useState("");
-  const [token, setToken] = useState(null);
-  const [roleChoice, setRoleChoice] = useState("Integration"); // Pour "Voir / Copier liens…"
-
-  useEffect(() => {
-    const fetchToken = async () => {
-      // Pour "Voir / Copier liens…" on ne récupère pas de token spécifique
-      if (type !== "voir_copier") {
-        const { data, error } = await supabase
-          .from("access_tokens")
-          .select("*")
-          .eq("access_type", type)
-          .limit(1)
-          .single();
-
-        if (!error && data) setToken(data.token);
-      }
-    };
-    fetchToken();
-  }, [type]);
 
   const handleSend = () => {
-    let message = "";
-    let link = token ? `https://soultrack-beta.vercel.app/access/${token}` : "#";
+    const link = "https://soultrack-beta.vercel.app/";
+    const message = `Voici votre accès à SoulTrack : 👉 Accéder`;
+    const encodedMessage = encodeURIComponent(message.replace(/👉 .+$/, `👉 ${link}`));
 
-    if (type === "ajouter_membre") {
-      message = `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre`;
-    } else if (type === "ajouter_evangelise") {
-      message = `Voici le lien pour ajouter un nouvel évangélisé : 👉 Ajouter nouveau évangélisé`;
-    } else if (type === "voir_copier") {
-      message = `Voici votre accès à SoulTrack pour ${roleChoice} : 👉 Accéder`;
-    }
-
-    let encodedMessage = encodeURIComponent(message.replace(/👉 .+$/, `👉 ${link}`));
-
-    if (phone.trim() === "") {
-      // Ouvre WhatsApp pour choisir un contact existant
+    if (!phone) {
+      // ouvrir WhatsApp pour choisir un contact existant
       window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
     } else {
       const cleanedPhone = phone.replace(/\D/g, "");
@@ -57,7 +28,7 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
     <div className="relative w-full">
       <button
         onClick={() => setShowPopup(true)}
-        className={`w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r ${buttonColor} transition-all duration-200`}
+        className="w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 transition-all duration-200"
       >
         {label}
       </button>
@@ -66,18 +37,6 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-lg flex flex-col gap-4">
             <h3 className="text-lg font-bold">{label}</h3>
-
-            {type === "voir_copier" && (
-              <select
-                value={roleChoice}
-                onChange={(e) => setRoleChoice(e.target.value)}
-                className="border rounded-xl px-3 py-2 w-full"
-              >
-                <option value="Integration">Integration</option>
-                <option value="Evangelisation">Evangelisation</option>
-              </select>
-            )}
-
             <p className="text-sm text-gray-700">
               Laissez vide pour sélectionner un contact existant sur WhatsApp
             </p>
