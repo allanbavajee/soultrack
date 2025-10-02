@@ -28,10 +28,13 @@ export default function SendLinkPopup({ label }) {
     <div className="relative w-full">
       <button
         onClick={() => setShowPopup(true)}
-        className="w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 transition-all duration-200"
-      >
-        {label}
-      </button>
+          style={{
+            background: "linear-gradient(to right, #2E3192, #1BFFFF)"
+              }}
+      className="w-full py-3 rounded-2xl text-white font-bold transition-all duration-200"
+        >
+  {label}
+</button>
 
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
