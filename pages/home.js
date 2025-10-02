@@ -104,7 +104,7 @@ export default function Home() {
           <SendLinkPopup
             label="Envoyer l'appli – Nouveau membre"
             type="ajouter_membre"
-            buttonColor="from-[#2E3192] to-[#92EFFD]"
+            buttonColor="from-[#2E3192] to-[#2E3192]"
           />
         )}
 
@@ -112,7 +112,7 @@ export default function Home() {
           <SendLinkPopup
             label="Envoyer l'appli – Évangélisé"
             type="ajouter_evangelise"
-            buttonColor="from-[#38EF7D] to-[#92EFFD]"
+            buttonColor="from-[#38EF7D] to-[#2E3192]"
           />
         )}
 
@@ -120,7 +120,7 @@ export default function Home() {
           <SendLinkPopup
             label="Voir / Copier liens…"
             type="voir_copier"
-            buttonColor="from-[#C33764] to-[#92EFFD]"
+            buttonColor="from-[#C33764] to-[#2E3192]"
           />
         )}
       </div>
