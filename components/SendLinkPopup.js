@@ -1,71 +1,96 @@
-// components/SendLinkPopup.js
+/* components/SendLinkPopup.js */
 "use client";
-import { useState } from "react";
 
-export default function SendLinkPopup({ label, buttonColor }) {
-  const [isOpen, setIsOpen] = useState(false);
+import { useState, useEffect } from "react";
+import supabase from "../lib/supabaseClient";
 
-  // 🔗 Lien à partager (tu peux le personnaliser)
-  const appLink = "https://soultrack.app/inscription";
+export default function SendLinkPopup({ type }) {
+  const [open, setOpen] = useState(false);
+  const [token, setToken] = useState(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(appLink);
-    alert("Lien copié ✅");
-  };
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("access_tokens")
+          .select("*")
+          .eq("access_type", type)
+          .limit(1)
+          .single();
 
-  const handleWhatsapp = () => {
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
-      `Bonjour 👋, voici le lien pour rejoindre : ${appLink}`
-    )}`;
-    window.open(whatsappUrl, "_blank");
+        if (error || !data) {
+          console.error("Token introuvable. Vérifie la table Supabase.", error);
+          return;
+        }
+        setToken(data.token);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchToken();
+  }, [type]);
+
+  const handleSend = () => {
+    if (!token) {
+      alert("Token introuvable.");
+      return;
+    }
+
+    // Construction du message personnalisé
+    const displayText = type === "ajouter_membre" ? "👉 Nouveau venu" : "👉 Nouvel evangelise";
+
+    const link = `https://soultrack-beta.vercel.app/access/${token}`;
+
+    const message = `${displayText}`;
+
+    // WhatsApp : si numéro vide, choix contact existant
+    const waUrl = phoneNumber
+      ? `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message + " " + link)}`
+      : `https://wa.me/?text=${encodeURIComponent(message + " " + link)}`;
+
+    window.open(waUrl, "_blank");
+    setOpen(false); // fermer le popup après envoi
   };
 
   return (
-    <div>
-      {/* Bouton principal */}
+    <div className="w-full">
+      {/* Bouton pour ouvrir le popup */}
       <button
-        onClick={() => setIsOpen(true)}
-        className={`w-full py-3 px-6 rounded-2xl text-white font-semibold shadow-md transition-all duration-200 bg-gradient-to-r ${buttonColor} hover:opacity-90`}
+        onClick={() => setOpen(true)}
+        className={`bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white font-bold py-3 rounded-2xl w-full transition-all duration-200 hover:scale-105`}
       >
-        {label}
+        {type === "ajouter_membre" ? "Envoyer l'appli – Nouveau membre" : "Envoyer l'appli – Évangélisé"}
       </button>
 
       {/* Popup */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">
-              Partager le lien
-            </h2>
-            <p className="text-sm text-gray-600 mb-4">
-              Voici le lien pour partager l’application :
-            </p>
-            <div className="bg-gray-100 p-3 rounded-md text-gray-700 text-sm break-all">
-              {appLink}
-            </div>
+      {open && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-3xl p-6 w-80 flex flex-col gap-4 shadow-xl relative">
+            <h3 className="text-lg font-bold text-gray-800 text-center">
+              {type === "ajouter_membre" ? "Envoyer lien Nouveau membre" : "Envoyer lien Nouvel evangelise"}
+            </h3>
 
-            {/* Boutons d’action */}
-            <div className="flex gap-4 mt-6">
-              <button
-                onClick={handleCopy}
-                className="flex-1 py-2 rounded-xl bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 text-white font-medium shadow hover:opacity-90"
-              >
-                Copier
-              </button>
-              <button
-                onClick={handleWhatsapp}
-                className="flex-1 py-2 rounded-xl bg-gradient-to-r from-green-400 via-green-500 to-green-600 text-white font-medium shadow hover:opacity-90"
-              >
-                WhatsApp
-              </button>
-            </div>
+            <input
+              type="tel"
+              placeholder="Numéro WhatsApp (laisser vide pour choisir contact)"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="border rounded-xl px-4 py-2 w-full"
+            />
 
-            {/* Fermer */}
             <button
-              onClick={() => setIsOpen(false)}
-              className="mt-6 w-full py-2 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition"
+              onClick={handleSend}
+              className="bg-gradient-to-r from-green-400 via-green-500 to-green-600 text-white font-bold py-3 rounded-2xl w-full transition-all duration-200 hover:scale-105"
             >
-              Fermer
+              Envoyer
+            </button>
+
+            <button
+              onClick={() => setOpen(false)}
+              className="absolute top-2 right-3 text-gray-500 hover:text-gray-800 font-bold"
+            >
+              ✕
             </button>
           </div>
         </div>
