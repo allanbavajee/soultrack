@@ -6,13 +6,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import SendWhatsappButtons from "../components/SendWhatsappButtons";
 import SendLinkPopup from "../components/SendLinkPopup";
 
 export default function Home() {
   const router = useRouter();
   const [profile, setProfile] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [showPopup, setShowPopup] = useState(null);
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
@@ -58,7 +58,7 @@ export default function Home() {
     >
       {/* Logo */}
       <div className="mt-6">
-        <Image src="/soul.logo.png" alt="SoulTrack Logo" width={100} height={100} />
+        <Image src="/logo.png" alt="SoulTrack Logo" width={100} height={100} />
       </div>
 
       {/* Titre SoulTrack */}
@@ -102,27 +102,47 @@ export default function Home() {
       {/* Boutons avec popup */}
       <div className="flex flex-col gap-4 mt-6 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendWhatsappButtons
-            type="ajouter_membre"
-            gradient="linear-gradient(to right, #2E3192, #1BFFFF)"
-          />
+          <button
+            onClick={() => setShowPopup("ajouter_membre")}
+            className="w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r from-[#2E3192] to-[#1BFFFF]"
+          >
+            Envoyer l'appli – Nouveau membre
+          </button>
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendWhatsappButtons
-            type="ajouter_evangelise"
-            gradient="linear-gradient(to right, #FF6B6B, #FFD93D)"
-          />
+          <button
+            onClick={() => setShowPopup("ajouter_evangelise")}
+            className="w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600"
+          >
+            Envoyer l'appli – Évangélisé
+          </button>
         )}
 
         {profile.role === "Admin" && (
-          <SendLinkPopup
-            label="Voir / Copier liens…"
-            type="voir_copier"
-            gradient="linear-gradient(to right, #2E3192, #1BFFFF)"
-          />
+          <button
+            onClick={() => setShowPopup("voir_copier")}
+            className="w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
+          >
+            Voir / Copier liens…
+          </button>
         )}
       </div>
+
+      {/* Popup d’envoi */}
+      {showPopup && (
+        <SendLinkPopup
+          type={showPopup}
+          label={
+            showPopup === "ajouter_membre"
+              ? "Envoyer l'appli – Nouveau membre"
+              : showPopup === "ajouter_evangelise"
+              ? "Envoyer l'appli – Évangélisé"
+              : "Voir / Copier liens…"
+          }
+          onClose={() => setShowPopup(null)}
+        />
+      )}
 
       {/* Message en bas */}
       <div className="mt-auto mb-4 text-center text-white text-lg">
@@ -131,4 +151,5 @@ export default function Home() {
     </div>
   );
 }
+
 
