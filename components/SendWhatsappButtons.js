@@ -17,10 +17,10 @@ export default function SendWhatsappButtons({ type }) {
     try {
       // Récupérer un token disponible dans Supabase
       const { data: tokenData, error } = await supabase
-        .from("access_tokens")          // <-- table correcte
+        .from("access_tokens")
         .select("*")
         .eq("access_type", type)
-        .is("user_id", null)           // token non utilisé
+        .is("user_id", null)
         .limit(1)
         .single();
 
@@ -35,14 +35,20 @@ export default function SendWhatsappButtons({ type }) {
 
       const number = manualNumber || phone;
       if (!number) {
-        setMessage("Veuillez saisir un numéro WhatsApp.");
+        setMessage("Veuillez saisir un numéro WhatsApp ou choisir un contact.");
         setLoading(false);
         return;
       }
 
+      // Message personnalisé selon le type
+      const customMessage =
+        type === "ajouter_membre"
+          ? `Voici le lien pour enregistrer un nouveau venu : ${link}`
+          : `Voici le lien pour enregistrer un nouvel évangélisé : ${link}`;
+
       // Lien WhatsApp
       const whatsappUrl = `https://wa.me/${number.replace(/\D/g, "")}?text=${encodeURIComponent(
-        `Voici votre lien SoulTrack : ${link}`
+        customMessage
       )}`;
 
       // Ouvrir WhatsApp
