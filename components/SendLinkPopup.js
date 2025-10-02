@@ -4,76 +4,84 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SendLinkPopup({ label, buttonColor }) {
+export default function SendLinkPopup({ label, profile, buttonColor }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phone, setPhone] = useState("");
-  const [tokens, setTokens] = useState({});
+  const [selectedType, setSelectedType] = useState("");
+  const [token, setToken] = useState(null);
 
-  // Récupère les tokens depuis Supabase pour les deux types
+  // Détermine les options disponibles selon le rôle
+  const accessOptions = [];
+  if (profile.role === "Admin") {
+    accessOptions.push({ label: "Nouveau membre", type: "ajouter_membre" });
+    accessOptions.push({ label: "Évangélisé", type: "ajouter_evangelise" });
+  } else if (profile.email === "clency.c@soultrack.org") {
+    accessOptions.push({ label: "Évangélisé", type: "ajouter_evangelise" });
+  } else if (profile.email === "lucie.d@soultrack.org") {
+    accessOptions.push({ label: "Nouveau membre", type: "ajouter_membre" });
+  }
+
   useEffect(() => {
-    const fetchTokens = async () => {
+    if (!selectedType) return;
+    const fetchToken = async () => {
       const { data, error } = await supabase
         .from("access_tokens")
         .select("*")
-        .in("access_type", ["ajouter_membre", "ajouter_evangelise"]);
-
-      if (!error && data) {
-        const tokenObj = {};
-        data.forEach((t) => {
-          tokenObj[t.access_type] = t.token;
-        });
-        setTokens(tokenObj);
-      }
+        .eq("access_type", selectedType)
+        .limit(1)
+        .single();
+      if (!error && data) setToken(data.token);
     };
-    fetchTokens();
-  }, []);
+    fetchToken();
+  }, [selectedType]);
 
-  const handleSend = (type) => {
-    const token = tokens[type];
+  const handleSend = () => {
     if (!token) {
-      alert("Token introuvable. Vérifie la table Supabase.");
+      alert("Token introuvable.");
       return;
     }
 
     let message = "";
-    if (type === "ajouter_membre") {
-      message = "Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre";
-    } else if (type === "ajouter_evangelise") {
-      message = "Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé";
+    let linkText = "";
+
+    if (selectedType === "ajouter_membre") {
+      message = "Voici le lien pour ajouter un nouveau membre :";
+      linkText = "👉 Ajouter nouveau membre";
+    } else if (selectedType === "ajouter_evangelise") {
+      message = "Voici le lien pour ajouter un nouveau évangélisé :";
+      linkText = "👉 Ajouter nouveau évangélisé";
     }
 
-    // Remplace le texte cliquable par le lien réel
-    const encodedMessage = encodeURIComponent(
-      message.replace(/👉 .+$/, `👉 ${window.location.origin}/access/${token}`)
-    );
+    const waMessage = `${message} ${linkText} ${window.location.origin}/access/${token}`;
 
-    if (!phone.trim()) {
-      // WhatsApp ouvert pour choisir un contact existant
+    const encodedMessage = encodeURIComponent(waMessage);
+
+    if (!phone) {
+      // Laisse choisir un contact existant
       window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
     } else {
-      // Envoie directement au numéro
       const cleanedPhone = phone.replace(/\D/g, "");
       window.open(`https://wa.me/${cleanedPhone}?text=${encodedMessage}`, "_blank");
     }
-    setPhone("");
+
     setShowPopup(false);
+    setPhone("");
   };
 
-  const handleCopy = (type) => {
-    const token = tokens[type];
-    if (!token) {
-      alert("Token introuvable. Vérifie la table Supabase.");
-      return;
-    }
-    const link = `${window.location.origin}/access/${token}`;
-    navigator.clipboard.writeText(link);
+  const handleCopy = () => {
+    if (!token) return;
+    const url = `${window.location.origin}/access/${token}`;
+    navigator.clipboard.writeText(url);
     alert("Lien copié !");
   };
 
   return (
     <div className="relative w-full">
       <button
-        onClick={() => setShowPopup(true)}
+        onClick={() => {
+          setShowPopup(true);
+          setSelectedType(accessOptions[0]?.type || "");
+        }}
         className={`w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r ${buttonColor} transition-all duration-200`}
       >
         {label}
@@ -82,74 +90,56 @@ export default function SendLinkPopup({ label, buttonColor }) {
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-lg flex flex-col gap-4">
-            <h3 className="text-lg font-bold text-center">{label}</h3>
-            <p className="text-sm text-gray-700 text-center mb-2">
-              Sélectionnez le type et copiez ou envoyez le lien via WhatsApp.
-              <br />
-              Laissez vide le numéro pour choisir un contact existant.
-            </p>
+            <h3 className="text-lg font-bold">{label}</h3>
 
-            {/* Intégration */}
-            <div className="flex flex-col gap-2">
-              <div className="font-semibold">Intégration</div>
-              <input
-                type="text"
-                placeholder="Numéro WhatsApp (facultatif)"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="border rounded-xl px-3 py-2 w-full"
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleCopy("ajouter_membre")}
-                  className="flex-1 px-3 py-2 rounded-xl bg-gray-300 text-gray-800 font-bold"
-                >
-                  Copier le lien
-                </button>
-                <button
-                  onClick={() => handleSend("ajouter_membre")}
-                  className="flex-1 px-3 py-2 rounded-xl text-white font-bold bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600"
-                >
-                  Envoyer
-                </button>
-              </div>
-            </div>
-
-            {/* Évangélisation */}
-            <div className="flex flex-col gap-2 mt-4">
-              <div className="font-semibold">Évangélisation</div>
-              <input
-                type="text"
-                placeholder="Numéro WhatsApp (facultatif)"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="border rounded-xl px-3 py-2 w-full"
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleCopy("ajouter_evangelise")}
-                  className="flex-1 px-3 py-2 rounded-xl bg-gray-300 text-gray-800 font-bold"
-                >
-                  Copier le lien
-                </button>
-                <button
-                  onClick={() => handleSend("ajouter_evangelise")}
-                  className="flex-1 px-3 py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
-                >
-                  Envoyer
-                </button>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowPopup(false)}
-              className="mt-4 px-4 py-2 rounded-xl bg-gray-300 text-gray-800 font-bold"
+            <label className="text-gray-700">Choisir le type :</label>
+            <select
+              className="border rounded-xl px-3 py-2 w-full"
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
             >
-              Fermer
-            </button>
+              {accessOptions.map((opt) => (
+                <option key={opt.type} value={opt.type}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+
+            <p className="text-sm text-gray-700">
+              Laissez vide pour sélectionner un contact existant sur WhatsApp
+            </p>
+            <input
+              type="text"
+              placeholder="Numéro WhatsApp avec indicatif"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="border rounded-xl px-3 py-2 w-full"
+            />
+
+            <div className="flex justify-end gap-2 mt-2">
+              <button
+                onClick={() => setShowPopup(false)}
+                className="px-4 py-2 rounded-xl bg-gray-300 text-gray-800 font-bold"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleCopy}
+                className="px-4 py-2 rounded-xl bg-orange-400 text-white font-bold"
+              >
+                Copier le lien
+              </button>
+              <button
+                onClick={handleSend}
+                className="px-4 py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
+              >
+                Envoyer
+              </button>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 }
+
