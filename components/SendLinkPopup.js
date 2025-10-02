@@ -1,20 +1,22 @@
-/* components/SendLinkPopup.js */
 "use client";
-
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SendLinkPopup({ label, type, buttonColor, customText }) {
-  const [showPopup, setShowPopup] = useState(false);
+export default function SendLinkPopup({ type, label, buttonColor }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
+
+  const togglePopup = () => {
+    setIsOpen(!isOpen);
+    setError(null);
+  };
 
   const fetchToken = async () => {
-    setLoading(true);
-    setError("");
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from("access_tokens")
         .select("*")
@@ -24,89 +26,85 @@ export default function SendLinkPopup({ label, type, buttonColor, customText }) 
 
       if (error || !data) {
         setError("Token introuvable. Vérifie la table Supabase.");
+        setToken(null);
       } else {
         setToken(data.token);
       }
     } catch (err) {
       setError("Erreur lors de la récupération du token");
-      console.error(err);
+      setToken(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClick = async () => {
-    await fetchToken();
-    setShowPopup(true);
-  };
-
-  const handleSendWhatsapp = () => {
+  const handleSend = () => {
     if (!token) return;
+    let message = "";
+    if (type === "ajouter_membre") {
+      message = `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre ${window.location.origin}/access/${token}`;
+    } else if (type === "ajouter_evangelise") {
+      message = `Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé ${window.location.origin}/access/${token}`;
+    }
 
-    const baseUrl = `https://soultrack-beta.vercel.app/access/${token}`;
-    const message = encodeURIComponent(`${customText}: ${baseUrl}`);
+    let whatsappUrl = "https://wa.me/";
+    if (phoneNumber) {
+      // supprimer les espaces et + si nécessaire
+      const formatted = phoneNumber.replace(/\D/g, "");
+      whatsappUrl += formatted + "?text=" + encodeURIComponent(message);
+    } else {
+      // laisse vide pour que l'utilisateur choisisse un contact dans WhatsApp
+      whatsappUrl += "?text=" + encodeURIComponent(message);
+    }
 
-    // Si numéro vide, WhatsApp ouvrira la sélection de contacts
-    const url = phoneNumber
-      ? `https://wa.me/${phoneNumber}?text=${message}`
-      : `https://wa.me/?text=${message}`;
-
-    window.open(url, "_blank");
-  };
-
-  const handleCopyLink = () => {
-    if (!token) return;
-    navigator.clipboard.writeText(`https://soultrack-beta.vercel.app/access/${token}`);
-    alert("Lien copié !");
+    window.open(whatsappUrl, "_blank");
   };
 
   return (
-    <div className="relative">
+    <div className="w-full">
       <button
-        className={`w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r ${buttonColor} hover:brightness-105 transition-all duration-200`}
-        onClick={handleClick}
+        className={`w-full py-3 rounded-2xl text-white font-bold transition-all duration-200 bg-gradient-to-r ${buttonColor}`}
+        onClick={() => {
+          togglePopup();
+          fetchToken();
+        }}
       >
         {label}
       </button>
 
-      {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-3xl shadow-lg w-full max-w-md flex flex-col gap-4">
-            <h3 className="text-xl font-bold text-gray-800 text-center">{label}</h3>
+      {isOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md flex flex-col gap-4 relative">
+            <h2 className="text-lg font-bold text-center">{label}</h2>
 
-            {error && <p className="text-red-500 text-center">{error}</p>}
+            <p className="text-sm text-gray-600">
+              Saisissez un numéro pour envoyer directement, ou laissez vide pour choisir un contact dans WhatsApp.
+            </p>
 
             <input
-              type="text"
-              placeholder="Saisir numéro WhatsApp (optionnel)"
+              type="tel"
+              placeholder="Numéro WhatsApp (ex: +230XXXXXXXX)"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
-              className="border rounded-xl px-4 py-2 w-full"
+              className="border border-gray-300 rounded-xl px-4 py-2 w-full"
             />
 
-            <div className="flex gap-2">
+            {error && <p className="text-red-500 text-center">{error}</p>}
+            {loading && <p className="text-gray-500 text-center">Chargement du token...</p>}
+            {token && !loading && (
               <button
-                className="flex-1 py-2 rounded-xl text-white font-bold bg-green-500 hover:bg-green-600 transition-all duration-200"
-                onClick={handleSendWhatsapp}
-                disabled={loading || !!error}
+                className={`w-full py-3 rounded-2xl text-white font-bold transition-all duration-200 bg-gradient-to-r ${buttonColor}`}
+                onClick={handleSend}
               >
                 Envoyer
               </button>
-
-              <button
-                className="flex-1 py-2 rounded-xl text-white font-bold bg-gray-500 hover:bg-gray-600 transition-all duration-200"
-                onClick={handleCopyLink}
-                disabled={!token}
-              >
-                Copier le lien
-              </button>
-            </div>
+            )}
 
             <button
-              className="mt-2 text-gray-500 hover:text-gray-800 text-sm underline"
-              onClick={() => setShowPopup(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 font-bold"
+              onClick={togglePopup}
             >
-              Fermer
+              ✕
             </button>
           </div>
         </div>
