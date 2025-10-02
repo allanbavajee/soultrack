@@ -1,4 +1,5 @@
 /* pages/home.js */
+/* pages/home.js */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,7 +13,6 @@ export default function Home() {
   const router = useRouter();
   const [profile, setProfile] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [showPopup, setShowPopup] = useState(null);
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
@@ -102,47 +102,29 @@ export default function Home() {
       {/* Boutons avec popup */}
       <div className="flex flex-col gap-4 mt-6 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <button
-            onClick={() => setShowPopup("ajouter_membre")}
-            className="w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r from-[#2E3192] to-[#1BFFFF]"
-          >
-            Envoyer l'appli – Nouveau membre
-          </button>
+          <SendLinkPopup
+            label="Envoyer l'appli – Nouveau membre"
+            type="ajouter_membre"
+            buttonColor="from-blue-400 via-blue-500 to-blue-600"
+          />
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <button
-            onClick={() => setShowPopup("ajouter_evangelise")}
-            className="w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600"
-          >
-            Envoyer l'appli – Évangélisé
-          </button>
+          <SendLinkPopup
+            label="Envoyer l'appli – Évangélisé"
+            type="ajouter_evangelise"
+            buttonColor="from-green-400 via-green-500 to-green-600"
+          />
         )}
 
         {profile.role === "Admin" && (
-          <button
-            onClick={() => setShowPopup("voir_copier")}
-            className="w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
-          >
-            Voir / Copier liens…
-          </button>
+          <SendLinkPopup
+            label="Voir / Copier liens…"
+            type="voir_copier"
+            buttonColor="from-orange-400 via-orange-500 to-orange-600"
+          />
         )}
       </div>
-
-      {/* Popup d’envoi */}
-      {showPopup && (
-        <SendLinkPopup
-          type={showPopup}
-          label={
-            showPopup === "ajouter_membre"
-              ? "Envoyer l'appli – Nouveau membre"
-              : showPopup === "ajouter_evangelise"
-              ? "Envoyer l'appli – Évangélisé"
-              : "Voir / Copier liens…"
-          }
-          onClose={() => setShowPopup(null)}
-        />
-      )}
 
       {/* Message en bas */}
       <div className="mt-auto mb-4 text-center text-white text-lg">
@@ -151,5 +133,3 @@ export default function Home() {
     </div>
   );
 }
-
-
