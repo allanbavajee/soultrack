@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
+import SendWhatsappButtons from "../components/SendWhatsappButtons";
 import SendLinkPopup from "../components/SendLinkPopup";
 
 export default function Home() {
@@ -53,7 +54,7 @@ export default function Home() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-10"
-      style={{ background: "linear-gradient(135deg, #92EFFD 0%, #2E3192 100%)" }}
+      style={{ background: "linear-gradient(135deg, #F8F8F9 0%, #111439 100%)" }}
     >
       {/* Logo */}
       <div className="mt-6">
@@ -67,6 +68,7 @@ export default function Home() {
 
       {/* Cartes principales */}
       <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mt-6">
+        {/* Suivis des membres */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <Link href="/membres-hub" className="flex-1">
             <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
@@ -76,6 +78,7 @@ export default function Home() {
           </Link>
         )}
 
+        {/* Évangélisation */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <Link href="/evangelisation-hub" className="flex-1">
             <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
@@ -85,6 +88,7 @@ export default function Home() {
           </Link>
         )}
 
+        {/* Rapport - Admin uniquement */}
         {profile.role === "Admin" && (
           <Link href="/rapport" className="flex-1">
             <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
@@ -98,18 +102,16 @@ export default function Home() {
       {/* Boutons avec popup */}
       <div className="flex flex-col gap-4 mt-6 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendLinkPopup
-            label="Envoyer l'appli – Nouveau membre"
+          <SendWhatsappButtons
             type="ajouter_membre"
-            buttonColor="from-blue-400 via-blue-500 to-blue-600"
+            gradient="linear-gradient(to right, #2E3192, #1BFFFF)"
           />
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendLinkPopup
-            label="Envoyer l'appli – Évangélisé"
+          <SendWhatsappButtons
             type="ajouter_evangelise"
-            buttonColor="from-green-400 via-green-500 to-green-600"
+            gradient="linear-gradient(to right, #FF6B6B, #FFD93D)"
           />
         )}
 
@@ -117,7 +119,7 @@ export default function Home() {
           <SendLinkPopup
             label="Voir / Copier liens…"
             type="voir_copier"
-            buttonColor="from-orange-400 via-orange-500 to-orange-600"
+            gradient="linear-gradient(to right, #2E3192, #1BFFFF)"
           />
         )}
       </div>
@@ -129,3 +131,4 @@ export default function Home() {
     </div>
   );
 }
+
