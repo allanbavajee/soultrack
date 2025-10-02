@@ -1,18 +1,21 @@
 /* components/SendLinkPopup.js */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SendLinkPopup({ type, label, buttonColor, messagePrefix, linkText }) {
+export default function SendLinkPopup({ type, label, buttonColor, linkText }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [token, setToken] = useState(null);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [link, setLink] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Récupère le token depuis Supabase selon le type
-  useEffect(() => {
-    const fetchToken = async () => {
+  const fetchToken = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
       const { data, error } = await supabase
         .from("access_token")
         .select("*")
@@ -20,73 +23,94 @@ export default function SendLinkPopup({ type, label, buttonColor, messagePrefix,
         .limit(1)
         .single();
 
-      if (!error && data) setToken(data.token);
-      else setToken(null);
-    };
+      if (error || !data) {
+        setError("Token introuvable. Vérifie la table Supabase.");
+        setLoading(false);
+        return;
+      }
 
+      const tokenLink = `https://soultrack-beta.vercel.app/access/${data.token}`;
+      setLink(tokenLink);
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setError("Erreur lors de la récupération du token");
+      setLoading(false);
+    }
+  };
+
+  const handleOpen = () => {
+    setIsOpen(true);
     fetchToken();
-  }, [type]);
+  };
 
-  const handleSend = () => {
-    if (!token) {
-      alert("Token introuvable. Vérifie la table Supabase.");
-      return;
-    }
+  const handleSendWhatsapp = () => {
+    if (!link) return;
 
-    const baseUrl = "https://soultrack-beta.vercel.app/access/";
-    const url = `${baseUrl}${token}`;
-    const message = `${messagePrefix}%0A${linkText} ${url}`;
+    // Message personnalisé avec texte cliquable
+    // Exemple : "Voici le lien pour ajouter un 👉 Nouvel évangélisé"
+    const message = `Voici le lien pour ajouter un ${linkText}`;
+    const encodedMessage = encodeURIComponent(`${message} ${link}`);
 
-    let whatsappUrl;
-    if (phone) {
-      // envoyer directement au numéro
-      const phoneNumber = phone.replace(/\D/g, ""); // retirer tout sauf chiffres
-      whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-    } else {
-      // laisse vide → ouvre WhatsApp pour choisir contact
-      whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    }
+    const whatsappUrl = whatsappNumber
+      ? `https://wa.me/${whatsappNumber}?text=${encodedMessage}`
+      : `https://wa.me/?text=${encodedMessage}`; // vide = choisir contact
 
     window.open(whatsappUrl, "_blank");
   };
 
   return (
-    <div className="w-full">
+    <div>
       <button
-        onClick={() => setIsOpen(true)}
-        className={`w-full py-3 rounded-2xl font-bold text-white text-lg bg-gradient-to-r ${buttonColor} hover:scale-105 transition-transform duration-200`}
+        className={`w-full py-3 rounded-2xl font-bold text-white bg-gradient-to-r ${buttonColor} hover:opacity-90 transition-all duration-200`}
+        onClick={handleOpen}
       >
         {label}
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-lg flex flex-col gap-4">
-            <h3 className="text-xl font-bold text-gray-800 text-center">{label}</h3>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-lg flex flex-col gap-4 relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+              onClick={() => setIsOpen(false)}
+            >
+              ✕
+            </button>
 
-            <input
-              type="text"
-              placeholder="Numéro WhatsApp (laisser vide pour choisir un contact)"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="border rounded-xl px-4 py-2 w-full"
-            />
+            <h3 className="text-lg font-bold text-gray-800 text-center">{label}</h3>
 
-            <div className="flex justify-between gap-4 mt-2">
-              <button
-                onClick={handleSend}
-                className={`flex-1 py-3 rounded-2xl font-bold text-white text-lg bg-gradient-to-r ${buttonColor} hover:scale-105 transition-transform duration-200`}
-              >
-                Envoyer
-              </button>
+            {loading && <p className="text-center text-gray-600">Chargement du token...</p>}
+            {error && <p className="text-center text-red-500">{error}</p>}
 
-              <button
-                onClick={() => setIsOpen(false)}
-                className="flex-1 py-3 rounded-2xl font-bold text-gray-700 border border-gray-300 hover:bg-gray-100 transition-colors"
-              >
-                Annuler
-              </button>
-            </div>
+            {!loading && !error && link && (
+              <>
+                <input
+                  type="text"
+                  placeholder="Saisir le numéro WhatsApp (optionnel)"
+                  value={whatsappNumber}
+                  onChange={(e) => setWhatsappNumber(e.target.value)}
+                  className="border rounded-xl px-4 py-2 w-full"
+                />
+
+                <button
+                  className={`w-full py-3 rounded-2xl font-bold text-white bg-gradient-to-r ${buttonColor} hover:opacity-90 transition-all duration-200`}
+                  onClick={handleSendWhatsapp}
+                >
+                  Envoyer
+                </button>
+
+                <p className="text-center text-gray-700 mt-2">
+                  Ou copier le lien :{" "}
+                  <span
+                    className="text-blue-600 font-semibold cursor-pointer underline"
+                    onClick={() => navigator.clipboard.writeText(link)}
+                  >
+                    {linkText}
+                  </span>
+                </p>
+              </>
+            )}
           </div>
         </div>
       )}
