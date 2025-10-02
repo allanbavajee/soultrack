@@ -67,4 +67,44 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-lg flex flex-col gap-4">
             <h3 className="text-lg font-bold">{label}</h3>
 
-            {type === "voir_copier" &&_
+            {type === "voir_copier" && (
+              <select
+                value={roleChoice}
+                onChange={(e) => setRoleChoice(e.target.value)}
+                className="border rounded-xl px-3 py-2 w-full"
+              >
+                <option value="Integration">Integration</option>
+                <option value="Evangelisation">Evangelisation</option>
+              </select>
+            )}
+
+            <p className="text-sm text-gray-700">
+              Laissez vide pour sélectionner un contact existant sur WhatsApp
+            </p>
+            <input
+              type="text"
+              placeholder="Numéro WhatsApp avec indicatif"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="border rounded-xl px-3 py-2 w-full"
+            />
+            <div className="flex justify-end gap-2 mt-2">
+              <button
+                onClick={() => setShowPopup(false)}
+                className="px-4 py-2 rounded-xl bg-gray-300 text-gray-800 font-bold"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleSend}
+                className="px-4 py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
+              >
+                Envoyer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
