@@ -1,111 +1,99 @@
 /* components/SendWhatsappButtons.js */
 "use client";
+
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function SendWhatsappButtons({ type }) {
-  const [popupOpen, setPopupOpen] = useState(false);
-  const [link, setLink] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [sending, setSending] = useState(false);
+  const [token, setToken] = useState(null);
+  const [error, setError] = useState(null);
 
-  // Récupérer un token dispo dans Supabase
-  const getToken = async () => {
-    const { data, error } = await supabase
-      .from("access_token")
-      .select("token")
-      .eq("access_type", type)
-      .is("profile_id", null)
-      .is("user_id", null)
-      .limit(1);
+  const fetchToken = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("access_token")
+        .select("*")
+        .eq("access_type", type)
+        .limit(1)
+        .single();
 
-    if (error || !data || data.length === 0) {
-      alert("Aucun token disponible pour le moment.");
+      if (error || !data) {
+        setError("Token introuvable");
+        return;
+      }
+
+      setToken(data.token);
+    } catch (err) {
+      console.error(err);
+      setError("Erreur lors de la récupération du token");
+    }
+  };
+
+  const handleClick = async () => {
+    if (!token) await fetchToken();
+    setShowPopup(true);
+  };
+
+  const handleSendWhatsapp = () => {
+    if (!phone) {
+      setError("Veuillez saisir un numéro WhatsApp");
       return;
     }
 
-    const token = data[0].token;
-    const url = `https://soultrack-beta.vercel.app/access/${token}`;
-    setLink(url);
-    setPopupOpen(true);
+    const link = `https://soultrack-beta.vercel.app/access/${token}`;
+    const whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(link)}`;
+    window.open(whatsappLink, "_blank");
+    setShowPopup(false);
+    setPhone("");
   };
 
-  // Copier le lien
-  const copyLink = () => {
-    navigator.clipboard.writeText(link);
-    alert("Lien copié !");
-  };
-
-  // Envoyer sur WhatsApp
-  const sendWhatsapp = () => {
-    if (!phoneNumber) {
-      alert("Saisis un numéro WhatsApp.");
-      return;
-    }
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-      `Voici ton lien d'accès : ${link}`
-    )}`;
-    window.open(whatsappUrl, "_blank");
-  };
+  const buttonGradient =
+    type === "ajouter_membre"
+      ? "from-blue-400 via-blue-500 to-blue-600"
+      : "from-green-400 via-green-500 to-green-600";
 
   return (
-    <div className="flex flex-col items-center w-full">
-      {/* Bouton principal */}
+    <div className="relative">
       <button
-        onClick={getToken}
-        className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-md hover:opacity-90 transition-all"
+        onClick={handleClick}
+        className={`w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r ${buttonGradient} transition-all duration-200 hover:opacity-90`}
       >
-        {type === "ajouter_membre"
-          ? "Envoyer l'appli – Nouveau membre"
-          : "Envoyer l'appli – Évangélisé"}
+        {type === "ajouter_membre" ? "Envoyer l'appli – Nouveau membre" : "Envoyer l'appli – Évangélisé"}
       </button>
 
-      {/* Popup */}
-      {popupOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-96 flex flex-col gap-4">
-            <h3 className="text-lg font-bold text-gray-800">Partager le lien</h3>
-
-            <input
-              type="text"
-              value={link}
-              readOnly
-              className="border rounded-lg px-3 py-2 w-full bg-gray-100"
-            />
-
-            <div className="flex gap-2">
-              <button
-                onClick={copyLink}
-                className="flex-1 bg-orange-500 text-white py-2 rounded-xl hover:bg-orange-600 transition-all"
-              >
-                Copier
-              </button>
-              <button
-                onClick={() => setPopupOpen(false)}
-                className="flex-1 bg-gray-400 text-white py-2 rounded-xl hover:bg-gray-500 transition-all"
-              >
-                Fermer
-              </button>
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-sm text-gray-600 mb-1">
-                Numéro WhatsApp :
-              </label>
-              <input
-                type="text"
-                placeholder="Ex: 2301234567"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                className="border rounded-lg px-3 py-2 w-full"
-              />
-              <button
-                onClick={sendWhatsapp}
-                className="mt-2 w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-2 rounded-xl hover:opacity-90 transition-all"
-              >
-                Envoyer sur WhatsApp
-              </button>
-            </div>
+      {showPopup && (
+        <div className="absolute top-16 left-0 w-full bg-white p-4 rounded-2xl shadow-lg z-50 flex flex-col gap-3">
+          <label className="font-semibold text-gray-700">Numéro WhatsApp :</label>
+          <input
+            type="tel"
+            placeholder="Ex: 230XXXXXXXX"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="border rounded-xl px-4 py-2 w-full"
+          />
+          {error && <p className="text-red-500">{error}</p>}
+          <div className="flex gap-3 mt-2">
+            <button
+              onClick={handleSendWhatsapp}
+              className={`flex-1 py-2 rounded-xl font-bold text-white bg-gradient-to-r ${buttonGradient} hover:opacity-90 transition-all duration-200`}
+            >
+              Envoyer
+            </button>
+            <button
+              onClick={() => setShowPopup(false)}
+              className="flex-1 py-2 rounded-xl font-bold text-gray-700 border border-gray-300 hover:bg-gray-100 transition-all duration-200"
+            >
+              Annuler
+            </button>
           </div>
+          {token && (
+            <p className="text-sm text-gray-500 mt-2 break-all">
+              Lien direct : <span className="text-blue-500">{`https://soultrack-beta.vercel.app/access/${token}`}</span>
+            </p>
+          )}
         </div>
       )}
     </div>
