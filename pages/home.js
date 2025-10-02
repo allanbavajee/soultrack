@@ -98,18 +98,36 @@ export default function Home() {
         )}
       </div>
 
-      {/* Boutons avec popup */}
+      {/* Boutons avec popup pour envoyer le lien */}
       <div className="flex flex-col gap-4 mt-6 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <SendLinkPopup type="ajouter_membre" />
+          <SendLinkPopup
+            type="ajouter_membre"
+            label="Envoyer l'appli – Nouveau membre"
+            buttonColor="from-blue-400 via-blue-500 to-blue-600"
+            messagePrefix="Voici le lien pour ajouter un Nouveau membre : "
+            linkText="👉 Ajouté nouveau membre"
+          />
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <SendLinkPopup type="ajouter_evangelise" />
+          <SendLinkPopup
+            type="ajouter_evangelise"
+            label="Envoyer l'appli – Évangélisé"
+            buttonColor="from-green-400 via-green-500 to-green-600"
+            messagePrefix="Voici le lien pour ajouter un Nouvel évangélisé : "
+            linkText="👉 Ajouté nouveau evangelise"
+          />
         )}
 
         {profile.role === "Admin" && (
-          <SendLinkPopup type="voir_liens" />
+          <SendLinkPopup
+            type="admin_links"
+            label="Voir / Copier liens…"
+            buttonColor="from-orange-400 via-orange-500 to-orange-600"
+            messagePrefix=""
+            linkText=""
+          />
         )}
       </div>
 
