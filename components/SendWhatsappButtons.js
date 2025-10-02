@@ -10,12 +10,12 @@ export default function SendWhatsappButtons({ type }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleSend = async (manualNumber) => {
+  const handleSend = async () => {
     setLoading(true);
     setMessage("");
 
     try {
-      // Récupérer un token disponible dans Supabase
+      // Récupération d’un token disponible
       const { data: tokenData, error } = await supabase
         .from("access_tokens")
         .select("*")
@@ -33,34 +33,27 @@ export default function SendWhatsappButtons({ type }) {
       const token = tokenData.token;
       const link = `https://soultrack-beta.vercel.app/access/${token}`;
 
-      const number = manualNumber || phone;
-      if (!number) {
-        setMessage("Veuillez saisir un numéro WhatsApp ou choisir un contact.");
-        setLoading(false);
-        return;
-      }
-
       // Message personnalisé selon le type
       const customMessage =
         type === "ajouter_membre"
           ? `Voici le lien pour enregistrer un nouveau venu : ${link}`
           : `Voici le lien pour enregistrer un nouvel évangélisé : ${link}`;
 
-      // Lien WhatsApp
-      const whatsappUrl = `https://wa.me/${number.replace(/\D/g, "")}?text=${encodeURIComponent(
-        customMessage
-      )}`;
+      // Construction de l’URL WhatsApp
+      const whatsappUrl = phone
+        ? `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(customMessage)}`
+        : `https://wa.me/?text=${encodeURIComponent(customMessage)}`;
 
-      // Ouvrir WhatsApp
+      // Ouvrir WhatsApp (le contact peut être choisi par WhatsApp si champ vide)
       window.open(whatsappUrl, "_blank");
 
       // Marquer le token comme utilisé
       await supabase
         .from("access_tokens")
-        .update({ user_id: "temporary" }) // optionnel : mettre l'ID du destinataire si connu
+        .update({ user_id: "temporary" }) // optionnel
         .eq("id", tokenData.id);
 
-      setMessage("Lien envoyé avec succès !");
+      setMessage("Lien prêt à être envoyé !");
       setPhone("");
       setShowPopup(false);
     } catch (err) {
@@ -74,10 +67,12 @@ export default function SendWhatsappButtons({ type }) {
   return (
     <div>
       <button
-        className={`w-full py-3 rounded-xl text-white font-bold bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 hover:from-blue-500 hover:to-blue-700 transition-all duration-200`}
+        className="w-full py-3 rounded-xl text-white font-bold bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 hover:from-blue-500 hover:to-blue-700 transition-all duration-200"
         onClick={() => setShowPopup(true)}
       >
-        {type === "ajouter_membre" ? "Envoyer l'appli – Nouveau membre" : "Envoyer l'appli – Évangélisé"}
+        {type === "ajouter_membre"
+          ? "Envoyer l'appli – Nouveau membre"
+          : "Envoyer l'appli – Évangélisé"}
       </button>
 
       {showPopup && (
@@ -87,14 +82,14 @@ export default function SendWhatsappButtons({ type }) {
 
             <input
               type="text"
-              placeholder="Numéro WhatsApp (+230...)"
+              placeholder="Numéro WhatsApp (+230...) (optionnel)"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="border rounded-xl px-3 py-2 w-full"
             />
 
             <button
-              onClick={() => handleSend()}
+              onClick={handleSend}
               disabled={loading}
               className="py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:from-green-500 hover:to-green-700 transition-all duration-200"
             >
