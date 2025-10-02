@@ -53,7 +53,7 @@ export default function Home() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-10"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+      style={{ background: "linear-gradient(135deg, #92EFFD 0%, #2E3192 100%)" }}
     >
       {/* Logo */}
       <div className="mt-6">
@@ -120,7 +120,7 @@ export default function Home() {
           <SendLinkPopup
             label="Voir / Copier liens…"
             type="voir_copier"
-            buttonColor="from-#C33764  to-#1D2671"
+            buttonColor="from-[#C33764] to-[#1D2671]"
           />
         )}
       </div>
