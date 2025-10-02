@@ -53,7 +53,7 @@ export default function Home() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-10"
-      style={{ background: "linear-gradient(135deg, #F8F8F9 0%, #111439 100%)" }}
+      style={{ background: "linear-gradient(135deg, #111439 0%, #F8F8F9 100%)" }}
     >
       {/* Logo */}
       <div className="mt-6">
@@ -103,6 +103,7 @@ export default function Home() {
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <SendLinkPopup
             label="Envoyer l'appli – Nouveau membre"
+            type="ajouter_membre"
             buttonColor="from-blue-400 via-blue-500 to-blue-600"
           />
         )}
@@ -110,6 +111,7 @@ export default function Home() {
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <SendLinkPopup
             label="Envoyer l'appli – Évangélisé"
+            type="ajouter_evangelise"
             buttonColor="from-green-400 via-green-500 to-green-600"
           />
         )}
@@ -117,6 +119,7 @@ export default function Home() {
         {profile.role === "Admin" && (
           <SendLinkPopup
             label="Voir / Copier liens…"
+            type="admin"
             buttonColor="from-orange-400 via-orange-500 to-orange-600"
           />
         )}
