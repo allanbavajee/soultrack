@@ -1,3 +1,4 @@
+/* components/SendLinkPopup.js */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -35,27 +36,33 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
   }
 
   const handleSend = () => {
-    let waUrl = `https://wa.me/${phone}?text=`;
-
     let message = "";
+    let clickableText = "";
+    
     if (type === "ajouter_membre") {
-      message = `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre`;
+      message = "Voici le lien pour ajouter un nouveau membre :";
+      clickableText = "👉 Ajouter nouveau membre";
     } else if (type === "ajouter_evangelise") {
-      message = `Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé`;
+      message = "Voici le lien pour ajouter un nouveau évangélisé :";
+      clickableText = "👉 Ajouter nouveau évangélisé";
     } else {
-      message = `Voici le lien SoulTrack : 👉 Accéder à l'application`;
+      message = "Voici le lien SoulTrack :";
+      clickableText = "👉 Accéder à l'application";
     }
 
-    // Encode le message et ajoute le lien token derrière le texte cliquable
-    let encodedMessage = encodeURIComponent(
-      message.replace(/👉 .+$/, `👉 ${window.location.origin}/access/${token}`)
-    );
+    const link = `https://soultrack-beta.vercel.app/access/${token}`;
+
+    // Formater le texte final pour WhatsApp avec le texte cliquable
+    const fullMessage = `${message} ${clickableText}`;
+    
+    // WhatsApp URL encode
+    const encodedMessage = encodeURIComponent(fullMessage);
 
     if (phone.trim() === "") {
-      // Ouvre WhatsApp pour choisir un contact existant
+      // Laisser vide → ouvrir WhatsApp et choisir contact
       window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
     } else {
-      // Envoie directement au numéro
+      // Envoyer directement à un numéro
       const cleanedPhone = phone.replace(/\D/g, "");
       window.open(`https://wa.me/${cleanedPhone}?text=${encodedMessage}`, "_blank");
     }
@@ -96,7 +103,7 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
               </button>
               <button
                 onClick={handleSend}
-                className="px-4 py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
+                className={`px-4 py-2 rounded-xl text-white font-bold bg-gradient-to-r ${buttonColor}`}
               >
                 Envoyer
               </button>
