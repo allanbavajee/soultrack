@@ -8,7 +8,7 @@ export default function SendWhatsappButtons({ type }) {
   const [link, setLink] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
 
-  // Fonction pour récupérer un token dispo
+  // Récupérer un token dispo dans Supabase
   const getToken = async () => {
     const { data, error } = await supabase
       .from("access_token")
@@ -48,11 +48,11 @@ export default function SendWhatsappButtons({ type }) {
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center w-full">
       {/* Bouton principal */}
       <button
         onClick={getToken}
-        className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-3 px-6 rounded-2xl shadow-md hover:opacity-90 transition-all"
+        className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-md hover:opacity-90 transition-all"
       >
         {type === "ajouter_membre"
           ? "Envoyer l'appli – Nouveau membre"
@@ -75,13 +75,13 @@ export default function SendWhatsappButtons({ type }) {
             <div className="flex gap-2">
               <button
                 onClick={copyLink}
-                className="flex-1 bg-blue-500 text-white py-2 rounded-xl hover:bg-blue-600"
+                className="flex-1 bg-orange-500 text-white py-2 rounded-xl hover:bg-orange-600 transition-all"
               >
                 Copier
               </button>
               <button
                 onClick={() => setPopupOpen(false)}
-                className="flex-1 bg-gray-400 text-white py-2 rounded-xl hover:bg-gray-500"
+                className="flex-1 bg-gray-400 text-white py-2 rounded-xl hover:bg-gray-500 transition-all"
               >
                 Fermer
               </button>
@@ -100,7 +100,7 @@ export default function SendWhatsappButtons({ type }) {
               />
               <button
                 onClick={sendWhatsapp}
-                className="mt-2 w-full bg-green-500 text-white py-2 rounded-xl hover:bg-green-600"
+                className="mt-2 w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-2 rounded-xl hover:opacity-90 transition-all"
               >
                 Envoyer sur WhatsApp
               </button>
