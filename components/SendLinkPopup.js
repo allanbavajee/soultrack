@@ -1,109 +1,90 @@
 /*components/SendLinkPopup.js*/
-"use client";
+import { useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 
-import { useState, useEffect } from "react";
-import supabase from "../lib/supabaseClient";
+export default function SendLinkPopup({ type, onClose, label }) {
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [loading, setLoading] = useState(false);
 
-export default function SendLinkPopup({ label, type, gradient }) {
-  const [showPopup, setShowPopup] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [token, setToken] = useState(null);
+  const handleSend = async () => {
+    try {
+      setLoading(true);
 
-  useEffect(() => {
-    if (type === "voir_copier") return; // Pas besoin de token pour ce bouton
-
-    const fetchToken = async () => {
+      // 1. Créer un token unique
       const { data, error } = await supabase
         .from("access_tokens")
-        .select("*")
-        .eq("access_type", type)
-        .limit(1)
+        .insert([{ type }])
+        .select()
         .single();
 
-      if (!error && data) setToken(data.token);
-    };
+      if (error) {
+        console.error(error);
+        setLoading(false);
+        return;
+      }
 
-    fetchToken();
-  }, [type]);
+      const token = data.token;
+      const link = `https://soultrack-beta.vercel.app/access/${token}`;
 
-  const handleSend = () => {
-    let message = "";
-    let link = "";
+      // 2. Texte du message selon le type
+      let message = "";
+      if (type === "ajouter_membre") {
+        message = `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre ${link}`;
+      } else if (type === "ajouter_evangelise") {
+        message = `Voici le lien pour ajouter un nouvel évangélisé : 👉 Ajouter nouvel évangélisé ${link}`;
+      }
 
-    if (type === "ajouter_membre") {
-      message = "Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre";
-      link = `https://soultrack-beta.vercel.app/access/${token}`;
-    } else if (type === "ajouter_evangelise") {
-      message = "Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé";
-      link = `https://soultrack-beta.vercel.app/access/${token}`;
-    } else if (type === "voir_copier") {
-      message = "Voici le lien pour accéder à SoulTrack : 👉 Accéder à l'application";
-      link = "https://soultrack-beta.vercel.app/";
+      // 3. Construire l’URL WhatsApp
+      let whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      if (phoneNumber.trim() !== "") {
+        const cleanNumber = phoneNumber.replace(/\D/g, "");
+        whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+      }
+
+      // 4. Ouvrir WhatsApp
+      window.open(whatsappUrl, "_blank");
+
+      setLoading(false);
+      onClose();
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
     }
-
-    // Encode message avec le lien cliquable
-    const fullMessage = encodeURIComponent(`${message} ${link}`);
-
-    if (phone.trim() === "") {
-      // Choisir un contact existant
-      window.open(`https://wa.me/?text=${fullMessage}`, "_blank");
-    } else {
-      // Envoyer directement au numéro
-      const cleanedPhone = phone.replace(/\D/g, "");
-      window.open(`https://wa.me/${cleanedPhone}?text=${fullMessage}`, "_blank");
-    }
-
-    setShowPopup(false);
-    setPhone("");
   };
 
   return (
-    <div className="relative w-full">
-      <button
-        onClick={() => setShowPopup(true)}
-        style={{ background: gradient }}
-        className="w-full py-3 rounded-2xl text-white font-bold transition-all duration-200"
-      >
-        {label}
-      </button>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-lg flex flex-col gap-4">
+        <h3 className="text-lg font-bold">{label}</h3>
 
-      {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-lg flex flex-col gap-4">
-            <h3 className="text-lg font-bold text-center">{label}</h3>
-            {type !== "voir_copier" && (
-              <p className="text-sm text-gray-700">
-                Laissez vide pour sélectionner un contact existant sur WhatsApp
-              </p>
-            )}
-            {type !== "voir_copier" && (
-              <input
-                type="text"
-                placeholder="Numéro WhatsApp avec indicatif"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="border rounded-xl px-3 py-2 w-full"
-              />
-            )}
-            <div className="flex justify-end gap-2 mt-2">
-              <button
-                onClick={() => setShowPopup(false)}
-                className="px-4 py-2 rounded-xl bg-gray-300 text-gray-800 font-bold"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleSend}
-                className="px-4 py-2 rounded-xl text-white font-bold"
-                style={{ background: gradient }}
-              >
-                Envoyer
-              </button>
-            </div>
-          </div>
+        {/* Champ numéro */}
+        <input
+          type="tel"
+          placeholder="Entrer le numéro WhatsApp (optionnel)"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+          className="border rounded-xl px-3 py-2 w-full"
+        />
+
+        {/* Boutons */}
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-gray-200 text-gray-700"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={handleSend}
+            disabled={loading}
+            className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold"
+          >
+            {loading ? "Envoi..." : "Envoyer"}
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
+
 
