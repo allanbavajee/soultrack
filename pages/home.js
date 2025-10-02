@@ -67,7 +67,6 @@ export default function Home() {
 
       {/* Cartes principales */}
       <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mt-6">
-        {/* Suivis des membres */}
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <Link href="/membres-hub" className="flex-1">
             <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
@@ -77,7 +76,6 @@ export default function Home() {
           </Link>
         )}
 
-        {/* Évangélisation */}
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <Link href="/evangelisation-hub" className="flex-1">
             <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
@@ -87,7 +85,6 @@ export default function Home() {
           </Link>
         )}
 
-        {/* Rapport - Admin uniquement */}
         {profile.role === "Admin" && (
           <Link href="/rapport" className="flex-1">
             <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
@@ -103,27 +100,24 @@ export default function Home() {
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <SendLinkPopup
             label="Envoyer l'appli – Nouveau membre"
+            type="ajouter_membre"
             buttonColor="from-blue-400 via-blue-500 to-blue-600"
-            responsables={[]} // pas utilisé ici
           />
         )}
 
         {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
           <SendLinkPopup
             label="Envoyer l'appli – Évangélisé"
+            type="ajouter_evangelise"
             buttonColor="from-green-400 via-green-500 to-green-600"
-            responsables={[]} // pas utilisé ici
           />
         )}
 
         {profile.role === "Admin" && (
           <SendLinkPopup
             label="Voir / Copier liens…"
+            type="voir_copier"
             buttonColor="from-orange-400 via-orange-500 to-orange-600"
-            responsables={[
-              { name: "Clency Ravina", email: "clency.c@soultrack.org", label: "Ajouter nouveau évangélisé" },
-              { name: "Lucie Des Jardins", email: "lucie.d@soultrack.org", label: "Ajouter nouveau membre" },
-            ]}
           />
         )}
       </div>
