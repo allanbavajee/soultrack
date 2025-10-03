@@ -7,28 +7,17 @@ export default function ListMembers() {
   const [members, setMembers] = useState([]);
   const [filter, setFilter] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
-  const [cellules, setCellules] = useState([]);
-  const [selectedCellules, setSelectedCellules] = useState({});
-  const [selectedEvangelises, setSelectedEvangelises] = useState({});
 
   useEffect(() => {
     fetchMembers();
-    fetchCellules();
   }, []);
 
   const fetchMembers = async () => {
     const { data, error } = await supabase
       .from("membres")
       .select("*")
-      .order("created_at", { ascending: false }); // nouveaux en haut
+      .order("created_at", { ascending: false });
     if (!error && data) setMembers(data);
-  };
-
-  const fetchCellules = async () => {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("id, cellule, responsable, telephone");
-    if (!error && data) setCellules(data);
   };
 
   const handleChangeStatus = async (id, newStatus) => {
@@ -53,12 +42,15 @@ export default function ListMembers() {
   const newMembers = members.filter((m) => m.is_new);
   const oldMembers = members.filter((m) => !m.is_new);
 
-  // Filtrage
-  const filteredMembers = [...newMembers, ...oldMembers].filter((m) => {
+  // Appliquer filtre
+  const filterFunc = (m) => {
     if (!filter) return true;
     if (filter === "star") return m.star === true;
     return m.statut === filter;
-  });
+  };
+
+  const filteredNewMembers = newMembers.filter(filterFunc);
+  const filteredOldMembers = oldMembers.filter(filterFunc);
 
   return (
     <div
@@ -103,31 +95,26 @@ export default function ListMembers() {
           <option value="a déjà mon église">A déjà mon église</option>
           <option value="star">⭐ Star</option>
         </select>
-        <span className="text-white font-semibold">Résultats: {filteredMembers.length}</span>
+        <span className="text-white font-semibold">
+          Résultats: {filteredNewMembers.length + filteredOldMembers.length}
+        </span>
       </div>
 
-      {/* Liste des membres */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
-        {filteredMembers.map((member, index) => (
-          <div key={member.id}>
-            {/* Ligne de séparation après les nouveaux membres */}
-            {index === newMembers.length && newMembers.length > 0 && oldMembers.length > 0 && (
-              <hr className="border-dashed border-white mb-2 mt-2 col-span-full" />
-            )}
-
+      {/* Nouveaux membres */}
+      {filteredNewMembers.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl mb-4">
+          {filteredNewMembers.map((member) => (
             <div
-              className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between"
-              style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
+              key={member.id}
+              className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4 border-green-500"
             >
               <div>
-                <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
                   <span>
-                    {member.prenom} {member.nom}{" "}
-                    {member.is_new && (
-                      <span className="ml-2 text-white bg-green-500 px-2 py-0.5 rounded-full text-xs">
-                        Nouveau
-                      </span>
-                    )}
+                    {member.prenom} {member.nom}
+                    <span className="ml-2 bg-green-500 text-white px-2 py-0.5 rounded-full text-xs">
+                      Nouveau
+                    </span>
                     {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
                   </span>
                   <select
@@ -144,14 +131,10 @@ export default function ListMembers() {
                   </select>
                 </h2>
                 <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
-                <p
-                  className="text-sm font-semibold"
-                  style={{ color: getBorderColor(member) }}
-                >
+                <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
                   {member.statut || "—"}
                 </p>
               </div>
-
               <p
                 className="mt-2 text-blue-500 underline cursor-pointer"
                 onClick={() =>
@@ -161,16 +144,67 @@ export default function ListMembers() {
                 {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
               </p>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {/* Ligne de séparation */}
+      {filteredNewMembers.length > 0 && filteredOldMembers.length > 0 && (
+        <hr className="border-dashed border-white w-full max-w-5xl mb-4" />
+      )}
+
+      {/* Anciens membres */}
+      {filteredOldMembers.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
+          {filteredOldMembers.map((member) => (
+            <div
+              key={member.id}
+              className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between"
+              style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
+            >
+              <div>
+                <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
+                  <span>
+                    {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                  </span>
+                  <select
+                    value={member.statut}
+                    onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+                    className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  >
+                    <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                    <option value="visiteur">Visiteur</option>
+                    <option value="a déjà mon église">A déjà mon église</option>
+                    <option value="evangelisé">Evangelisé</option>
+                    <option value="actif">Actif</option>
+                    <option value="ancien">Ancien</option>
+                  </select>
+                </h2>
+                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
+                <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
+                  {member.statut || "—"}
+                </p>
+              </div>
+              <p
+                className="mt-2 text-blue-500 underline cursor-pointer"
+                onClick={() =>
+                  setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
+                }
+              >
+                {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Bouton remonter en haut */}
       <button
         onClick={scrollToTop}
-        className="fixed bottom-5 right-5 bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600"
+        className="fixed bottom-5 right-5 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg flex items-center justify-center text-2xl font-bold"
+        title="Remonter en haut"
       >
-        ↑
+        ⬆
       </button>
 
       {/* Message final */}
