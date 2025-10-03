@@ -1,4 +1,4 @@
-/* pages/index.js - MAIS SUR LA PLATEFORME C'EST LA PAGE LOGIN */
+/* pages/index.js - Page login */
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/router";
@@ -65,12 +65,8 @@ export default function LoginPage() {
 
         {/* Message de bienvenue */}
         <p className="text-center text-gray-700 mb-6">
-          Bienvenue sur SoulTrack !
+          Bienvenue sur SoulTrack !<br/>
           Une plateforme pour garder le contact, organiser les visites, et soutenir chaque membre dans sa vie spirituelle.
-          <br />
-          <span className="italic font-semibold mt-2 block text-green-600">
-            "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
-          </span>
         </p>
 
         {/* Formulaire login */}
@@ -103,8 +99,12 @@ export default function LoginPage() {
             {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
+
+        {/* Texte biblique sous le bouton */}
+        <p className="text-center italic font-semibold mt-4 text-green-600">
+          "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
+        </p>
       </div>
     </div>
   );
 }
-
