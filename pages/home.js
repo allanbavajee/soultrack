@@ -1,99 +1,138 @@
-/* pages/login.js */
+/* pages/home.js */
 "use client";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
+import SendLinkPopup from "../components/SendLinkPopup";
 
-export default function LoginPage() {
+export default function Home() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      router.push("/"); // pas connecté → login
+      return;
+    }
 
-    try {
-      const { data: profile, error } = await supabase
+    const fetchProfile = async () => {
+      const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("email", email)
+        .eq("id", userId)
         .single();
 
-      if (error || !profile) {
-        setError("Utilisateur introuvable");
-        setLoading(false);
-        return;
-      }
+      if (!error && data) setProfile(data);
+      setLoadingProfile(false);
+    };
 
-      const { data: checkPassword } = await supabase.rpc("verify_password", {
-        p_password: password,
-        p_hash: profile.password_hash,
-      });
+    fetchProfile();
+  }, [router]);
 
-      if (!checkPassword || checkPassword[0].verify !== true) {
-        setError("Mot de passe incorrect");
-        setLoading(false);
-        return;
-      }
+  if (loadingProfile) {
+    return <p className="text-center mt-10 text-gray-600">Chargement du profil...</p>;
+  }
 
-      localStorage.setItem("userId", profile.id);
-      router.push("/home");
-    } catch (err) {
-      console.error(err);
-      setError("Erreur inattendue");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!profile) {
+    return (
+      <div className="text-center mt-10 text-red-500">
+        Profil introuvable. Connecte-toi.
+        <br />
+        <a href="/" className="text-green-600 font-bold underline mt-2 inline-block">
+          Retour à la connexion
+        </a>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white p-8 rounded-3xl shadow-lg flex flex-col gap-6 w-full max-w-md"
-      >
-        {/* Titre avec logo */}
-        <h2 className="text-2xl font-bold flex items-center justify-center gap-3">
-          <img
-            src="/logo.png"
-            alt="Logo SoulTrack"
-            className="w-8 h-8 object-contain"
+    <div
+      className="min-h-screen flex flex-col items-center justify-between p-6 gap-10"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
+      {/* Logo */}
+      <div className="mt-6">
+        <Image src="/logo.png" alt="SoulTrack Logo" width={100} height={100} />
+      </div>
+
+      {/* Titre SoulTrack */}
+      <h1 className="text-4xl font-handwriting text-white text-center mt-4">
+        SoulTrack
+      </h1>
+      {/* Message en bas */}
+      <div className="mt-auto mb-4 text-center text-white text-lg">
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous grandissons, et nous partageons l’amour de Christ dans chaque action ❤️
+      </div>
+
+      {/* Cartes principales */}
+      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mt-6">
+        {/* Suivis des membres */}
+        {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
+          <Link href="/membres-hub" className="flex-1">
+            <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
+              <div className="text-5xl mb-2">👤</div>
+              <div className="text-lg font-bold text-gray-800 text-center">Suivis des membres</div>
+            </div>
+          </Link>
+        )}
+
+        {/* Évangélisation */}
+        {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
+          <Link href="/evangelisation-hub" className="flex-1">
+            <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
+              <div className="text-5xl mb-2">🙌</div>
+              <div className="text-lg font-bold text-gray-800 text-center">Évangélisation</div>
+            </div>
+          </Link>
+        )}
+
+        {/* Rapport - Admin uniquement */}
+        {profile.role === "Admin" && (
+          <Link href="/rapport" className="flex-1">
+            <div className="w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-4 hover:shadow-xl transition-all duration-200 cursor-pointer">
+              <div className="text-5xl mb-2">📊</div>
+              <div className="text-lg font-bold text-gray-800 text-center">Rapport</div>
+            </div>
+          </Link>
+        )}
+      </div>
+
+      {/* Boutons avec popup */}
+      <div className="flex flex-col gap-4 mt-6 w-full max-w-md">
+        {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
+          <SendLinkPopup
+            label="Envoyer l'appli – Nouveau membre"
+            type="ajouter_membre"
+            buttonColor="from-[#09203F] to-[#537895]"
           />
-          Connexion SoulTrack
-        </h2>
+        )}
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border rounded-xl px-4 py-2 w-full"
-          required
-        />
+        {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
+          <SendLinkPopup
+            label="Envoyer l'appli – Évangélisé"
+            type="ajouter_evangelise"
+            buttonColor="from-[#09203F] to-[#537895]"
+          />
+        )}
 
-        <input
-          type="password"
-          placeholder="Mot de passe"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border rounded-xl px-4 py-2 w-full"
-          required
-        />
+        {profile.role === "Admin" && (
+          <SendLinkPopup
+            label="Voir / Copier liens…"
+            type="voir_copier"
+            buttonColor="from-[#FF5F6D] to-[#FFC371]"
+          />
+        )}
+      </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-2xl transition-all duration-200"
-        >
-          {loading ? "Connexion..." : "Se connecter"}
-        </button>
-
-        {error && <p className="text-red-500 text-center">{error}</p>}
-      </form>
+      {/* Message en bas */}
+      <div className="mt-auto mb-4 text-center text-white text-lg">
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
+      </div>
     </div>
   );
 }
