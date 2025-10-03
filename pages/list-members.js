@@ -38,13 +38,7 @@ export default function ListMembers() {
     );
   };
 
-  const filteredMembers = members.filter((m) => {
-    if (!filter) return true;
-    if (filter === "star") return m.star === true;
-    return m.statut === filter;
-  });
-
-  const countFiltered = filteredMembers.length;
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const getBorderColor = (member) => {
     if (member.star) return "#FBC02D";
@@ -55,7 +49,16 @@ export default function ListMembers() {
       return "#34A853";
   };
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  // Séparer nouveaux et anciens
+  const newMembers = members.filter((m) => m.is_new);
+  const oldMembers = members.filter((m) => !m.is_new);
+
+  // Filtrage
+  const filteredMembers = [...newMembers, ...oldMembers].filter((m) => {
+    if (!filter) return true;
+    if (filter === "star") return m.star === true;
+    return m.statut === filter;
+  });
 
   return (
     <div
@@ -100,7 +103,7 @@ export default function ListMembers() {
           <option value="a déjà mon église">A déjà mon église</option>
           <option value="star">⭐ Star</option>
         </select>
-        <span className="text-white font-semibold">Résultats: {countFiltered}</span>
+        <span className="text-white font-semibold">Résultats: {filteredMembers.length}</span>
       </div>
 
       {/* Liste des membres */}
@@ -108,8 +111,8 @@ export default function ListMembers() {
         {filteredMembers.map((member, index) => (
           <div key={member.id}>
             {/* Ligne de séparation après les nouveaux membres */}
-            {index === 0 && members.some((m) => m.is_new) && (
-              <hr className="border-dashed border-white mb-2 mt-2" />
+            {index === newMembers.length && newMembers.length > 0 && oldMembers.length > 0 && (
+              <hr className="border-dashed border-white mb-2 mt-2 col-span-full" />
             )}
 
             <div
@@ -119,7 +122,13 @@ export default function ListMembers() {
               <div>
                 <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
                   <span>
-                    {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                    {member.prenom} {member.nom}{" "}
+                    {member.is_new && (
+                      <span className="ml-2 text-white bg-green-500 px-2 py-0.5 rounded-full text-xs">
+                        Nouveau
+                      </span>
+                    )}
+                    {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
                   </span>
                   <select
                     value={member.statut}
