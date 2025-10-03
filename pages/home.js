@@ -61,7 +61,7 @@ export default function Home() {
       </div>
 
       {/* Titre SoulTrack */}
-      <h1 className="text-6xl sm:text-6xl font-handwriting text-white text-center mt-1">
+      <h1 className="text-5xl sm:text-5xl font-handwriting text-white text-center mt-1">
         SoulTrack
       </h1>
 
