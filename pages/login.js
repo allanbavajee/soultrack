@@ -4,9 +4,22 @@
     onSubmit={handleLogin}
     className="bg-white p-8 rounded-3xl shadow-lg flex flex-col gap-6 w-full max-w-md"
   >
-    {/* Titre avec logo */}
+    {/* Titre avec logo inline */}
     <h2 className="text-2xl font-bold flex items-center justify-center gap-3">
-      <img src="/logo.png" alt="Logo" className="w-8 h-8" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-8 h-8 text-green-500"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 4v16m8-8H4"
+        />
+      </svg>
       Connexion SoulTrack
     </h2>
 
