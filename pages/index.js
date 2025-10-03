@@ -1,4 +1,4 @@
-/* pages/index.js */
+/* pages/index.js - MAIS SUR LA PLATEFORME C'EST LA PAGE LOGIN */
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/router";
@@ -53,8 +53,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
-        {/* Titre */}
-        <h1 className="text-5xl font-handwriting text-black-800 mb-3 text-center">
+        {/* Titre avec logo responsive */}
+        <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <img
+            src="/logo.png"
+            alt="Logo SoulTrack"
+            className="w-12 h-12 object-contain"
+          />
           SoulTrack
         </h1>
 
@@ -101,3 +106,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
