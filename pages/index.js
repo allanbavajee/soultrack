@@ -58,7 +58,7 @@ export default function LoginPage() {
           <img
             src="/logo.png"
             alt="Logo SoulTrack"
-            className="w-11 h-11 object-contain"
+            className="w-12 h-12 object-contain"
           />
           SoulTrack
         </h1>
