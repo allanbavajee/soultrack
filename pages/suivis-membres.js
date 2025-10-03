@@ -45,7 +45,7 @@ export default function SuivisMembres() {
         cellule:cellule_id (id, cellule)
       `
       )
-      .not("statut", "in", "(integrer,refus)"); // exclure intégrés et refusés
+      .neq("statut", "actif"); // ne pas afficher les actifs
 
     if (cellule) query = query.eq("cellule_id", cellule);
 
@@ -89,8 +89,8 @@ export default function SuivisMembres() {
       .update({ statut: newStatus })
       .eq("id", currentMember.id);
 
-    // Si "integrer", mettre à jour aussi le membre
-    if (newStatus === "integrer") {
+    // Si actif, mettre à jour le membre et le retirer du suivi
+    if (newStatus === "actif") {
       await supabase
         .from("membres")
         .update({ statut: "actif" })
@@ -196,9 +196,9 @@ export default function SuivisMembres() {
                 value={newStatus}
                 onChange={handleStatusChange}
               >
-                <option value="envoye">Envoyé</option>
-                <option value="encours">En cours</option>
-                <option value="integrer">Intégrer</option>
+                <option value="envoyé">Envoyé</option>
+                <option value="en cours">En cours</option>
+                <option value="Intégrer">Intégrer</option>
                 <option value="refus">Refus</option>
               </select>
 
