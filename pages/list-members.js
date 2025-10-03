@@ -57,10 +57,6 @@ export default function ListMembers() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
-  // Séparer les nouveaux membres (is_new) et anciens
-  const newMembers = filteredMembers.filter((m) => m.is_new);
-  const oldMembers = filteredMembers.filter((m) => !m.is_new);
-
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
@@ -109,67 +105,53 @@ export default function ListMembers() {
 
       {/* Liste des membres */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
-        {/* Nouveaux membres */}
-        {newMembers.map((member) => (
-          <div
-            key={member.id}
-            className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4 border-green-500"
-          >
-            <div className="flex justify-between items-start">
-              <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
-                <span>
-                  {member.prenom} {member.nom} <span className="ml-2 text-white bg-green-500 px-2 py-0.5 rounded-full text-xs">Nouveau</span> {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-                </span>
-                <select
-                  value={member.statut}
-                  onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                  className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+        {filteredMembers.map((member, index) => (
+          <div key={member.id}>
+            {/* Ligne de séparation après les nouveaux membres */}
+            {index === 0 && members.some((m) => m.is_new) && (
+              <hr className="border-dashed border-white mb-2 mt-2" />
+            )}
+
+            <div
+              className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between"
+              style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
+            >
+              <div>
+                <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
+                  <span>
+                    {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                  </span>
+                  <select
+                    value={member.statut}
+                    onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+                    className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  >
+                    <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                    <option value="visiteur">Visiteur</option>
+                    <option value="a déjà mon église">A déjà mon église</option>
+                    <option value="evangelisé">Evangelisé</option>
+                    <option value="actif">Actif</option>
+                    <option value="ancien">Ancien</option>
+                  </select>
+                </h2>
+                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: getBorderColor(member) }}
                 >
-                  <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                  <option value="visiteur">Visiteur</option>
-                  <option value="a déjà mon église">A déjà mon église</option>
-                  <option value="evangelisé">Evangelisé</option>
-                  <option value="actif">Actif</option>
-                  <option value="ancien">Ancien</option>
-                </select>
-              </h2>
-              <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
-            </div>
-          </div>
-        ))}
+                  {member.statut || "—"}
+                </p>
+              </div>
 
-        {/* Ligne séparatrice si il y a des nouveaux et des anciens */}
-        {newMembers.length > 0 && oldMembers.length > 0 && (
-          <div className="col-span-full">
-            <hr className="border-dashed border-white mt-2 mb-2" />
-          </div>
-        )}
-
-        {/* Anciens membres */}
-        {oldMembers.map((member) => (
-          <div
-            key={member.id}
-            className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between"
-            style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
-          >
-            <div className="flex justify-between items-start">
-              <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
-                {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-              </h2>
-              <select
-                value={member.statut}
-                onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              <p
+                className="mt-2 text-blue-500 underline cursor-pointer"
+                onClick={() =>
+                  setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
+                }
               >
-                <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                <option value="visiteur">Visiteur</option>
-                <option value="a déjà mon église">A déjà mon église</option>
-                <option value="evangelisé">Evangelisé</option>
-                <option value="actif">Actif</option>
-                <option value="ancien">Ancien</option>
-              </select>
+                {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+              </p>
             </div>
-            <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
           </div>
         ))}
       </div>
