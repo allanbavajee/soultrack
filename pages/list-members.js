@@ -38,37 +38,13 @@ export default function ListMembers() {
     );
   };
 
-  const handleWhatsAppSingle = async (member, cellule) => {
-    if (!cellule) return;
+  const filteredMembers = members.filter((m) => {
+    if (!filter) return true;
+    if (filter === "star") return m.star === true;
+    return m.statut === filter;
+  });
 
-    const prenomResponsable = cellule.responsable.split(" ")[0];
-    const message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
-Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}  
-- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
-- 📧 Email : ${member.email || "—"}  
-- 🏙️ Ville : ${member.ville || "—"}  
-- 🙏 Besoin : ${member.besoin || "—"}  
-- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\nMerci pour ton cœur ❤️ et son amour ✨`;
-
-    window.open(
-      `https://wa.me/${cellule.telephone}?text=${encodeURIComponent(message)}`,
-      "_blank"
-    );
-
-    // Mise à jour membre en actif
-    await supabase.from("membres").update({ statut: "actif" }).eq("id", member.id);
-
-    // Création du suivi
-    await supabase.from("suivis_membres").insert([
-      { membre_id: member.id, cellule_id: cellule.id, statut: "envoye" },
-    ]);
-
-    setMembers((prev) =>
-      prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m))
-    );
-  };
-
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const countFiltered = filteredMembers.length;
 
   const getBorderColor = (member) => {
     if (member.star) return "#FBC02D";
@@ -79,24 +55,15 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
       return "#34A853";
   };
 
-  const filteredMembers = members.filter((m) => {
-    if (!filter) return true;
-    if (filter === "star") return m.star === true;
-    return m.statut === filter;
-  });
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
-  const countFiltered = filteredMembers.length;
-
-  // Séparer nouveaux et anciens
+  // Séparer les nouveaux et les anciens
   const nouveaux = filteredMembers.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
   const anciens = filteredMembers.filter(
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
-
-  // Tri anciens par created_at
-  anciens.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   return (
     <div
@@ -123,7 +90,8 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
 
       {/* Message inspirant */}
       <p className="text-center text-white text-lg mb-6 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et partageons l’amour de Christ dans chaque action ❤️
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et partageons
+        l’amour de Christ dans chaque action ❤️
       </p>
 
       {/* Filtres + compte */}
@@ -145,104 +113,124 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
       </div>
 
       {/* Liste des membres */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
-        {[...nouveaux, ...anciens].map((member, index) => {
-          const isFirstAncien = index === nouveaux.length && nouveaux.length > 0;
-          return (
-            <div key={member.id}>
-              {/* Ligne de séparation */}
-              {isFirstAncien && (
-                <hr className="border-white border-t w-full my-2" />
-              )}
-
-              <div
-                className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between"
-                style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
-              >
-                <div>
-                  <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
-                    <span>
-                      {member.prenom} {member.nom}{" "}
-                      {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
-                        <span className="ml-1 text-green-500 font-semibold text-sm">Nouveau</span>
-                      )}
-                      {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-                    </span>
-                    <select
-                      value={member.statut}
-                      onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                      className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                    >
-                      <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                      <option value="visiteur">Visiteur</option>
-                      <option value="a déjà mon église">A déjà mon église</option>
-                      <option value="evangelisé">Evangelisé</option>
-                      <option value="actif">Actif</option>
-                      <option value="ancien">Ancien</option>
-                    </select>
-                  </h2>
-                  <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
-                  <p
-                    className="text-sm font-semibold"
-                    style={{ color: getBorderColor(member) }}
-                  >
-                    {member.statut || "—"}
-                  </p>
-                </div>
-
-                <p
-                  className="mt-2 text-blue-500 underline cursor-pointer"
-                  onClick={() =>
-                    setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                  }
+      <div className="w-full max-w-5xl">
+        {/* Nouveaux membres */}
+        {nouveaux.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-2">
+            {nouveaux.map((member) => (
+              <div key={member.id}>
+                <div
+                  className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between"
+                  style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
                 >
-                  {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                </p>
-
-                {detailsOpen[member.id] && (
-                  <div className="mt-2 text-sm text-gray-700 space-y-2">
-                    <p>Email : {member.email || "—"}</p>
-                    <p>Besoin : {member.besoin || "—"}</p>
-                    <p>Ville : {member.ville || "—"}</p>
-                    <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
-                    <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-
-                    {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
-                      <div className="mt-2">
-                        <label className="block mb-1 font-semibold">Choisir une cellule :</label>
-                        <select
-                          className="w-full p-2 border rounded-lg mb-2"
-                          value={selectedCellules[member.id]?.cellule || ""}
-                          onChange={(e) => {
-                            const cellule = cellules.find((c) => c.cellule === e.target.value);
-                            setSelectedCellules((prev) => ({ ...prev, [member.id]: cellule }));
-                          }}
-                        >
-                          <option value="">-- Sélectionner cellule --</option>
-                          {cellules.map((c) => (
-                            <option key={c.id} value={c.cellule}>{c.cellule}</option>
-                          ))}
-                        </select>
-                        <button
-                          className="w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
-                          onClick={() => handleWhatsAppSingle(member, selectedCellules[member.id])}
-                        >
-                          Envoyer WhatsApp au responsable
-                        </button>
-                      </div>
-                    )}
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
+                      <span>
+                        {member.prenom} {member.nom}
+                        <span className="ml-1 text-green-500 font-semibold text-sm">Nouveau</span>
+                        {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                      </span>
+                      <select
+                        value={member.statut}
+                        onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+                        className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                      >
+                        <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                        <option value="visiteur">Visiteur</option>
+                        <option value="a déjà mon église">A déjà mon église</option>
+                        <option value="evangelisé">Evangelisé</option>
+                        <option value="actif">Actif</option>
+                        <option value="ancien">Ancien</option>
+                      </select>
+                    </h2>
+                    <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
+                    <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
+                      {member.statut || "—"}
+                    </p>
                   </div>
-                )}
+
+                  <p
+                    className="mt-2 text-blue-500 underline cursor-pointer"
+                    onClick={() =>
+                      setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
+                    }
+                  >
+                    {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                  </p>
+
+                  {detailsOpen[member.id] && (
+                    <div className="mt-2 text-sm text-gray-700 space-y-2">
+                      {/* Détails et bouton WhatsApp */}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            ))}
+          </div>
+        )}
+
+        {/* Ligne de séparation */}
+        {nouveaux.length > 0 && <hr className="border-white border-t w-full my-4" />}
+
+        {/* Anciens membres */}
+        {anciens.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {anciens.map((member) => (
+              <div key={member.id}>
+                <div
+                  className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between"
+                  style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
+                >
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
+                      <span>
+                        {member.prenom} {member.nom}
+                        {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                      </span>
+                      <select
+                        value={member.statut}
+                        onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+                        className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                      >
+                        <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                        <option value="visiteur">Visiteur</option>
+                        <option value="a déjà mon église">A déjà mon église</option>
+                        <option value="evangelisé">Evangelisé</option>
+                        <option value="actif">Actif</option>
+                        <option value="ancien">Ancien</option>
+                      </select>
+                    </h2>
+                    <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
+                    <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
+                      {member.statut || "—"}
+                    </p>
+                  </div>
+
+                  <p
+                    className="mt-2 text-blue-500 underline cursor-pointer"
+                    onClick={() =>
+                      setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
+                    }
+                  >
+                    {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                  </p>
+
+                  {detailsOpen[member.id] && (
+                    <div className="mt-2 text-sm text-gray-700 space-y-2">
+                      {/* Détails et bouton WhatsApp */}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Bouton remonter en haut */}
+      {/* Flèche pour remonter en haut */}
       <button
         onClick={scrollToTop}
-        className="fixed bottom-5 right-5 text-white text-2xl font-bold hover:text-gray-200"
+        className="fixed bottom-5 right-5 text-white text-2xl font-bold bg-transparent hover:text-gray-200"
       >
         ↑
       </button>
