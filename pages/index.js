@@ -65,7 +65,8 @@ export default function LoginPage() {
 
         {/* Message de bienvenue */}
         <p className="text-center text-gray-700 mb-6">
-          Bienvenue sur la plateforme de suivi et d’accompagnement spirituel de l’église.
+          Bienvenue sur SoulTrack !
+          Une plateforme pour garder le contact, organiser les visites, et soutenir chaque membre dans sa vie spirituelle.
           <br />
           <span className="italic font-semibold mt-2 block text-green-600">
             "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
