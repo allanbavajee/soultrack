@@ -38,9 +38,13 @@ export default function ListMembers() {
       return "#34A853";
   };
 
-  // Séparer nouveaux et anciens
-  const newMembers = members.filter((m) => m.is_new);
-  const oldMembers = members.filter((m) => !m.is_new);
+  // Définir nouveaux et anciens membres
+  const newMembers = members.filter(
+    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
+  );
+  const oldMembers = members
+    .filter((m) => !newMembers.includes(m))
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // anciens triés
 
   // Appliquer filtre
   const filterFunc = (m) => {
@@ -57,7 +61,7 @@ export default function ListMembers() {
       className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* Retour */}
+      {/* Bouton Retour */}
       <button
         onClick={() => window.history.back()}
         className="self-start mb-4 flex items-center text-orange-500 font-semibold hover:text-orange-600"
@@ -205,12 +209,7 @@ export default function ListMembers() {
         title="Remonter en haut"
       >
         ⬆
-      </button>
-
-      {/* Message final */}
-      <p className="mt-6 mb-4 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
-      </p>
+      </button>      
     </div>
   );
 }
