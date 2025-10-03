@@ -2,7 +2,6 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/router";
-import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
@@ -59,12 +58,10 @@ export default function LoginPage() {
       >
         {/* Titre avec logo */}
         <h2 className="text-2xl font-bold flex items-center justify-center gap-3">
-          <Image
+          <img
             src="/logo.png"
             alt="Logo SoulTrack"
-            width={32}
-            height={32}
-            className="object-contain"
+            className="w-8 h-8 object-contain"
           />
           Connexion SoulTrack
         </h2>
