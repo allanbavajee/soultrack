@@ -17,7 +17,6 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // Vérifier l'utilisateur dans la table profiles
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("*")
@@ -30,7 +29,6 @@ export default function LoginPage() {
         return;
       }
 
-      // Vérifier le mot de passe via la fonction RPC verify_password
       const { data: checkPassword } = await supabase.rpc("verify_password", {
         p_password: password,
         p_hash: profile.password_hash,
@@ -42,10 +40,7 @@ export default function LoginPage() {
         return;
       }
 
-      // Stocker l'ID du profil dans localStorage
       localStorage.setItem("userId", profile.id);
-
-      // Rediriger vers la vraie page index
       router.push("/home");
     } catch (err) {
       console.error(err);
@@ -61,7 +56,24 @@ export default function LoginPage() {
         onSubmit={handleLogin}
         className="bg-white p-8 rounded-3xl shadow-lg flex flex-col gap-6 w-full max-w-md"
       >
-        <h2 className="text-2xl font-bold text-center">Connexion SoulTrack</h2>
+        {/* Titre avec logo */}
+        <h2 className="text-2xl font-bold flex items-center justify-center gap-3">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-8 h-8 text-green-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          Connexion SoulTrack
+        </h2>
 
         <input
           type="email"
