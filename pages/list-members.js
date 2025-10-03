@@ -1,6 +1,6 @@
 // pages/list-members.js
 import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient"; // Assure-toi que c’est export default
+import supabase from "../lib/supabaseClient";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
@@ -17,24 +17,16 @@ export default function ListMembers() {
 
   const fetchMembers = async () => {
     const { data, error } = await supabase.from("membres").select("*");
-    if (error) {
-      console.error("❌ Erreur fetchMembers:", error);
-    } else {
-      console.log("✅ Membres reçus:", data);
-      setMembers(data);
-    }
+    if (error) console.error("❌ fetchMembers:", error);
+    else setMembers(data);
   };
 
   const fetchCellules = async () => {
     const { data, error } = await supabase
       .from("cellules")
       .select("id, cellule, responsable, telephone");
-    if (error) {
-      console.error("❌ Erreur fetchCellules:", error);
-    } else {
-      console.log("✅ Cellules reçues:", data);
-      setCellules(data);
-    }
+    if (error) console.error("❌ fetchCellules:", error);
+    else setCellules(data);
   };
 
   const handleChangeStatus = async (id, newStatus) => {
@@ -48,13 +40,7 @@ export default function ListMembers() {
     if (!cellule) return;
 
     const prenomResponsable = cellule.responsable.split(" ")[0];
-    const message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
-Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}  
-- 📱 Téléphone : ${member.telephone || "—"} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
-- 📧 Email : ${member.email || "—"}  
-- 🏙️ Ville : ${member.ville || "—"}  
-- 🙏 Besoin : ${member.besoin || "—"}  
-- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\nMerci pour ton cœur ❤️ et son amour ✨`;
+    const message = `👋 Salut ${prenomResponsable},\n\n🙏 Nouvelle personne à suivre :\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${member.telephone || "—"} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}\n- 📧 Email : ${member.email || "—"}\n- 🏙️ Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\nMerci ❤️`;
 
     window.open(
       `https://wa.me/${cellule.telephone}?text=${encodeURIComponent(message)}`,
@@ -62,7 +48,6 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
     );
 
     await supabase.from("membres").update({ statut: "actif" }).eq("id", member.id);
-
     await supabase.from("suivis_membres").insert([
       { membre_id: member.id, cellule_id: cellule.id, statut: "envoye" },
     ]);
@@ -111,7 +96,7 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
         ← Retour
       </button>
 
-      <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
+      <h1 className="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-6">
         Liste des membres
       </h1>
 
@@ -144,36 +129,34 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
         {sortedMembers.map((member) => (
           <div
             key={member.id}
-            className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+            className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between"
             style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
           >
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center">
-                  {member.prenom} {member.nom}
-                  {member.star && <span className="ml-2 text-yellow-400 font-bold">⭐</span>}
-                </h2>
-                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
-                <p
-                  className="text-sm"
-                  style={{ color: getBorderColor(member), fontWeight: "bold" }}
+            <div>
+              <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
+                <span>
+                  {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                </span>
+                <select
+                  value={member.statut}
+                  onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+                  className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
                 >
-                  {member.statut || "—"}
-                </p>
-              </div>
-
-              <select
-                value={member.statut}
-                onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                  <option value="visiteur">Visiteur</option>
+                  <option value="a déjà mon église">A déjà mon église</option>
+                  <option value="evangelisé">Evangelisé</option>
+                  <option value="actif">Actif</option>
+                  <option value="ancien">Ancien</option>
+                </select>
+              </h2>
+              <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
+              <p
+                className="text-sm font-semibold"
+                style={{ color: getBorderColor(member) }}
               >
-                <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                <option value="visiteur">Visiteur</option>
-                <option value="a déjà mon église">A déjà mon église</option>
-                <option value="evangelisé">Evangelisé</option>
-                <option value="actif">Actif</option>
-                <option value="ancien">Ancien</option>
-              </select>
+                {member.statut || "—"}
+              </p>
             </div>
 
             <p
@@ -214,9 +197,7 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
                     </select>
                     {selectedCellules[member.id] && (
                       <button
-                        onClick={() =>
-                          handleWhatsAppSingle(member, selectedCellules[member.id])
-                        }
+                        onClick={() => handleWhatsAppSingle(member, selectedCellules[member.id])}
                         className="mt-2 w-full py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600"
                       >
                         📤 Envoyer sur WhatsApp
