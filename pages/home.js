@@ -56,7 +56,7 @@ export default function Home() {
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       {/* Logo */}
-      <div className="mt-1"> {/* réduit l’espace en haut */}
+      <div className="mt-1">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
 
@@ -99,6 +99,18 @@ export default function Home() {
           </Link>
         )}
       </div>
+
+      {/* Lien création utilisateur pour l'admin */}
+      {profile.role === "Admin" && (
+        <div className="mt-4 text-center w-full max-w-md">
+          <Link
+            href="/admin/creation-utilisateur"
+            className="w-full block bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 text-center"
+          >
+            ➕ Créer un nouvel utilisateur
+          </Link>
+        </div>
+      )}
 
       {/* Boutons avec popup */}
       <div className="flex flex-col gap-3 mt-2 w-full max-w-md">
