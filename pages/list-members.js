@@ -87,9 +87,10 @@ export default function ListMembers() {
       {/* Bouton Retour */}
       <button
         onClick={() => window.history.back()}
-        className="self-start mb-4 flex items-center text-orange-500 font-semibold hover:text-orange-600"
+        className="self-start mb-4 flex items-center justify-center w-10 h-10 rounded-full bg-white text-orange-500 hover:text-orange-600 font-semibold shadow-md"
+        title="Retour"
       >
-        ← Retour
+        ←
       </button>
 
       {/* Logo */}
@@ -215,12 +216,12 @@ export default function ListMembers() {
 
       {/* Séparation stylée */}
       {newMembers.length > 0 && oldMembers.length > 0 && (
-        <div className="w-full max-w-5xl h-1 mb-4 rounded-full" style={{ background: "linear-gradient(to right, #34A853, transparent)" }}></div>
+        <hr className="border-t border-white border-dashed my-6 w-3/4 mx-auto" />
       )}
 
       {/* Anciens membres */}
       {oldMembers.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl mb-4">
           {oldMembers.map((member) => (
             <div
               key={member.id}
@@ -230,7 +231,8 @@ export default function ListMembers() {
               <div>
                 <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
                   <span>
-                    {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                    {member.prenom} {member.nom}
+                    {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
                   </span>
                   <select
                     value={member.statut}
@@ -304,7 +306,7 @@ export default function ListMembers() {
       {/* Bouton remonter en haut */}
       <button
         onClick={scrollToTop}
-        className="fixed bottom-5 right-5 bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-full shadow-md"
+        className="fixed bottom-5 right-5 bg-white text-orange-500 hover:text-orange-600 p-3 rounded-full shadow-md"
         title="Remonter en haut"
       >
         ↑
