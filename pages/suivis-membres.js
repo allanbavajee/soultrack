@@ -1,6 +1,6 @@
 // pages/suivis-membres.js
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import supabase from "../lib/supabaseClient";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
@@ -10,6 +10,7 @@ export default function SuivisMembres() {
   const [currentMember, setCurrentMember] = useState(null);
   const [newStatus, setNewStatus] = useState("");
 
+  // Liste des membres refus
   const [showRefus, setShowRefus] = useState(false);
   const [refusMembers, setRefusMembers] = useState([]);
 
@@ -27,59 +28,48 @@ export default function SuivisMembres() {
   }, [selectedCellule]);
 
   const fetchCellules = async () => {
-    const { data, error } = await supabase.from("cellules").select("id, cellule");
-    if (!error && data) setCellules(data);
+    const { data, error } = await supabase.from("cellules").select("*");
+    if (!error) setCellules(data);
   };
 
   const fetchSuivis = async (cellule = null) => {
     let query = supabase
       .from("suivis_membres")
-      .select(`
+      .select(
+        `
         id,
         statut,
-        membre:membre_id (id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp),
-        cellule:cellule_id (id, cellule)
-      `, { count: "exact" }) // count pour debug
-      .neq("statut", "actif");
+        created_at,
+        membre:membre_id (
+          id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp, statut
+        ),
+        cellule:cellule_id (id, cellule, responsable, telephone)
+      `
+      );
 
     if (cellule) query = query.eq("cellule_id", cellule);
 
     const { data, error } = await query.order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Erreur fetchSuivis:", error);
-      setSuivis([]);
-    } else if (data) {
-      // Si la jointure échoue, Supabase met membre ou cellule à null
-      const safeData = data.map((s) => ({
-        ...s,
-        membre: s.membre || { id: s.membre_id, prenom: "-", nom: "-", telephone: "-", email: "-", ville: "-", infos_supplementaires: "-", is_whatsapp: false },
-        cellule: s.cellule || { id: s.cellule_id, cellule: "-" }
-      }));
-      setSuivis(safeData);
-    }
+    if (!error) setSuivis(data);
   };
 
   const fetchRefus = async () => {
     const { data, error } = await supabase
       .from("suivis_membres")
-      .select(`
+      .select(
+        `
         id,
         statut,
-        membre:membre_id (id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp),
+        membre:membre_id (
+          id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp
+        ),
         cellule:cellule_id (id, cellule)
-      `)
+      `
+      )
       .eq("statut", "refus")
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      const safeData = data.map((s) => ({
-        ...s,
-        membre: s.membre || { id: s.membre_id, prenom: "-", nom: "-", telephone: "-", email: "-", ville: "-", infos_supplementaires: "-", is_whatsapp: false },
-        cellule: s.cellule || { id: s.cellule_id, cellule: "-" }
-      }));
-      setRefusMembers(safeData);
-    }
+    if (!error) setRefusMembers(data);
   };
 
   const openPopup = (member) => {
@@ -93,11 +83,13 @@ export default function SuivisMembres() {
   const handleValidate = async () => {
     if (!currentMember) return;
 
+    // Mettre à jour le suivi
     await supabase
       .from("suivis_membres")
       .update({ statut: newStatus })
       .eq("id", currentMember.id);
 
+    // Si actif, mettre à jour le membre et le retirer du suivi
     if (newStatus === "actif") {
       await supabase
         .from("membres")
@@ -124,7 +116,7 @@ export default function SuivisMembres() {
           <option value="">-- Toutes les cellules --</option>
           {cellules.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.cellule}
+              {c.cellule} ({c.responsable})
             </option>
           ))}
         </select>
@@ -160,7 +152,7 @@ export default function SuivisMembres() {
               <tr key={s.id}>
                 <td className="border px-4 py-2">{s.membre.nom}</td>
                 <td className="border px-4 py-2">{s.membre.prenom}</td>
-                <td className="border px-4 py-2">{s.cellule?.cellule || "-"}</td>
+                <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
                 <td className="border px-4 py-2">{s.statut}</td>
                 <td className="border px-4 py-2">
                   <span
@@ -191,10 +183,11 @@ export default function SuivisMembres() {
               <p>Nom : {currentMember.membre.nom}</p>
               <p>Prénom : {currentMember.membre.prenom}</p>
               <p>📱 Téléphone : {currentMember.membre.telephone}</p>
-              <p>📧 Email : {currentMember.membre.email || "-"}</p>
-              <p>🏙️ Ville : {currentMember.membre.ville || "-"}</p>
-              <p>📝 Infos supplémentaires : {currentMember.membre.infos_supplementaires || "-"}</p>
+              <p>📧 Email : {currentMember.membre.email || "—"}</p>
+              <p>🏙️ Ville : {currentMember.membre.ville || "—"}</p>
+              <p>📝 Infos supplémentaires : {currentMember.membre.infos_supplementaires || "—"}</p>
               <p>WhatsApp : {currentMember.membre.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+              <p>Cellule assignée : {currentMember.cellule?.cellule || "—"}</p>
             </div>
 
             <div className="mt-4">
@@ -204,7 +197,7 @@ export default function SuivisMembres() {
                 value={newStatus}
                 onChange={handleStatusChange}
               >
-                <option value="envoyé">Envoyé</option>
+                <option value="envoye">Envoyé</option>
                 <option value="en cours">En cours</option>
                 <option value="actif">Actif</option>
                 <option value="refus">Refus</option>
@@ -249,7 +242,7 @@ export default function SuivisMembres() {
                     <tr key={s.id}>
                       <td className="border px-4 py-2">{s.membre.nom}</td>
                       <td className="border px-4 py-2">{s.membre.prenom}</td>
-                      <td className="border px-4 py-2">{s.cellule?.cellule || "-"}</td>
+                      <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
                       <td className="border px-4 py-2">{s.statut}</td>
                     </tr>
                   ))}
