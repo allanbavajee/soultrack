@@ -58,20 +58,11 @@ export default function LoginPage() {
       >
         {/* Titre avec logo */}
         <h2 className="text-2xl font-bold flex items-center justify-center gap-3">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-8 h-8 text-green-500"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
+          <img
+            src="/logo.png"
+            alt="Logo SoulTrack"
+            className="w-8 h-8 object-contain"
+          />
           Connexion SoulTrack
         </h2>
 
