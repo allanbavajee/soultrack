@@ -20,7 +20,7 @@ export default function ListMembers() {
     const { data, error } = await supabase
       .from("membres")
       .select("*")
-      .order("created_at", { ascending: false }); // nouveaux en haut
+      .order("created_at", { ascending: false });
     if (!error && data) setMembers(data);
   };
 
@@ -35,6 +35,36 @@ export default function ListMembers() {
     await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
     setMembers((prev) =>
       prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
+    );
+  };
+
+  const handleWhatsAppSingle = async (member, cellule) => {
+    if (!cellule) return;
+
+    const prenomResponsable = cellule.responsable.split(" ")[0];
+    const message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
+Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}  
+- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
+- 📧 Email : ${member.email || "—"}  
+- 🏙️ Ville : ${member.ville || "—"}  
+- 🙏 Besoin : ${member.besoin || "—"}  
+- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\nMerci pour ton cœur ❤️ et son amour ✨`;
+
+    window.open(
+      `https://wa.me/${cellule.telephone}?text=${encodeURIComponent(message)}`,
+      "_blank"
+    );
+
+    // Mise à jour membre en actif
+    await supabase.from("membres").update({ statut: "actif" }).eq("id", member.id);
+
+    // Création du suivi
+    await supabase.from("suivis_membres").insert([
+      { membre_id: member.id, cellule_id: cellule.id, statut: "envoye" },
+    ]);
+
+    setMembers((prev) =>
+      prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m))
     );
   };
 
@@ -117,12 +147,12 @@ export default function ListMembers() {
       {/* Liste des membres */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
         {[...nouveaux, ...anciens].map((member, index) => {
-          const isFirstAncien =
-            index === nouveaux.length && nouveaux.length > 0;
+          const isFirstAncien = index === nouveaux.length && nouveaux.length > 0;
           return (
             <div key={member.id}>
+              {/* Ligne de séparation */}
               {isFirstAncien && (
-                <hr className="border-white border-t-2 w-full my-2" />
+                <hr className="border-white border-t w-full my-2" />
               )}
 
               <div
@@ -146,56 +176,4 @@ export default function ListMembers() {
                       <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
                       <option value="visiteur">Visiteur</option>
                       <option value="a déjà mon église">A déjà mon église</option>
-                      <option value="evangelisé">Evangelisé</option>
-                      <option value="actif">Actif</option>
-                      <option value="ancien">Ancien</option>
-                    </select>
-                  </h2>
-                  <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
-                  <p
-                    className="text-sm font-semibold"
-                    style={{ color: getBorderColor(member) }}
-                  >
-                    {member.statut || "—"}
-                  </p>
-                </div>
-
-                <p
-                  className="mt-2 text-blue-500 underline cursor-pointer"
-                  onClick={() =>
-                    setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                  }
-                >
-                  {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                </p>
-
-                {detailsOpen[member.id] && (
-                  <div className="mt-2 text-sm text-gray-700 space-y-1">
-                    <p>Email : {member.email || "—"}</p>
-                    <p>Besoin : {member.besoin || "—"}</p>
-                    <p>Ville : {member.ville || "—"}</p>
-                    <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
-                    <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Bouton remonter en haut */}
-      <button
-        onClick={scrollToTop}
-        className="fixed bottom-5 right-5 text-white text-2xl font-bold hover:text-gray-200"
-      >
-        ↑
-      </button>
-
-      {/* Message final */}
-      <p className="mt-6 mb-4 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
-      </p>
-    </div>
-  );
-}
+                      <option value=
