@@ -176,4 +176,81 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
                       <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
                       <option value="visiteur">Visiteur</option>
                       <option value="a déjà mon église">A déjà mon église</option>
-                      <option value=
+                      <option value="evangelisé">Evangelisé</option>
+                      <option value="actif">Actif</option>
+                      <option value="ancien">Ancien</option>
+                    </select>
+                  </h2>
+                  <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
+                  <p
+                    className="text-sm font-semibold"
+                    style={{ color: getBorderColor(member) }}
+                  >
+                    {member.statut || "—"}
+                  </p>
+                </div>
+
+                <p
+                  className="mt-2 text-blue-500 underline cursor-pointer"
+                  onClick={() =>
+                    setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
+                  }
+                >
+                  {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                </p>
+
+                {detailsOpen[member.id] && (
+                  <div className="mt-2 text-sm text-gray-700 space-y-2">
+                    <p>Email : {member.email || "—"}</p>
+                    <p>Besoin : {member.besoin || "—"}</p>
+                    <p>Ville : {member.ville || "—"}</p>
+                    <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+                    <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
+
+                    {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
+                      <div className="mt-2">
+                        <label className="block mb-1 font-semibold">Choisir une cellule :</label>
+                        <select
+                          className="w-full p-2 border rounded-lg mb-2"
+                          value={selectedCellules[member.id]?.cellule || ""}
+                          onChange={(e) => {
+                            const cellule = cellules.find((c) => c.cellule === e.target.value);
+                            setSelectedCellules((prev) => ({ ...prev, [member.id]: cellule }));
+                          }}
+                        >
+                          <option value="">-- Sélectionner cellule --</option>
+                          {cellules.map((c) => (
+                            <option key={c.id} value={c.cellule}>{c.cellule}</option>
+                          ))}
+                        </select>
+                        <button
+                          className="w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
+                          onClick={() => handleWhatsAppSingle(member, selectedCellules[member.id])}
+                        >
+                          Envoyer WhatsApp au responsable
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bouton remonter en haut */}
+      <button
+        onClick={scrollToTop}
+        className="fixed bottom-5 right-5 text-white text-2xl font-bold hover:text-gray-200"
+      >
+        ↑
+      </button>
+
+      {/* Message final */}
+      <p className="mt-6 mb-4 text-center text-white text-lg font-handwriting-light">
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
+      </p>
+    </div>
+  );
+}
