@@ -87,10 +87,9 @@ export default function ListMembers() {
       {/* Bouton Retour */}
       <button
         onClick={() => window.history.back()}
-        className="self-start mb-4 flex items-center justify-center w-10 h-10 rounded-full bg-white text-orange-500 hover:text-orange-600 font-semibold shadow-md"
-        title="Retour"
+        className="self-start mb-4 flex items-center text-white font-semibold hover:text-gray-200"
       >
-        ←
+        ← Retour
       </button>
 
       {/* Logo */}
@@ -216,12 +215,12 @@ export default function ListMembers() {
 
       {/* Séparation stylée */}
       {newMembers.length > 0 && oldMembers.length > 0 && (
-        <hr className="border-t border-white border-dashed my-6 w-3/4 mx-auto" />
+        <div className="w-full max-w-5xl my-4 border-t" style={{ borderColor: "white", borderWidth: "1px" }} />
       )}
 
       {/* Anciens membres */}
       {oldMembers.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
           {oldMembers.map((member) => (
             <div
               key={member.id}
@@ -306,7 +305,7 @@ export default function ListMembers() {
       {/* Bouton remonter en haut */}
       <button
         onClick={scrollToTop}
-        className="fixed bottom-5 right-5 bg-white text-orange-500 hover:text-orange-600 p-3 rounded-full shadow-md"
+        className="fixed bottom-5 right-5 text-white text-2xl font-bold cursor-pointer"
         title="Remonter en haut"
       >
         ↑
