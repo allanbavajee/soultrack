@@ -10,7 +10,6 @@ export default function SuivisMembres() {
   const [currentMember, setCurrentMember] = useState(null);
   const [newStatus, setNewStatus] = useState("");
 
-  // Liste des membres refus
   const [showRefus, setShowRefus] = useState(false);
   const [refusMembers, setRefusMembers] = useState([]);
 
@@ -29,47 +28,58 @@ export default function SuivisMembres() {
 
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("id, cellule");
-    if (!error) setCellules(data);
+    if (!error && data) setCellules(data);
   };
 
   const fetchSuivis = async (cellule = null) => {
     let query = supabase
       .from("suivis_membres")
-      .select(
-        `
+      .select(`
         id,
         statut,
-        membre:membre_id (
-          id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp
-        ),
+        membre:membre_id (id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp),
         cellule:cellule_id (id, cellule)
-      `
-      )
-      .neq("statut", "actif"); // ne pas afficher les actifs
+      `, { count: "exact" }) // count pour debug
+      .neq("statut", "actif");
 
     if (cellule) query = query.eq("cellule_id", cellule);
 
     const { data, error } = await query.order("created_at", { ascending: false });
-    if (!error) setSuivis(data);
+
+    if (error) {
+      console.error("Erreur fetchSuivis:", error);
+      setSuivis([]);
+    } else if (data) {
+      // Si la jointure échoue, Supabase met membre ou cellule à null
+      const safeData = data.map((s) => ({
+        ...s,
+        membre: s.membre || { id: s.membre_id, prenom: "-", nom: "-", telephone: "-", email: "-", ville: "-", infos_supplementaires: "-", is_whatsapp: false },
+        cellule: s.cellule || { id: s.cellule_id, cellule: "-" }
+      }));
+      setSuivis(safeData);
+    }
   };
 
   const fetchRefus = async () => {
     const { data, error } = await supabase
       .from("suivis_membres")
-      .select(
-        `
+      .select(`
         id,
         statut,
-        membre:membre_id (
-          id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp
-        ),
+        membre:membre_id (id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp),
         cellule:cellule_id (id, cellule)
-      `
-      )
+      `)
       .eq("statut", "refus")
       .order("created_at", { ascending: false });
 
-    if (!error) setRefusMembers(data);
+    if (!error && data) {
+      const safeData = data.map((s) => ({
+        ...s,
+        membre: s.membre || { id: s.membre_id, prenom: "-", nom: "-", telephone: "-", email: "-", ville: "-", infos_supplementaires: "-", is_whatsapp: false },
+        cellule: s.cellule || { id: s.cellule_id, cellule: "-" }
+      }));
+      setRefusMembers(safeData);
+    }
   };
 
   const openPopup = (member) => {
@@ -83,13 +93,11 @@ export default function SuivisMembres() {
   const handleValidate = async () => {
     if (!currentMember) return;
 
-    // Mettre à jour le suivi
     await supabase
       .from("suivis_membres")
       .update({ statut: newStatus })
       .eq("id", currentMember.id);
 
-    // Si actif, mettre à jour le membre et le retirer du suivi
     if (newStatus === "actif") {
       await supabase
         .from("membres")
@@ -152,7 +160,7 @@ export default function SuivisMembres() {
               <tr key={s.id}>
                 <td className="border px-4 py-2">{s.membre.nom}</td>
                 <td className="border px-4 py-2">{s.membre.prenom}</td>
-                <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
+                <td className="border px-4 py-2">{s.cellule?.cellule || "-"}</td>
                 <td className="border px-4 py-2">{s.statut}</td>
                 <td className="border px-4 py-2">
                   <span
@@ -183,9 +191,9 @@ export default function SuivisMembres() {
               <p>Nom : {currentMember.membre.nom}</p>
               <p>Prénom : {currentMember.membre.prenom}</p>
               <p>📱 Téléphone : {currentMember.membre.telephone}</p>
-              <p>📧 Email : {currentMember.membre.email || "—"}</p>
-              <p>🏙️ Ville : {currentMember.membre.ville || "—"}</p>
-              <p>📝 Infos supplémentaires : {currentMember.membre.infos_supplementaires || "—"}</p>
+              <p>📧 Email : {currentMember.membre.email || "-"}</p>
+              <p>🏙️ Ville : {currentMember.membre.ville || "-"}</p>
+              <p>📝 Infos supplémentaires : {currentMember.membre.infos_supplementaires || "-"}</p>
               <p>WhatsApp : {currentMember.membre.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
             </div>
 
@@ -241,7 +249,7 @@ export default function SuivisMembres() {
                     <tr key={s.id}>
                       <td className="border px-4 py-2">{s.membre.nom}</td>
                       <td className="border px-4 py-2">{s.membre.prenom}</td>
-                      <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
+                      <td className="border px-4 py-2">{s.cellule?.cellule || "-"}</td>
                       <td className="border px-4 py-2">{s.statut}</td>
                     </tr>
                   ))}
