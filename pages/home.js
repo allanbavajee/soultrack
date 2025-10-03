@@ -56,20 +56,17 @@ export default function Home() {
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       {/* Logo */}
-      <div className="mt-2">
+      <div className="mt-2"> {/* réduit l’espace en haut */}
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
 
       {/* Titre SoulTrack */}
-      <h1 className="text-5xl sm:text-6xl text-white text-center mt-1" style={{ fontFamily: "'Patrick Hand', cursive" }}>
+      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mt-1">
         SoulTrack
       </h1>
 
-      {/* Message sous le titre */}
-      <div
-        className="mt-1 mb-4 text-center text-white text-lg"
-        style={{ fontFamily: "'Patrick Hand', cursive" }}
-      >
+      {/* Message en dessous du titre */}
+      <div className="mt-1 mb-4 text-center text-white text-lg font-handwriting-light">
         Chaque personne a une valeur infinie. Ensemble, nous avançons, nous grandissons, et nous partageons l’amour de Christ dans chaque action ❤️
       </div>
 
@@ -131,10 +128,7 @@ export default function Home() {
       </div>
 
       {/* Message final */}
-      <div
-        className="mt-2 mb-4 text-center text-white text-lg"
-        style={{ fontFamily: "'Patrick Hand', cursive" }}
-      >
+      <div className="mt-2 mb-4 text-center text-white text-lg font-handwriting-light">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
       </div>
     </div>
