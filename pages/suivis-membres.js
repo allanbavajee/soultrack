@@ -149,9 +149,9 @@ export default function SuivisMembres() {
 
       {/* Tableau des suivis */}
       <div className="overflow-x-auto w-full max-w-5xl mb-6">
-        <table className="table-auto w-full border-collapse border border-white text-white text-center">
+        <table className="table-auto w-full border-collapse border border-white text-center">
           <thead>
-            <tr className="bg-white bg-opacity-20">
+            <tr className="bg-white bg-opacity-20 text-gray-800">
               <th className="border px-4 py-2">Nom</th>
               <th className="border px-4 py-2">Prénom</th>
               <th className="border px-4 py-2">Cellule</th>
@@ -159,7 +159,7 @@ export default function SuivisMembres() {
               <th className="border px-4 py-2">Détails</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-gray-800">
             {suivis.map((s) => (
               <tr key={s.id}>
                 <td className="border px-4 py-2">{s.membre.nom}</td>
@@ -168,7 +168,7 @@ export default function SuivisMembres() {
                 <td className="border px-4 py-2">{s.statut}</td>
                 <td className="border px-4 py-2">
                   <span
-                    className="text-white underline cursor-pointer hover:text-gray-200"
+                    className="text-blue-600 underline cursor-pointer hover:text-blue-800"
                     onClick={() => openPopup(s)}
                   >
                     Afficher
@@ -236,7 +236,7 @@ export default function SuivisMembres() {
               ✖
             </button>
             <div className="overflow-x-auto">
-              <table className="table-auto w-full border-collapse border border-gray-300 text-center">
+              <table className="table-auto w-full border-collapse border border-gray-300 text-center text-gray-800">
                 <thead>
                   <tr className="bg-gray-200">
                     <th className="border px-4 py-2">Nom</th>
