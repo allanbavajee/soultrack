@@ -1,4 +1,5 @@
 // pages/list-members.js
+import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -8,8 +9,6 @@ export default function ListMembers() {
   const [filter, setFilter] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
-  const [selectedCellules, setSelectedCellules] = useState({});
-  const [selectedEvangelises, setSelectedEvangelises] = useState({});
 
   useEffect(() => {
     fetchMembers();
@@ -38,14 +37,6 @@ export default function ListMembers() {
     );
   };
 
-  const filteredMembers = members.filter((m) => {
-    if (!filter) return true;
-    if (filter === "star") return m.star === true;
-    return m.statut === filter;
-  });
-
-  const countFiltered = filteredMembers.length;
-
   const getBorderColor = (member) => {
     if (member.star) return "#FBC02D";
     if (member.statut === "actif") return "#4285F4";
@@ -55,22 +46,18 @@ export default function ListMembers() {
       return "#34A853";
   };
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const findCellule = (celluleId) =>
+    cellules.find((c) => c.id === celluleId) || null;
 
-  // Séparer les nouveaux et les anciens
-  const nouveaux = filteredMembers.filter(
-    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
-  );
-  const anciens = filteredMembers.filter(
-    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
-  );
+  const toggleDetails = (id) => {
+    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* Retour */}
       <button
         onClick={() => window.history.back()}
         className="self-start mb-4 flex items-center text-white font-semibold hover:text-gray-200"
@@ -78,166 +65,88 @@ export default function ListMembers() {
         ← Retour
       </button>
 
-      {/* Logo */}
       <div className="mt-2 mb-2">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
 
-      {/* Titre */}
       <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
         SoulTrack
       </h1>
 
-      {/* Message inspirant */}
       <p className="text-center text-white text-lg mb-6 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et partageons
-        l’amour de Christ dans chaque action ❤️
+        Chaque personne compte, et ensemble nous formons une famille unie dans l’amour du Christ ❤️
       </p>
 
-      {/* Filtres + compte */}
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-4 w-full max-w-md">
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        >
-          <option value="">-- Filtrer par statut --</option>
-          <option value="actif">Actif</option>
-          <option value="ancien">Ancien</option>
-          <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-          <option value="visiteur">Visiteur</option>
-          <option value="a déjà mon église">A déjà mon église</option>
-          <option value="star">⭐ Star</option>
-        </select>
-        <span className="text-white italic text-opacity-80">Résultats: {countFiltered}</span>
+      <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {members.map((member) => {
+          const cellule = findCellule(member.cellule_id);
+          return (
+            <div
+              key={member.id}
+              className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-all duration-300"
+              style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
+            >
+              <div className="flex flex-col justify-between">
+                <h2 className="text-lg font-bold text-gray-800 mb-1">
+                  {member.prenom} {member.nom}
+                  {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                </h2>
+                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
+                <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
+                  {member.statut || "—"}
+                </p>
+
+                <p
+                  className="mt-2 text-blue-600 underline cursor-pointer"
+                  onClick={() => toggleDetails(member.id)}
+                >
+                  {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                </p>
+
+                <AnimatePresence>
+                  {detailsOpen[member.id] && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="mt-2 text-sm text-gray-700 bg-gray-50 rounded-lg p-3 space-y-2"
+                    >
+                      <p>📧 <span className="font-medium">{member.email || "Non renseigné"}</span></p>
+                      <p>🧭 <span className="font-medium">Comment il est venu :</span> {member.how_came || "—"}</p>
+                      <p>🙏 <span className="font-medium">Besoin :</span> {member.besoin || "—"}</p>
+
+                      {cellule ? (
+                        <>
+                          <p>🏠 <span className="font-medium">Cellule :</span> {cellule.cellule}</p>
+                          <p>👤 <span className="font-medium">Responsable :</span> {cellule.responsable}</p>
+                          {cellule.telephone && (
+                            <a
+                              href={`https://wa.me/${cellule.telephone}?text=${encodeURIComponent(
+                                `Bonjour ${cellule.responsable},\nJe te contacte concernant ${member.prenom} ${member.nom}.`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block mt-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors duration-200"
+                            >
+                              💬 Contacter le responsable
+                            </a>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-gray-500 italic">Aucune cellule assignée</p>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Liste des membres */}
-      <div className="w-full max-w-5xl">
-        {/* Nouveaux membres */}
-        {nouveaux.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-2">
-            {nouveaux.map((member) => (
-              <div key={member.id}>
-                <div
-                  className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between"
-                  style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
-                >
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
-                      <span>
-                        {member.prenom} {member.nom}
-                        <span className="ml-1 text-green-500 font-semibold text-sm">Nouveau</span>
-                        {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-                      </span>
-                      <select
-                        value={member.statut}
-                        onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                        className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                      >
-                        <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                        <option value="visiteur">Visiteur</option>
-                        <option value="a déjà mon église">A déjà mon église</option>
-                        <option value="evangelisé">Evangelisé</option>
-                        <option value="actif">Actif</option>
-                        <option value="ancien">Ancien</option>
-                      </select>
-                    </h2>
-                    <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
-                    <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
-                      {member.statut || "—"}
-                    </p>
-                  </div>
-
-                  <p
-                    className="mt-2 text-blue-500 underline cursor-pointer"
-                    onClick={() =>
-                      setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                    }
-                  >
-                    {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                  </p>
-
-                  {detailsOpen[member.id] && (
-                    <div className="mt-2 text-sm text-gray-700 space-y-2">
-                      {/* Détails et bouton WhatsApp */}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Ligne de séparation */}
-        {nouveaux.length > 0 && <hr className="border-white border-t w-full my-4" />}
-
-        {/* Anciens membres */}
-        {anciens.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {anciens.map((member) => (
-              <div key={member.id}>
-                <div
-                  className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between"
-                  style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
-                >
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
-                      <span>
-                        {member.prenom} {member.nom}
-                        {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-                      </span>
-                      <select
-                        value={member.statut}
-                        onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                        className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                      >
-                        <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                        <option value="visiteur">Visiteur</option>
-                        <option value="a déjà mon église">A déjà mon église</option>
-                        <option value="evangelisé">Evangelisé</option>
-                        <option value="actif">Actif</option>
-                        <option value="ancien">Ancien</option>
-                      </select>
-                    </h2>
-                    <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
-                    <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
-                      {member.statut || "—"}
-                    </p>
-                  </div>
-
-                  <p
-                    className="mt-2 text-blue-500 underline cursor-pointer"
-                    onClick={() =>
-                      setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                    }
-                  >
-                    {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                  </p>
-
-                  {detailsOpen[member.id] && (
-                    <div className="mt-2 text-sm text-gray-700 space-y-2">
-                      {/* Détails et bouton WhatsApp */}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Flèche pour remonter en haut */}
-      <button
-        onClick={scrollToTop}
-        className="fixed bottom-5 right-5 text-white text-2xl font-bold bg-transparent hover:text-gray-200"
-      >
-        ↑
-      </button>
-
-      {/* Message final */}
-      <p className="mt-6 mb-4 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
+      <p className="mt-8 text-center text-white text-lg font-handwriting-light">
+        « Car le corps ne se compose pas d’un seul membre, mais de plusieurs. » — 1 Corinthiens 12:14 ❤️
       </p>
     </div>
   );
