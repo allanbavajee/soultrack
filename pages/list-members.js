@@ -206,3 +206,26 @@ export default function ListMembers() {
                       >
                         {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                       </p>
+                      {detailsOpen[member.id] && (
+                        <div className="mt-2 text-sm text-gray-700 space-y-2">
+                          {/* Détails et bouton WhatsApp */}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Ligne de séparation */}
+            {nouveaux.length > 0 && (
+              <hr className="border-white border-t w-full my-4" />
+            )}
+
+            {/* Anciens membres */}
+            {anciens.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {anciens.map((member) => (
+                  <div key={member.id}>
+                    <div
+                      className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify
