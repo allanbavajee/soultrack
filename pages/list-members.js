@@ -1,244 +1,256 @@
-// pages/list-members.js
+// pages/suivis-membres.js
 import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
-import Image from "next/image";
+import { supabase } from "../lib/supabaseClient";
 
-export default function ListMembers() {
-  const [members, setMembers] = useState([]);
-  const [filter, setFilter] = useState("");
-  const [detailsOpen, setDetailsOpen] = useState({});
+export default function SuivisMembres() {
+  const [suivis, setSuivis] = useState([]);
   const [cellules, setCellules] = useState([]);
-  const [selectedCellules, setSelectedCellules] = useState({});
-  const [selectedEvangelises, setSelectedEvangelises] = useState({});
+  const [selectedCellule, setSelectedCellule] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [currentMember, setCurrentMember] = useState(null);
+  const [newStatus, setNewStatus] = useState("");
+
+  // Liste des membres refus
+  const [showRefus, setShowRefus] = useState(false);
+  const [refusMembers, setRefusMembers] = useState([]);
 
   useEffect(() => {
-    fetchMembers();
     fetchCellules();
+    fetchSuivis();
   }, []);
 
-  const fetchMembers = async () => {
-    const { data, error } = await supabase
-      .from("membres")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error && data) setMembers(data);
-  };
+  useEffect(() => {
+    if (selectedCellule) {
+      fetchSuivis(selectedCellule);
+    } else {
+      fetchSuivis();
+    }
+  }, [selectedCellule]);
 
   const fetchCellules = async () => {
+    const { data, error } = await supabase.from("cellules").select("id, cellule");
+    if (!error) setCellules(data);
+  };
+
+  const fetchSuivis = async (cellule = null) => {
+    let query = supabase
+      .from("suivis_membres")
+      .select(
+        `
+        id,
+        statut,
+        membre:membre_id (
+          id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp
+        ),
+        cellule:cellule_id (id, cellule)
+      `
+      )
+      .neq("statut", "actif"); // ne pas afficher les actifs
+
+    if (cellule) query = query.eq("cellule_id", cellule);
+
+    const { data, error } = await query.order("created_at", { ascending: false });
+    if (!error) setSuivis(data);
+  };
+
+  const fetchRefus = async () => {
     const { data, error } = await supabase
-      .from("cellules")
-      .select("id, cellule, responsable, telephone");
-    if (!error && data) setCellules(data);
+      .from("suivis_membres")
+      .select(
+        `
+        id,
+        statut,
+        membre:membre_id (
+          id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp
+        ),
+        cellule:cellule_id (id, cellule)
+      `
+      )
+      .eq("statut", "refus")
+      .order("created_at", { ascending: false });
+
+    if (!error) setRefusMembers(data);
   };
 
-  const handleChangeStatus = async (id, newStatus) => {
-    await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
-    setMembers((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
-    );
+  const openPopup = (member) => {
+    setCurrentMember(member);
+    setNewStatus(member.statut);
+    setShowPopup(true);
   };
 
-  const filteredMembers = members.filter((m) => {
-    if (!filter) return true;
-    if (filter === "star") return m.star === true;
-    return m.statut === filter;
-  });
+  const handleStatusChange = (e) => setNewStatus(e.target.value);
 
-  const countFiltered = filteredMembers.length;
+  const handleValidate = async () => {
+    if (!currentMember) return;
 
-  const getBorderColor = (member) => {
-    if (member.star) return "#FBC02D";
-    if (member.statut === "actif") return "#4285F4";
-    if (member.statut === "a déjà mon église") return "#EA4335";
-    if (member.statut === "ancien") return "#999999";
-    if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
-      return "#34A853";
+    // Mettre à jour le suivi
+    await supabase
+      .from("suivis_membres")
+      .update({ statut: newStatus })
+      .eq("id", currentMember.id);
+
+    // Si actif, mettre à jour le membre et le retirer du suivi
+    if (newStatus === "actif") {
+      await supabase
+        .from("membres")
+        .update({ statut: "actif" })
+        .eq("id", currentMember.membre.id);
+    }
+
+    setShowPopup(false);
+    fetchSuivis(selectedCellule);
   };
-
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
-
-  // Séparer les nouveaux et les anciens
-  const nouveaux = filteredMembers.filter(
-    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
-  );
-  const anciens = filteredMembers.filter(
-    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
-  );
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      {/* Retour */}
-      <button
-        onClick={() => window.history.back()}
-        className="self-start mb-4 flex items-center text-white font-semibold hover:text-gray-200"
-      >
-        ← Retour
-      </button>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <h1 className="text-3xl font-bold text-center mb-6">Suivi des membres ajoutés</h1>
 
-      {/* Logo */}
-      <div className="mt-2 mb-2">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-      </div>
-
-      {/* Titre */}
-      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
-        SoulTrack
-      </h1>
-
-      {/* Message inspirant */}
-      <p className="text-center text-white text-lg mb-6 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et partageons
-        l’amour de Christ dans chaque action ❤️
-      </p>
-
-      {/* Filtres + compte */}
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-4 w-full max-w-md">
+      {/* Filtre cellule */}
+      <div className="mb-6 max-w-md mx-auto">
+        <label className="block mb-2 font-semibold">Filtrer par cellule :</label>
         <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="w-full p-2 border rounded-lg"
+          value={selectedCellule}
+          onChange={(e) => setSelectedCellule(e.target.value)}
         >
-          <option value="">-- Filtrer par statut --</option>
-          <option value="actif">Actif</option>
-          <option value="ancien">Ancien</option>
-          <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-          <option value="visiteur">Visiteur</option>
-          <option value="a déjà mon église">A déjà mon église</option>
-          <option value="star">⭐ Star</option>
+          <option value="">-- Toutes les cellules --</option>
+          {cellules.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.cellule}
+            </option>
+          ))}
         </select>
-        <span className="text-white italic text-opacity-80">Résultats: {countFiltered}</span>
       </div>
 
-      {/* Liste des membres */}
-      <div className="w-full max-w-5xl">
-        {/* Nouveaux membres */}
-        {nouveaux.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-2">
-            {nouveaux.map((member) => (
-              <div key={member.id}>
-                <div
-                  className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between"
-                  style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
-                >
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
-                      <span>
-                        {member.prenom} {member.nom}
-                        <span className="ml-1 text-green-500 font-semibold text-sm">Nouveau</span>
-                        {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-                      </span>
-                      <select
-                        value={member.statut}
-                        onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                        className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                      >
-                        <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                        <option value="visiteur">Visiteur</option>
-                        <option value="a déjà mon église">A déjà mon église</option>
-                        <option value="evangelisé">Evangelisé</option>
-                        <option value="actif">Actif</option>
-                        <option value="ancien">Ancien</option>
-                      </select>
-                    </h2>
-                    <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
-                    <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
-                      {member.statut || "—"}
-                    </p>
-                  </div>
-
-                  <p
-                    className="mt-2 text-blue-500 underline cursor-pointer"
-                    onClick={() =>
-                      setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                    }
-                  >
-                    {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                  </p>
-
-                  {detailsOpen[member.id] && (
-                    <div className="mt-2 text-sm text-gray-700 space-y-2">
-                      {/* Détails et bouton WhatsApp */}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Ligne de séparation */}
-        {nouveaux.length > 0 && <hr className="border-white border-t w-full my-4" />}
-
-        {/* Anciens membres */}
-        {anciens.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {anciens.map((member) => (
-              <div key={member.id}>
-                <div
-                  className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between"
-                  style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
-                >
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
-                      <span>
-                        {member.prenom} {member.nom}
-                        {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-                      </span>
-                      <select
-                        value={member.statut}
-                        onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                        className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                      >
-                        <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                        <option value="visiteur">Visiteur</option>
-                        <option value="a déjà mon église">A déjà mon église</option>
-                        <option value="evangelisé">Evangelisé</option>
-                        <option value="actif">Actif</option>
-                        <option value="ancien">Ancien</option>
-                      </select>
-                    </h2>
-                    <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
-                    <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
-                      {member.statut || "—"}
-                    </p>
-                  </div>
-
-                  <p
-                    className="mt-2 text-blue-500 underline cursor-pointer"
-                    onClick={() =>
-                      setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                    }
-                  >
-                    {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                  </p>
-
-                  {detailsOpen[member.id] && (
-                    <div className="mt-2 text-sm text-gray-700 space-y-2">
-                      {/* Détails et bouton WhatsApp */}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+      {/* Lien pour afficher les refus */}
+      <div className="mb-4 text-center">
+        <span
+          className="text-blue-600 cursor-pointer hover:underline"
+          onClick={() => {
+            setShowRefus(true);
+            fetchRefus();
+          }}
+        >
+          Voir les refus
+        </span>
       </div>
 
-      {/* Flèche pour remonter en haut */}
-      <button
-        onClick={scrollToTop}
-        className="fixed bottom-5 right-5 text-white text-2xl font-bold bg-transparent hover:text-gray-200"
-      >
-        ↑
-      </button>
+      {/* Tableau des membres */}
+      <div className="overflow-x-auto">
+        <table className="table-auto w-full max-w-4xl mx-auto border-collapse border border-gray-300 text-center">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="border px-4 py-2">Nom</th>
+              <th className="border px-4 py-2">Prénom</th>
+              <th className="border px-4 py-2">Cellule</th>
+              <th className="border px-4 py-2">Statut</th>
+              <th className="border px-4 py-2">Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            {suivis.map((s) => (
+              <tr key={s.id}>
+                <td className="border px-4 py-2">{s.membre.nom}</td>
+                <td className="border px-4 py-2">{s.membre.prenom}</td>
+                <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
+                <td className="border px-4 py-2">{s.statut}</td>
+                <td className="border px-4 py-2">
+                  <span
+                    className="text-blue-600 cursor-pointer hover:underline"
+                    onClick={() => openPopup(s)}
+                  >
+                    Afficher
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      {/* Message final */}
-      <p className="mt-6 mb-4 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
-      </p>
+      {/* Popup détails */}
+      {showPopup && currentMember && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-md w-full relative">
+            <h2 className="text-xl font-bold mb-4">Détails du membre</h2>
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+              onClick={() => setShowPopup(false)}
+            >
+              ✖
+            </button>
+            <div className="space-y-1 text-gray-700">
+              <p>Nom : {currentMember.membre.nom}</p>
+              <p>Prénom : {currentMember.membre.prenom}</p>
+              <p>📱 Téléphone : {currentMember.membre.telephone}</p>
+              <p>📧 Email : {currentMember.membre.email || "—"}</p>
+              <p>🏙️ Ville : {currentMember.membre.ville || "—"}</p>
+              <p>📝 Infos supplémentaires : {currentMember.membre.infos_supplementaires || "—"}</p>
+              <p>WhatsApp : {currentMember.membre.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+            </div>
+
+            <div className="mt-4">
+              <label className="block mb-2 font-semibold">Changer le statut :</label>
+              <select
+                className="w-full p-2 border rounded-lg"
+                value={newStatus}
+                onChange={handleStatusChange}
+              >
+                <option value="envoyé">Envoyé</option>
+                <option value="en cours">En cours</option>
+                <option value="Intégrer">Intégrer</option>
+                <option value="refus">Refus</option>
+              </select>
+
+              {newStatus !== currentMember.statut && (
+                <button
+                  className="mt-4 w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600"
+                  onClick={handleValidate}
+                >
+                  Valider
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Popup liste refus */}
+      {showRefus && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-3xl w-full relative">
+            <h2 className="text-xl font-bold mb-4">Membres refusés</h2>
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+              onClick={() => setShowRefus(false)}
+            >
+              ✖
+            </button>
+            <div className="overflow-x-auto">
+              <table className="table-auto w-full border-collapse border border-gray-300 text-center">
+                <thead>
+                  <tr className="bg-gray-200">
+                    <th className="border px-4 py-2">Nom</th>
+                    <th className="border px-4 py-2">Prénom</th>
+                    <th className="border px-4 py-2">Cellule</th>
+                    <th className="border px-4 py-2">Statut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {refusMembers.map((s) => (
+                    <tr key={s.id}>
+                      <td className="border px-4 py-2">{s.membre.nom}</td>
+                      <td className="border px-4 py-2">{s.membre.prenom}</td>
+                      <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
+                      <td className="border px-4 py-2">{s.statut}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
