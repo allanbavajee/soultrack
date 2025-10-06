@@ -1,4 +1,3 @@
-// pages/list-members.js
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -8,6 +7,7 @@ export default function ListMembers() {
   const [filter, setFilter] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
+  const [selectedCellule, setSelectedCellule] = useState({});
 
   useEffect(() => {
     fetchMembers();
@@ -36,6 +36,13 @@ export default function ListMembers() {
     );
   };
 
+  const handleSelectCellule = (memberId, celluleName) => {
+    setSelectedCellule((prev) => ({
+      ...prev,
+      [memberId]: celluleName,
+    }));
+  };
+
   const filteredMembers = members.filter((m) => {
     if (!filter) return true;
     if (filter === "star") return m.star === true;
@@ -60,6 +67,116 @@ export default function ListMembers() {
   const anciens = filteredMembers.filter(
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
+
+  const renderMembers = (membersList) =>
+    membersList.map((member) => {
+      const cellule =
+        cellules.find(
+          (c) => c.cellule === selectedCellule[member.id]
+        ) || null;
+
+      let whatsappLink = "";
+      if (cellule?.telephone) {
+        const message = encodeURIComponent(
+          `Bonjour ${cellule.responsable},\nJe te contacte à propos de ${member.prenom} ${member.nom} (${member.telephone || "—"}), que tu suis dans la cellule "${cellule.cellule}".`
+        );
+        whatsappLink = `https://wa.me/${cellule.telephone.replace(/\D/g, "")}?text=${message}`;
+      }
+
+      return (
+        <div
+          key={member.id}
+          className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 border-l-4 flex flex-col justify-between"
+          style={{ borderColor: getBorderColor(member) }}
+        >
+          <div>
+            <h3 className="text-lg font-bold text-gray-800 mb-1 flex justify-between">
+              <span>
+                {member.prenom} {member.nom}
+                {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+              </span>
+              <select
+                value={member.statut}
+                onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+                className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              >
+                <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                <option value="visiteur">Visiteur</option>
+                <option value="a déjà mon église">A déjà mon église</option>
+                <option value="evangelisé">Evangelisé</option>
+                <option value="actif">Actif</option>
+                <option value="ancien">Ancien</option>
+              </select>
+            </h3>
+
+            <p className="text-sm text-gray-600 mb-1">
+              📱 {member.telephone || "—"}
+            </p>
+            <p
+              className="text-sm font-semibold"
+              style={{ color: getBorderColor(member) }}
+            >
+              {member.statut || "—"}
+            </p>
+
+            {/* Bouton Détails */}
+            <p
+              className="mt-2 text-blue-500 underline cursor-pointer"
+              onClick={() =>
+                setDetailsOpen((prev) => ({
+                  ...prev,
+                  [member.id]: !prev[member.id],
+                }))
+              }
+            >
+              {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+            </p>
+
+            {/* Détails */}
+            {detailsOpen[member.id] && (
+              <div className="mt-3 text-sm text-gray-700 space-y-2 border-t pt-2">
+                <p>📧 <strong>Email:</strong> {member.email || "—"}</p>
+                <p>🕊️ <strong>Comment est-il venu:</strong> {member.how_came || "—"}</p>
+                <p>🙏 <strong>Besoins:</strong> {member.besoin || "—"}</p>
+
+                {/* Menu déroulant des cellules */}
+                <div className="mt-3">
+                  <label className="block text-gray-600 font-semibold mb-1">
+                    👥 Sélectionner une cellule :
+                  </label>
+                  <select
+                    value={selectedCellule[member.id] || ""}
+                    onChange={(e) =>
+                      handleSelectCellule(member.id, e.target.value)
+                    }
+                    className="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  >
+                    <option value="">-- Choisir une cellule --</option>
+                    {cellules.map((c) => (
+                      <option key={c.id} value={c.cellule}>
+                        {c.cellule} ({c.responsable})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Bouton WhatsApp */}
+                {cellule && (
+                  <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-semibold mt-3 w-full text-center"
+                  >
+                    📲 Envoyer à {cellule.responsable} sur WhatsApp
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    });
 
   return (
     <div
@@ -91,7 +208,7 @@ export default function ListMembers() {
       </p>
 
       {/* Filtres */}
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-4 w-full max-w-md">
+      <div className="flex flex-col md:flex-row items-center gap-4 mb-6 w-full max-w-md">
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
@@ -110,205 +227,22 @@ export default function ListMembers() {
         </span>
       </div>
 
-      {/* Liste des membres */}
-      <div className="w-full max-w-6xl">
-        {/* Nouveaux membres */}
+      {/* Listes */}
+      <div className="w-full max-w-6xl space-y-8">
         {nouveaux.length > 0 && (
           <>
-            <h2 className="text-2xl text-white font-semibold mb-4">
-              Nouveaux membres
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-              {nouveaux.map((member) => (
-                <div
-                  key={member.id}
-                  className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 border-l-4"
-                  style={{ borderColor: getBorderColor(member) }}
-                >
-                  <h3 className="text-lg font-bold text-gray-800 mb-1 flex justify-between">
-                    <span>
-                      {member.prenom} {member.nom}{" "}
-                      <span className="ml-1 text-green-500 font-semibold text-sm">
-                        Nouveau
-                      </span>
-                      {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-                    </span>
-                    <select
-                      value={member.statut}
-                      onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                      className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                    >
-                      <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                      <option value="visiteur">Visiteur</option>
-                      <option value="a déjà mon église">A déjà mon église</option>
-                      <option value="evangelisé">Evangelisé</option>
-                      <option value="actif">Actif</option>
-                      <option value="ancien">Ancien</option>
-                    </select>
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-1">
-                    📱 {member.telephone || "—"}
-                  </p>
-                  <p
-                    className="text-sm font-semibold"
-                    style={{ color: getBorderColor(member) }}
-                  >
-                    {member.statut || "—"}
-                  </p>
-
-                  {/* Bouton Détails */}
-                  <p
-                    className="mt-2 text-blue-500 underline cursor-pointer"
-                    onClick={() =>
-                      setDetailsOpen((prev) => ({
-                        ...prev,
-                        [member.id]: !prev[member.id],
-                      }))
-                    }
-                  >
-                    {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                  </p>
-
-                  {/* Détails */}
-                  {detailsOpen[member.id] && (
-                    <div className="mt-3 text-sm text-gray-700 space-y-2 border-t pt-2">
-                      <p>📧 <strong>Email:</strong> {member.email || "—"}</p>
-                      <p>🕊️ <strong>Comment est-il venu:</strong> {member.how_came || "—"}</p>
-                      <p>🙏 <strong>Besoins:</strong> {member.besoin || "—"}</p>
-                      <p>👤 <strong>Assigné à:</strong> {member.assignee || "—"}</p>
-
-                      {(() => {
-                        const cellule = cellules.find(
-                          (c) => c.cellule === member.assignee
-                        );
-                        if (!cellule)
-                          return (
-                            <p className="text-gray-500 italic">
-                              Aucune cellule assignée
-                            </p>
-                          );
-
-                        const message = encodeURIComponent(
-                          `Bonjour ${cellule.responsable},\nJe te contacte à propos de ${member.prenom} ${member.nom} (${member.telephone || "—"}), que tu suis dans la cellule "${cellule.cellule}".`
-                        );
-                        const whatsappLink = `https://wa.me/${cellule.telephone?.replace(
-                          /\D/g,
-                          ""
-                        )}?text=${message}`;
-
-                        return (
-                          <a
-                            href={whatsappLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-block bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg font-semibold mt-2"
-                          >
-                            📲 Contacter {cellule.responsable} sur WhatsApp
-                          </a>
-                        );
-                      })()}
-                    </div>
-                  )}
-                </div>
-              ))}
+            <h2 className="text-2xl text-white font-semibold mb-2">Nouveaux membres</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {renderMembers(nouveaux)}
             </div>
           </>
         )}
 
-        {/* Anciens membres */}
         {anciens.length > 0 && (
           <>
-            <h2 className="text-2xl text-white font-semibold mb-4">
-              Membres existants
-            </h2>
+            <h2 className="text-2xl text-white font-semibold mb-2">Membres existants</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {anciens.map((member) => (
-                <div
-                  key={member.id}
-                  className="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 border-l-4"
-                  style={{ borderColor: getBorderColor(member) }}
-                >
-                  <h3 className="text-lg font-bold text-gray-800 mb-1 flex justify-between">
-                    <span>
-                      {member.prenom} {member.nom}
-                      {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-                    </span>
-                    <select
-                      value={member.statut}
-                      onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                      className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                    >
-                      <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                      <option value="visiteur">Visiteur</option>
-                      <option value="a déjà mon église">A déjà mon église</option>
-                      <option value="evangelisé">Evangelisé</option>
-                      <option value="actif">Actif</option>
-                      <option value="ancien">Ancien</option>
-                    </select>
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-1">
-                    📱 {member.telephone || "—"}
-                  </p>
-                  <p
-                    className="text-sm font-semibold"
-                    style={{ color: getBorderColor(member) }}
-                  >
-                    {member.statut || "—"}
-                  </p>
-
-                  <p
-                    className="mt-2 text-blue-500 underline cursor-pointer"
-                    onClick={() =>
-                      setDetailsOpen((prev) => ({
-                        ...prev,
-                        [member.id]: !prev[member.id],
-                      }))
-                    }
-                  >
-                    {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                  </p>
-
-                  {detailsOpen[member.id] && (
-                    <div className="mt-3 text-sm text-gray-700 space-y-2 border-t pt-2">
-                      <p>📧 <strong>Email:</strong> {member.email || "—"}</p>
-                      <p>🕊️ <strong>Comment est-il venu:</strong> {member.how_came || "—"}</p>
-                      <p>🙏 <strong>Besoins:</strong> {member.besoin || "—"}</p>
-                      <p>👤 <strong>Assigné à:</strong> {member.assignee || "—"}</p>
-
-                      {(() => {
-                        const cellule = cellules.find(
-                          (c) => c.cellule === member.assignee
-                        );
-                        if (!cellule)
-                          return (
-                            <p className="text-gray-500 italic">
-                              Aucune cellule assignée
-                            </p>
-                          );
-
-                        const message = encodeURIComponent(
-                          `Bonjour ${cellule.responsable},\nJe te contacte à propos de ${member.prenom} ${member.nom} (${member.telephone || "—"}), que tu suis dans la cellule "${cellule.cellule}".`
-                        );
-                        const whatsappLink = `https://wa.me/${cellule.telephone?.replace(
-                          /\D/g,
-                          ""
-                        )}?text=${message}`;
-
-                        return (
-                          <a
-                            href={whatsappLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-block bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg font-semibold mt-2"
-                          >
-                            📲 Contacter {cellule.responsable} sur WhatsApp
-                          </a>
-                        );
-                      })()}
-                    </div>
-                  )}
-                </div>
-              ))}
+              {renderMembers(anciens)}
             </div>
           </>
         )}
