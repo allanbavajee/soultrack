@@ -121,7 +121,7 @@ export default function ListMembers() {
               <div key={member.id}>
                 <div
                   className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between"
-                  style={{ borderTop: 4px solid ${getBorderColor(member)} }}
+                  style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
                 >
                   <div>
                     <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
@@ -179,7 +179,7 @@ export default function ListMembers() {
               <div key={member.id}>
                 <div
                   className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between"
-                  style={{ borderTop: 4px solid ${getBorderColor(member)} }}
+                  style={{ borderTop: `4px solid ${getBorderColor(member)}` }}
                 >
                   <div>
                     <h2 className="text-lg font-bold text-gray-800 mb-1 flex items-center justify-between">
@@ -242,116 +242,3 @@ export default function ListMembers() {
     </div>
   );
 }
-ChatGPT said:
-Parfait 👍 tu m’as montré ta page list-members.js.
-
-J’ai remarqué que dans tes Détails, tu as laissé le bloc vide :
-
-{detailsOpen[member.id] && (
-  <div className="mt-2 text-sm text-gray-700 space-y-2">
-    {/* Détails et bouton WhatsApp */}
-  </div>
-)}
-👉 C’est pour ça que rien ne s’affiche quand on clique sur “Détails”.
-
-Je peux t’aider à compléter ça avec :
-
-Infos supplémentaires du membre (email, date d’ajout, cellule, etc. si tu les as dans ta table).
-
-Un bouton WhatsApp direct (si telephone existe, il ouvrira WhatsApp avec un message).
-
-Par exemple :
-
-{detailsOpen[member.id] && (
-  <div className="mt-2 text-sm text-gray-700 space-y-2">
-    <p>📧 Email : {member.email || "—"}</p>
-    <p>📅 Ajouté le : {new Date(member.created_at).toLocaleDateString()}</p>
-    <p>📍 Cellule : {member.cellule || "Non assigné"}</p>
-
-    {member.telephone && (
-      <a
-        href={`https://wa.me/${member.telephone.replace(/\D/g, "")}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-block px-3 py-1 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition"
-      >
-        💬 Contacter sur WhatsApp
-      </a>
-    )}
-  </div>
-)}
-✅ Résultat :
-
-Quand tu cliques sur Détails, ça montre l’email, la date, la cellule, et un bouton WhatsApp si le numéro existe.
-
-Le bouton ouvre WhatsApp (web ou app) directement.
-
-Veux-tu que je t’intègre ça dans tes deux blocs (nouveaux + anciens) et je t’envoie la page complète prête à coller ?
-
-You said:
-OUi,
-et quand je click sur details ,qu'es ce qui va s'afficher?
-ChatGPT said:
-Bonne question 👌
-
-Quand tu cliqueras sur “Détails”, tu verras s’afficher un petit panneau sous la carte du membre avec par exemple :
-
-Exemple pour un membre visiteur :
-Carte avant d’ouvrir :
-
-Jean Dupont
-📱 57481234
-Statut : Visiteur
-[Détails]
-Carte après clic sur “Détails” :
-
-Jean Dupont
-📱 57481234
-Statut : Visiteur
-[Fermer détails]
-
-📧 Email : jean.dupont@mail.com
-📅 Ajouté le : 05/10/2025
-📍 Cellule : CPE Groupe 2
-
-💬 Contacter sur WhatsApp
-Ce qui s’affiche dans la section détails :
-Email (si présent dans ta table membres).
-
-Date d’ajout (via created_at).
-
-Cellule (si assignée).
-
-Bouton WhatsApp (seulement si telephone existe → il ouvre WhatsApp avec le numéro du membre).
-
-👉 Et si une info n’existe pas (par exemple pas de cellule), ça affiche — ou Non assigné.
-
-Veux-tu que je t’intègre ça directement dans ton list-members.js pour que tu aies un affichage concret comme ci-dessus ?
-
-You said:
-oui.
-rien ne dois changer appart quand je clik sur details les detials doivent s'afficher a vla possoiblite d'envouer par whatsapp
-ChatGPT said:
-Parfait 👍
-On ne touche pas au reste de la page, on ajoute juste le contenu de la section "Détails" quand tu cliques dessus.
-
-Voici la partie modifiée de ton list-members.js (j’ai complété uniquement la section des détails) :
-
-{detailsOpen[member.id] && (
-  <div className="mt-2 text-sm text-gray-700 space-y-2">
-    <p>📧 <strong>Email :</strong> {member.email || "—"}</p>
-    <p>📅 <strong>Ajouté le :</strong> {member.created_at ? new Date(member.created_at).toLocaleDateString() : "—"}</p>
-    <p>📍 <strong>Cellule :</strong> {member.cellule || "Non assigné"}</p>
-
-    {member.telephone && (
-      <a
-        href={`https://wa.me/${member.telephone}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-block bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition"
-      >
-        📲 Envoyer un WhatsApp
-      </a>
-    )}
-  </div>
-)}
