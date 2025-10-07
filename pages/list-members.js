@@ -7,39 +7,32 @@ export default function ListMembers() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Charger les membres avec statut "visiteur" ou "veut rejoindre icc"
+  // 🔹 Charger les membres
   useEffect(() => {
     const fetchMembers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("membres")
-          .select("*")
-          .in("statut", ["visiteur", "veut rejoindre icc"])
-          .order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("membres")
+        .select("id, nom, telephone, statut, cellule_id");
 
-        if (error) {
-          console.error("❌ Erreur chargement membres:", error);
-          return;
-        }
-
-        setMembers(data || []);
-      } catch (err) {
-        console.error("❌ Erreur inattendue fetchMembers:", err);
-      } finally {
-        setLoading(false);
+      if (error) {
+        console.error("❌ Erreur fetch membres:", error);
+      } else {
+        setMembers(data);
       }
+      setLoading(false);
     };
 
     fetchMembers();
   }, []);
 
-  // Envoyer WhatsApp à un membre
+  // 🔹 Envoyer un WhatsApp à un seul membre
   const handleWhatsAppSingle = async (member) => {
     try {
-      // Générer un token
-      const { data: tokenData, error: tokenError } = await supabase.rpc("generate_access_token", {
-        p_access_type: "ajouter_membre",
-      });
+      // ⚡ Générer token d’accès
+      const { data: tokenData, error: tokenError } = await supabase.rpc(
+        "generate_access_token",
+        { p_access_type: "ajouter_membre" }
+      );
 
       if (tokenError) {
         console.error("❌ Erreur RPC:", tokenError);
@@ -51,10 +44,13 @@ export default function ListMembers() {
       const link = `https://soultrack-beta.vercel.app/access/${token}`;
       const message = `Bonjour ${member.nom}, voici le lien pour remplir vos infos : 👉 ${link}`;
 
-      // Ouvrir WhatsApp
-      window.open(`https://wa.me/${member.telephone}?text=${encodeURIComponent(message)}`, "_blank");
+      // ⚡ Envoyer le message WhatsApp
+      window.open(
+        `https://wa.me/${member.telephone}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
 
-      // Vérifier la cellule du membre
+      // ⚡ Récupérer cellule
       const { data: cellule, error: celluleError } = await supabase
         .from("cellules")
         .select("id")
@@ -63,9 +59,10 @@ export default function ListMembers() {
 
       if (celluleError) {
         console.error("❌ Erreur récupération cellule:", celluleError);
+        return;
       }
 
-      // Insérer le suivi
+      // ⚡ Insérer suivi du membre
       const { data: insertData, error: insertError } = await supabase
         .from("suivis_membres")
         .insert([
@@ -83,50 +80,46 @@ export default function ListMembers() {
         return;
       }
 
-      console.log("✅ Suivi inséré:", insertData);
-      alert("Lien WhatsApp envoyé et suivi enregistré ✅");
+      console.log("✅ Insert OK:", insertData);
+      alert("Lien envoyé et suivi enregistré ✅");
     } catch (err) {
-      console.error("❌ Erreur handleWhatsAppSingle:", err);
+      console.error("❌ Erreur inattendue:", err);
     }
   };
 
+  // 🔹 Rendu
   if (loading) return <p className="p-4">Chargement...</p>;
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">📋 Liste des membres</h1>
-
-      {members.length === 0 ? (
-        <p>Aucun membre avec statut "visiteur" ou "veut rejoindre icc".</p>
-      ) : (
-        <table className="w-full border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border p-2">Nom</th>
-              <th className="border p-2">Téléphone</th>
-              <th className="border p-2">Statut</th>
-              <th className="border p-2">Action</th>
+      <h1 className="text-2xl font-bold mb-4">Liste des membres</h1>
+      <table className="w-full border">
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="p-2 border">Nom</th>
+            <th className="p-2 border">Téléphone</th>
+            <th className="p-2 border">Statut</th>
+            <th className="p-2 border">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {members.map((member) => (
+            <tr key={member.id} className="border">
+              <td className="p-2 border">{member.nom}</td>
+              <td className="p-2 border">{member.telephone}</td>
+              <td className="p-2 border">{member.statut}</td>
+              <td className="p-2 border text-center">
+                <button
+                  onClick={() => handleWhatsAppSingle(member)}
+                  className="bg-green-500 text-white px-3 py-1 rounded"
+                >
+                  Envoyer WhatsApp
+                </button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {members.map((member) => (
-              <tr key={member.id} className="hover:bg-gray-50">
-                <td className="border p-2">{member.nom}</td>
-                <td className="border p-2">{member.telephone}</td>
-                <td className="border p-2">{member.statut}</td>
-                <td className="border p-2 text-center">
-                  <button
-                    onClick={() => handleWhatsAppSingle(member)}
-                    className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                  >
-                    Envoyer WhatsApp
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
