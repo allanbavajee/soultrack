@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
+import { v4 as uuidv4 } from "uuid"; // pour générer des id uniques
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
@@ -44,7 +45,7 @@ export default function ListMembers() {
     }));
   };
 
-  // --- Fonction complète pour envoyer WhatsApp et créer un suivi ---
+  // --- Fonction mise à jour suivis_membres et statut membre ---
   const markAsSent = async (memberId) => {
     const cellule = cellules.find((c) => c.cellule === selectedCellule[memberId]);
     if (!cellule) {
@@ -52,34 +53,47 @@ export default function ListMembers() {
       return;
     }
 
-    // Ajouter dans suivis_membres
-    const { data, error: insertError } = await supabase
-      .from("suivis_membres")
-      .insert([
-        {
-          membre_id: memberId,
-          cellule_id: cellule.id,
-          statut: "envoye",
-        },
-      ]);
+    try {
+      // Création d'un suivi unique
+      const suiviId = uuidv4();
 
-    if (insertError) {
-      console.error("Erreur lors de l'ajout dans suivis_membres:", insertError);
-      return;
+      // Insertion dans la table suivis_membres
+      const { data, error } = await supabase
+        .from("suivis_membres")
+        .insert([
+          {
+            id: suiviId,
+            membre_id: memberId,
+            cellule_id: cellule.id,
+            statut: "envoye",
+          },
+        ]);
+
+      if (error) {
+        console.error("Erreur insertion suivis:", error);
+        alert("Impossible d'ajouter le suivi. Vérifie la console.");
+        return;
+      }
+
+      // Mise à jour du statut du membre
+      const { error: updateError } = await supabase
+        .from("membres")
+        .update({ statut: "actif" })
+        .eq("id", memberId);
+
+      if (updateError) {
+        console.error("Erreur mise à jour membre:", updateError);
+        alert("Impossible de mettre à jour le membre.");
+        return;
+      }
+
+      // Rafraîchir la liste
+      fetchMembers();
+      alert("Le contact a été envoyé et le suivi créé !");
+    } catch (err) {
+      console.error(err);
+      alert("Erreur inattendue. Vérifie la console.");
     }
-
-    // Mettre le membre à actif
-    const { error: updateError } = await supabase
-      .from("membres")
-      .update({ statut: "actif" })
-      .eq("id", memberId);
-
-    if (updateError) {
-      console.error("Erreur lors de la mise à jour du membre:", updateError);
-      return;
-    }
-
-    fetchMembers();
   };
 
   const filteredMembers = members.filter((m) => {
@@ -209,11 +223,7 @@ export default function ListMembers() {
                   >
                     <option value="">-- Choisir une cellule --</option>
                     {cellules.map((c) => (
-                      <option
-                        key={c.id}
-                        value={c.cellule}
-                        className="truncate max-w-[250px]"
-                      >
+                      <option key={c.id} value={c.cellule}>
                         {c.cellule} ({c.responsable})
                       </option>
                     ))}
@@ -226,7 +236,11 @@ export default function ListMembers() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-semibold mt-3 w-full text-center"
-                    onClick={() => markAsSent(member.id)}
+                    onClick={(e) => {
+                      e.preventDefault(); // éviter le saut immédiat
+                      markAsSent(member.id);
+                      window.open(whatsappLink, "_blank");
+                    }}
                   >
                     📲 Envoyer à {cellule.responsable} sur WhatsApp
                   </a>
@@ -241,9 +255,7 @@ export default function ListMembers() {
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       <button
         onClick={() => window.history.back()}
