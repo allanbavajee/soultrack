@@ -44,14 +44,41 @@ export default function ListMembers() {
     }));
   };
 
-  // --- Nouvelle fonction pour marquer le membre comme envoyé ---
+  // --- Fonction complète pour envoyer WhatsApp et créer un suivi ---
   const markAsSent = async (memberId) => {
-    await supabase
+    const cellule = cellules.find((c) => c.cellule === selectedCellule[memberId]);
+    if (!cellule) {
+      alert("Veuillez sélectionner une cellule avant d'envoyer.");
+      return;
+    }
+
+    // Ajouter dans suivis_membres
+    const { data, error: insertError } = await supabase
+      .from("suivis_membres")
+      .insert([
+        {
+          membre_id: memberId,
+          cellule_id: cellule.id,
+          statut: "envoye",
+        },
+      ]);
+
+    if (insertError) {
+      console.error("Erreur lors de l'ajout dans suivis_membres:", insertError);
+      return;
+    }
+
+    // Mettre le membre à actif
+    const { error: updateError } = await supabase
       .from("membres")
       .update({ statut: "actif" })
       .eq("id", memberId);
 
-    // Rafraîchir la liste
+    if (updateError) {
+      console.error("Erreur lors de la mise à jour du membre:", updateError);
+      return;
+    }
+
     fetchMembers();
   };
 
@@ -145,7 +172,6 @@ export default function ListMembers() {
               {member.statut || "—"}
             </p>
 
-            {/* Bouton Détails */}
             <p
               className="mt-2 text-blue-500 underline cursor-pointer"
               onClick={() =>
@@ -158,7 +184,6 @@ export default function ListMembers() {
               {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
             </p>
 
-            {/* Détails */}
             {detailsOpen[member.id] && (
               <div className="mt-3 text-sm text-gray-700 space-y-2 border-t pt-2">
                 <p>
@@ -171,7 +196,6 @@ export default function ListMembers() {
                   🙏 <strong>Besoins:</strong> {member.besoin || "—"}
                 </p>
 
-                {/* Menu déroulant des cellules */}
                 <div className="mt-3">
                   <label className="block text-gray-600 font-semibold mb-1">
                     👥 Sélectionner une cellule :
@@ -196,14 +220,13 @@ export default function ListMembers() {
                   </select>
                 </div>
 
-                {/* Bouton WhatsApp */}
                 {cellule && (
                   <a
                     href={whatsappLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-semibold mt-3 w-full text-center"
-                    onClick={() => markAsSent(member.id)} // <-- mise à jour du statut après envoi
+                    onClick={() => markAsSent(member.id)}
                   >
                     📲 Envoyer à {cellule.responsable} sur WhatsApp
                   </a>
@@ -222,7 +245,6 @@ export default function ListMembers() {
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      {/* Retour */}
       <button
         onClick={() => window.history.back()}
         className="self-start mb-4 flex items-center text-white font-semibold hover:text-gray-200"
@@ -230,23 +252,19 @@ export default function ListMembers() {
         ← Retour
       </button>
 
-      {/* Logo */}
       <div className="mt-2 mb-2">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
 
-      {/* Titre */}
       <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
         SoulTrack
       </h1>
 
-      {/* Message inspirant */}
       <p className="text-center text-white text-lg mb-6 font-handwriting-light">
         Chaque personne a une valeur infinie. Ensemble, nous avançons,
         grandissons et partageons l’amour de Christ dans chaque action ❤️
       </p>
 
-      {/* Filtres */}
       <div className="flex flex-col md:flex-row items-center gap-4 mb-6 w-full max-w-md">
         <select
           value={filter}
@@ -266,7 +284,6 @@ export default function ListMembers() {
         </span>
       </div>
 
-      {/* Listes */}
       <div className="w-full max-w-6xl space-y-8">
         {nouveaux.length > 0 && (
           <>
@@ -280,7 +297,6 @@ export default function ListMembers() {
           </>
         )}
 
-        {/* Ligne de séparation bleu-gris */}
         <div className="my-8 h-1 bg-gradient-to-r from-blue-200 via-blue-300 to-blue-400 rounded-full"></div>
 
         {anciens.length > 0 && (
@@ -290,7 +306,6 @@ export default function ListMembers() {
         )}
       </div>
 
-      {/* Bouton retour haut */}
       <button
         onClick={scrollToTop}
         className="fixed bottom-5 right-5 text-white text-2xl font-bold bg-transparent hover:text-gray-200"
@@ -298,7 +313,6 @@ export default function ListMembers() {
         ↑
       </button>
 
-      {/* Verset */}
       <p className="mt-6 mb-4 text-center text-white text-lg font-handwriting-light">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs.
         <br />— 1 Corinthiens 12:14 ❤️
