@@ -12,16 +12,10 @@ export default function CreationUtilisateur() {
   const [message, setMessage] = useState("");
   const router = useRouter();
 
+  // Vérifier si l'utilisateur est admin
   useEffect(() => {
     const userId = localStorage.getItem("userId");
-    if (!userId) return router.push("/");
-
-    // Vérifier que l'utilisateur est admin
-    fetch("/api/get-current-user")
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data || data.role !== "Admin") router.push("/");
-      });
+    if (!userId) router.push("/");
   }, [router]);
 
   const handleCreateUser = async () => {
@@ -43,7 +37,7 @@ export default function CreationUtilisateur() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Erreur serveur");
+      if (!res.ok) throw new Error(data.error || "Erreur inconnue");
 
       setMessage(data.message);
       setUsername("");
@@ -51,8 +45,8 @@ export default function CreationUtilisateur() {
       setNomComplet("");
       setRole("");
       setPassword("");
-    } catch (error) {
-      setMessage(error.message);
+    } catch (err) {
+      setMessage("❌ Erreur : " + err.message);
     }
 
     setLoading(false);
