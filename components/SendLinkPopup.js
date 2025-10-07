@@ -28,66 +28,60 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
   }, [type]);
 
   const handleSend = async () => {
+    if (!phone) return alert("Veuillez entrer un numéro WhatsApp.");
+
     setSending(true);
 
     try {
-      let memberId = null;
+      // 1️⃣ Vérifier si le membre existe déjà
+      const { data: existingMember } = await supabase
+        .from("membres")
+        .select("*")
+        .eq("telephone", phone.trim())
+        .single();
 
-      if (type === "ajouter_membre" || type === "ajouter_evangelise") {
-        // Vérifier si le membre existe déjà
-        const { data: existingMember, error: memberError } = await supabase
+      let memberId;
+      if (!existingMember) {
+        // Créer le membre si inexistant
+        const { data: newMember } = await supabase
           .from("membres")
-          .select("*")
-          .eq("telephone", phone.trim())
+          .insert([{ telephone: phone.trim(), statut: "actif" }])
+          .select()
           .single();
-
-        if (memberError && memberError.code !== "PGRST116") throw memberError;
-
-        if (!existingMember) {
-          // Créer un nouveau membre
-          const { data: newMember, error: insertError } = await supabase
-            .from("membres")
-            .insert([{ telephone: phone.trim(), statut: "envoye" }])
-            .select()
-            .single();
-          if (insertError) throw insertError;
-          memberId = newMember.id;
-        } else {
-          memberId = existingMember.id;
-        }
-
-        // Créer le suivi
-        const { error: suiviError } = await supabase
-          .from("suivis_membres")
-          .insert([{ membre_id: memberId, statut: "envoye" }]);
-        if (suiviError) throw suiviError;
-
-        // Mettre à jour le statut du membre pour qu'il ne soit plus "Nouveau"
+        memberId = newMember.id;
+      } else {
+        memberId = existingMember.id;
+        // Mettre à jour le statut existant
         await supabase
           .from("membres")
           .update({ statut: "actif" })
           .eq("id", memberId);
       }
 
-      // Générer le lien WhatsApp
-      const link = type !== "voir_copier" ? `${window.location.origin}/access/${token}` : "https://soultrack-beta.vercel.app/";
+      // 2️⃣ Créer un suivi
+      await supabase.from("suivis_membres").insert([
+        {
+          membre_id: memberId,
+          statut: "envoye",
+        },
+      ]);
+
+      // 3️⃣ Préparer le lien WhatsApp
       const message =
         type === "ajouter_membre"
-          ? `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre ${link}`
-          : type === "ajouter_evangelise"
-          ? `Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé ${link}`
-          : `Voici le lien pour accéder à l'application : 👉 Accéder à l'application ${link}`;
+          ? `Voici le lien pour ajouter un nouveau membre : 👉 ${window.location.origin}/access/${token}`
+          : `Voici le lien pour ajouter un nouveau évangélisé : 👉 ${window.location.origin}/access/${token}`;
 
-      const waUrl = phone
-        ? `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`
-        : `https://wa.me/?text=${encodeURIComponent(message)}`;
-
+      const waUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+        message
+      )}`;
       window.open(waUrl, "_blank");
+
       setPhone("");
       setShowPopup(false);
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de l'envoi du lien.");
+      alert("Erreur lors de l'envoi du lien et mise à jour du membre.");
     } finally {
       setSending(false);
     }
@@ -151,5 +145,4 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
   );
 }
 
-  
 
