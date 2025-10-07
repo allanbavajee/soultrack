@@ -1,8 +1,8 @@
 //pages/admin/creation-utilisateur.js
 "use client";
 import { useState, useEffect } from "react";
-import supabase from "../../lib/supabaseClient";
 import { useRouter } from "next/router";
+import supabase from "../../lib/supabaseClient";
 
 export default function CreationUtilisateur() {
   const [username, setUsername] = useState("");
@@ -23,7 +23,6 @@ export default function CreationUtilisateur() {
       }
 
       const userId = session.user.id;
-
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
@@ -39,16 +38,6 @@ export default function CreationUtilisateur() {
     checkAdmin();
   }, [router]);
 
-  const getAccessPages = (role) => {
-    switch (role) {
-      case "ResponsableCelluleCpe": return ["/suivis-membres"];
-      case "ResponsableCellule": return ["/membres"];
-      case "ResponsableEvangelisation": return ["/evangelisation"];
-      case "Admin": return ["/admin/creation-utilisateur", "/suivis-membres", "/membres"];
-      default: return [];
-    }
-  };
-
   const handleCreateUser = async () => {
     setLoading(true);
     setMessage("");
@@ -60,33 +49,22 @@ export default function CreationUtilisateur() {
     }
 
     try {
-      // 🔹 Créer utilisateur via Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
+      // 🔹 Appel API route
+      const res = await fetch("/api/create-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, nomComplet, role, password }),
       });
 
-      if (authError) throw authError;
-      const userId = authData.id;
+      const data = await res.json();
 
-      // 🔹 Ajouter profil
-      const { error: profileError } = await supabase.from("profiles").insert([{
-        id: userId,
-        username,
-        email,
-        role,
-        responsable: nomComplet,
-        access_pages: JSON.stringify(getAccessPages(role)),
-      }]);
+      if (!res.ok) throw new Error(data.error || "Erreur serveur");
 
-      if (profileError) throw profileError;
-
-      setMessage("Utilisateur créé avec succès !");
+      setMessage(data.message);
       setUsername(""); setEmail(""); setNomComplet(""); setRole(""); setPassword("");
     } catch (err) {
       console.error(err);
-      setMessage("Erreur : " + (err.message || err));
+      setMessage("Erreur : " + err.message);
     }
 
     setLoading(false);
@@ -120,3 +98,4 @@ export default function CreationUtilisateur() {
     </div>
   );
 }
+
