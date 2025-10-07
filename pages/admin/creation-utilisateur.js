@@ -1,7 +1,7 @@
 // pages/admin/creation-utilisateur.js
 import { useState, useEffect } from "react";
-import supabase from "../../lib/supabaseClient";
 import { useRouter } from "next/router";
+import supabase from "../../lib/supabaseClient";
 
 export default function CreationUtilisateur() {
   const [username, setUsername] = useState("");
@@ -11,9 +11,9 @@ export default function CreationUtilisateur() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [currentUser, setCurrentUser] = useState(null);
   const router = useRouter();
 
+  // Vérif admin
   useEffect(() => {
     const userId = localStorage.getItem("userId");
     if (!userId) {
@@ -21,18 +21,13 @@ export default function CreationUtilisateur() {
       return;
     }
 
-    // Vérifier que l'utilisateur est admin
     supabase
       .from("profiles")
       .select("role")
       .eq("id", userId)
       .single()
       .then(({ data }) => {
-        if (!data || data.role !== "Admin") {
-          router.push("/"); // pas admin, renvoyer à login
-        } else {
-          setCurrentUser(data);
-        }
+        if (!data || data.role !== "Admin") router.push("/");
       });
   }, [router]);
 
@@ -47,59 +42,26 @@ export default function CreationUtilisateur() {
     }
 
     try {
-      // 1️⃣ Créer l'utilisateur dans Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
+      const res = await fetch("/api/create-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, nomComplet, role, password }),
       });
 
-      if (authError) throw authError;
-      const userId = authData.id;
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
 
-      // 2️⃣ Ajouter le profil dans la table profiles
-      const { error: profileError } = await supabase.from("profiles").insert([
-        {
-          id: userId,
-          username,
-          email,
-          role,
-          responsable: nomComplet,
-        },
-      ]);
-
-      if (profileError) throw profileError;
-
-      // 3️⃣ Définir l'accès aux pages selon le rôle (simple JSON dans profiles)
-      await supabase.from("profiles").update({ access_pages: JSON.stringify(getAccessPages(role)) }).eq("id", userId);
-
-      setMessage("Utilisateur créé avec succès !");
+      setMessage("✅ " + data.message);
       setUsername("");
       setEmail("");
       setNomComplet("");
       setRole("");
       setPassword("");
     } catch (error) {
-      console.error(error);
-      setMessage("Erreur : " + error.message);
+      setMessage("❌ Erreur : " + error.message);
     }
 
     setLoading(false);
-  };
-
-  const getAccessPages = (role) => {
-    switch (role) {
-      case "ResponsableCelluleCpe":
-        return ["/suivis-membres"];
-      case "ResponsableCellule":
-        return ["/membres"];
-      case "ResponsableEvangelisation":
-        return ["/evangelisation"];
-      case "Admin":
-        return ["/admin/creation-utilisateur", "/suivis-membres", "/membres"];
-      default:
-        return [];
-    }
   };
 
   return (
@@ -108,10 +70,11 @@ export default function CreationUtilisateur() {
 
       <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-md">
         <div className="flex flex-col gap-4">
-          <input type="text" placeholder="Nom complet / Responsable" value={nomComplet} onChange={(e) => setNomComplet(e.target.value)} className="border p-2 rounded" />
+          <input type="text" placeholder="Nom complet" value={nomComplet} onChange={(e) => setNomComplet(e.target.value)} className="border p-2 rounded" />
           <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} className="border p-2 rounded" />
           <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="border p-2 rounded" />
           <input type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} className="border p-2 rounded" />
+
           <select value={role} onChange={(e) => setRole(e.target.value)} className="border p-2 rounded">
             <option value="">-- Choisir un rôle --</option>
             <option value="ResponsableCelluleCpe">Responsable Suivi Membres</option>
@@ -124,7 +87,7 @@ export default function CreationUtilisateur() {
             {loading ? "Création..." : "Créer l'utilisateur"}
           </button>
 
-          {message && <p className="text-red-600 mt-2">{message}</p>}
+          {message && <p className="mt-2">{message}</p>}
         </div>
       </div>
     </div>
