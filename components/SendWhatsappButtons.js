@@ -3,7 +3,7 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SendWhatsappButtons({ type, profile, gradient }) {
+export default function SendWhatsappButtons({ type, gradient }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [sending, setSending] = useState(false);
@@ -12,30 +12,57 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
     setSending(true);
 
     try {
-      // Appel RPC Supabase pour générer token
+      // Générer token via RPC Supabase
       const { data, error } = await supabase.rpc("generate_access_token", {
         p_access_type: type,
       });
 
       if (error) throw error;
-
       const token = data?.token;
       if (!token) throw new Error("Token introuvable.");
 
-      const link = `https://soultrack-beta.vercel.app/access/${token}`;
+      // Créer le membre + suivi si c'est un nouveau membre
+      let memberId = null;
+      if (type === "ajouter_membre" || type === "ajouter_evangelise") {
+        const { data: existingMember } = await supabase
+          .from("membres")
+          .select("*")
+          .eq("telephone", phoneNumber.trim())
+          .single();
+
+        if (!existingMember) {
+          const { data: newMember } = await supabase
+            .from("membres")
+            .insert([{ telephone: phoneNumber.trim(), statut: "envoye" }])
+            .select()
+            .single();
+          memberId = newMember.id;
+        } else {
+          memberId = existingMember.id;
+        }
+
+        await supabase
+          .from("suivis_membres")
+          .insert([{ membre_id: memberId, statut: "envoye" }]);
+
+        // Mettre à jour le statut pour qu'il devienne actif
+        await supabase
+          .from("membres")
+          .update({ statut: "actif" })
+          .eq("id", memberId);
+      }
+
+      const link = `${window.location.origin}/access/${token}`;
       const message =
         type === "ajouter_membre"
           ? `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre ${link}`
           : `Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé ${link}`;
 
-      if (!phoneNumber) {
-        // Choisir un contact existant
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-      } else {
-        const cleanedPhone = phoneNumber.replace(/\D/g, "");
-        window.open(`https://wa.me/${cleanedPhone}?text=${encodeURIComponent(message)}`, "_blank");
-      }
+      const waUrl = phoneNumber
+        ? `https://wa.me/${phoneNumber.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`
+        : `https://wa.me/?text=${encodeURIComponent(message)}`;
 
+      window.open(waUrl, "_blank");
       setPhoneNumber("");
       setShowPopup(false);
     } catch (err) {
