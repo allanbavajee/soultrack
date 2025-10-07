@@ -10,12 +10,32 @@ export default function CreationUtilisateur() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
   const router = useRouter();
 
-  // Vérifier si l'utilisateur est admin
   useEffect(() => {
     const userId = localStorage.getItem("userId");
-    if (!userId) router.push("/");
+    if (!userId) {
+      router.push("/");
+      return;
+    }
+
+    // Vérifier que l'utilisateur est admin
+    fetch("/api/get-profile?id=" + userId)
+      .then(async (res) => {
+        let data;
+        try {
+          data = await res.json();
+        } catch {
+          data = null;
+        }
+        if (!data || data.role !== "Admin") {
+          router.push("/"); // pas admin, renvoyer à login
+        } else {
+          setCurrentUser(data);
+        }
+      })
+      .catch(() => router.push("/"));
   }, [router]);
 
   const handleCreateUser = async () => {
@@ -35,18 +55,24 @@ export default function CreationUtilisateur() {
         body: JSON.stringify({ username, email, nomComplet, role, password }),
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        data = { error: "Réponse invalide du serveur" };
+      }
 
       if (!res.ok) throw new Error(data.error || "Erreur inconnue");
 
-      setMessage(data.message);
+      setMessage(data.message || "Utilisateur créé avec succès !");
       setUsername("");
       setEmail("");
       setNomComplet("");
       setRole("");
       setPassword("");
-    } catch (err) {
-      setMessage("❌ Erreur : " + err.message);
+    } catch (error) {
+      console.error(error);
+      setMessage("❌ Erreur : " + error.message);
     }
 
     setLoading(false);
@@ -106,10 +132,13 @@ export default function CreationUtilisateur() {
             {loading ? "Création..." : "Créer l'utilisateur"}
           </button>
 
-          {message && <p className="text-red-600 mt-2">{message}</p>}
+          {message && (
+            <p className={`mt-2 ${message.startsWith("❌") ? "text-red-600" : "text-green-600"}`}>
+              {message}
+            </p>
+          )}
         </div>
       </div>
     </div>
   );
 }
-
