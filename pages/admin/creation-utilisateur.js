@@ -1,6 +1,5 @@
 // pages/admin/creation-utilisateur.js
 import { useState, useEffect } from "react";
-import supabase from "../../lib/supabaseClient";
 import { useRouter } from "next/router";
 
 export default function CreationUtilisateur() {
@@ -10,33 +9,27 @@ export default function CreationUtilisateur() {
   const [role, setRole] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ text: "", type: "" });
-  const [currentUser, setCurrentUser] = useState(null);
-
+  const [message, setMessage] = useState("");
   const router = useRouter();
 
-  // Vérification que l'utilisateur est admin
   useEffect(() => {
     const userId = localStorage.getItem("userId");
     if (!userId) return router.push("/");
 
-    supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single()
-      .then(({ data }) => {
+    // Vérifier que l'utilisateur est admin
+    fetch("/api/get-current-user")
+      .then((res) => res.json())
+      .then((data) => {
         if (!data || data.role !== "Admin") router.push("/");
-        else setCurrentUser(data);
       });
   }, [router]);
 
   const handleCreateUser = async () => {
     setLoading(true);
-    setMessage({ text: "", type: "" });
+    setMessage("");
 
     if (!username || !email || !nomComplet || !role || !password) {
-      setMessage({ text: "Tous les champs sont obligatoires !", type: "error" });
+      setMessage("Tous les champs sont obligatoires !");
       setLoading(false);
       return;
     }
@@ -50,18 +43,16 @@ export default function CreationUtilisateur() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Erreur inconnue");
+      if (!res.ok) throw new Error(data.error || "Erreur serveur");
 
-      setMessage({ text: data.message, type: "success" });
-
-      // Réinitialiser le formulaire
+      setMessage(data.message);
       setUsername("");
       setEmail("");
       setNomComplet("");
       setRole("");
       setPassword("");
     } catch (error) {
-      setMessage({ text: error.message, type: "error" });
+      setMessage(error.message);
     }
 
     setLoading(false);
@@ -121,17 +112,10 @@ export default function CreationUtilisateur() {
             {loading ? "Création..." : "Créer l'utilisateur"}
           </button>
 
-          {message.text && (
-            <p
-              className={`mt-2 ${
-                message.type === "error" ? "text-red-600" : "text-green-600"
-              }`}
-            >
-              {message.text}
-            </p>
-          )}
+          {message && <p className="text-red-600 mt-2">{message}</p>}
         </div>
       </div>
     </div>
   );
 }
+
