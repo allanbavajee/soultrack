@@ -9,7 +9,7 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
   const [sending, setSending] = useState(false);
 
   // ⚡ Nouvelle fonction pour marquer le membre comme envoyé
-  const markAsSent = async (memberId) => {
+  const markAsSent = async (memberId, celluleId = null) => {
     if (!memberId) return;
 
     // 1️⃣ Mettre le statut du membre à "actif"
@@ -18,19 +18,20 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
       .update({ statut: "actif" })
       .eq("id", memberId);
 
-    // 2️⃣ Vérifier si une entrée existe déjà dans suivis_membres
-    const { data: existing } = await supabase
+    // 2️⃣ Vérifier si une entrée existe déjà pour ce membre + cellule
+    const { data: existing, error } = await supabase
       .from("suivis_membres")
       .select("*")
       .eq("membre_id", memberId)
-      .single();
+      .eq("cellule_id", celluleId)
+      .maybeSingle(); // ✅ évite crash si 0 ou plusieurs résultats
 
     if (!existing) {
-      // Créer l'entrée dans suivis_membres
+      // Créer une nouvelle entrée dans suivis_membres
       await supabase.from("suivis_membres").insert({
         membre_id: memberId,
+        cellule_id: celluleId, // ⚡ plus de null si dispo
         statut: "envoye",
-        cellule_id: null, // tu peux mettre la cellule si nécessaire
       });
     }
   };
@@ -64,7 +65,7 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
       }
 
       // ⚡ Marquer le membre comme envoyé dans suivis_membres
-      await markAsSent(profile?.id);
+      await markAsSent(profile?.id, profile?.cellule_id);
 
       setPhoneNumber("");
       setShowPopup(false);
@@ -118,6 +119,3 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
     </div>
   );
 }
-
-
-
