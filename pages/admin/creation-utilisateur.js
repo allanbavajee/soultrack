@@ -1,5 +1,6 @@
 // pages/admin/creation-utilisateur.js
 import { useState, useEffect } from "react";
+import supabase from "../../lib/supabaseClient";
 import { useRouter } from "next/router";
 
 export default function CreationUtilisateur() {
@@ -11,33 +12,54 @@ export default function CreationUtilisateur() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
+
   const router = useRouter();
 
+  // ✅ Vérification de la session et rôle Admin
   useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-      router.push("/");
-      return;
-    }
+    const checkAdmin = async () => {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        router.push("/"); // pas connecté
+        return;
+      }
 
-    // Vérifier que l'utilisateur est admin
-    fetch("/api/get-profile?id=" + userId)
-      .then(async (res) => {
-        let data;
-        try {
-          data = await res.json();
-        } catch {
-          data = null;
-        }
-        if (!data || data.role !== "Admin") {
-          router.push("/"); // pas admin, renvoyer à login
-        } else {
-          setCurrentUser(data);
-        }
-      })
-      .catch(() => router.push("/"));
+      const userId = session.user.id;
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+
+      if (profileError || !profile || profile.role !== "Admin") {
+        router.push("/"); // pas admin
+        return;
+      }
+
+      setCurrentUser(profile);
+    };
+
+    checkAdmin();
   }, [router]);
 
+  // 🔹 Définir les pages accessibles selon rôle
+  const getAccessPages = (role) => {
+    switch (role) {
+      case "ResponsableCelluleCpe":
+        return ["/suivis-membres"];
+      case "ResponsableCellule":
+        return ["/membres"];
+      case "ResponsableEvangelisation":
+        return ["/evangelisation"];
+      case "Admin":
+        return ["/admin/creation-utilisateur", "/suivis-membres", "/membres"];
+      default:
+        return [];
+    }
+  };
+
+  // 🔹 Création d'un utilisateur
   const handleCreateUser = async () => {
     setLoading(true);
     setMessage("");
@@ -49,22 +71,31 @@ export default function CreationUtilisateur() {
     }
 
     try {
-      const res = await fetch("/api/create-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, nomComplet, role, password }),
+      // 1️⃣ Créer l'utilisateur Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
       });
 
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        data = { error: "Réponse invalide du serveur" };
-      }
+      if (authError) throw authError;
+      const userId = authData.id;
 
-      if (!res.ok) throw new Error(data.error || "Erreur inconnue");
+      // 2️⃣ Ajouter le profil
+      const { error: profileError } = await supabase.from("profiles").insert([
+        {
+          id: userId,
+          username,
+          email,
+          role,
+          responsable: nomComplet,
+          access_pages: JSON.stringify(getAccessPages(role)),
+        },
+      ]);
 
-      setMessage(data.message || "Utilisateur créé avec succès !");
+      if (profileError) throw profileError;
+
+      setMessage("Utilisateur créé avec succès !");
       setUsername("");
       setEmail("");
       setNomComplet("");
@@ -72,7 +103,7 @@ export default function CreationUtilisateur() {
       setPassword("");
     } catch (error) {
       console.error(error);
-      setMessage("❌ Erreur : " + error.message);
+      setMessage("Erreur : " + (error.message || error));
     }
 
     setLoading(false);
@@ -132,11 +163,7 @@ export default function CreationUtilisateur() {
             {loading ? "Création..." : "Créer l'utilisateur"}
           </button>
 
-          {message && (
-            <p className={`mt-2 ${message.startsWith("❌") ? "text-red-600" : "text-green-600"}`}>
-              {message}
-            </p>
-          )}
+          {message && <p className="text-red-600 mt-2">{message}</p>}
         </div>
       </div>
     </div>
