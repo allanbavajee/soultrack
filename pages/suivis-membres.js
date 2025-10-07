@@ -12,7 +12,8 @@ export default function SuivisMembres() {
       try {
         const { data, error } = await supabase
           .from("suivis_membres")
-          .select(`
+          .select(
+            `
             id,
             created_at,
             statut,
@@ -20,8 +21,8 @@ export default function SuivisMembres() {
             cellule_id,
             membres (id, prenom, nom, telephone, statut),
             cellules (id, cellule, responsable, telephone)
-          `)
-          .in("membres.statut", ["visiteur", "veut rejoindre ICC"]) // ✅ Filtre pour ces membres uniquement
+            `
+          )
           .order("created_at", { ascending: false });
 
         if (error) {
@@ -29,7 +30,14 @@ export default function SuivisMembres() {
           return;
         }
 
-        setSuivis(data || []);
+        // ⚡ Filtrer seulement les membres avec statut visiteur ou veut rejoindre ICC
+        const filtered = data.filter(
+          (s) =>
+            s.membres &&
+            (s.membres.statut === "visiteur" || s.membres.statut === "veut rejoindre ICC")
+        );
+
+        setSuivis(filtered || []);
       } catch (err) {
         console.error("❌ Erreur inattendue fetchSuivis:", err);
       } finally {
