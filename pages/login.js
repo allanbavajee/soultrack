@@ -1,78 +1,66 @@
-/* pages/login.js */
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/router";
+import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
-export default function LoginPage() {
+export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    setError("");
 
-    try {
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("email", email)
-        .single();
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("email", email)
+      .eq("password", password)
+      .single();
 
-      if (error || !profile) {
-        setError("Utilisateur introuvable");
-        setLoading(false);
-        return;
-      }
-
-      const { data: checkPassword } = await supabase.rpc("verify_password", {
-        p_password: password,
-        p_hash: profile.password_hash,
-      });
-
-      if (!checkPassword || checkPassword[0].verify !== true) {
-        setError("Mot de passe incorrect");
-        setLoading(false);
-        return;
-      }
-
-      localStorage.setItem("userId", profile.id);
-      router.push("/home");
-    } catch (err) {
-      console.error(err);
-      setError("Erreur inattendue");
-    } finally {
-      setLoading(false);
+    if (error || !data) {
+      setError("Identifiants incorrects. Veuillez réessayer.");
+      return;
     }
+
+    // Enregistrer les infos dans le localStorage
+    localStorage.setItem("userId", data.id);
+    localStorage.setItem("role", data.role);
+    router.push("/home");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+    <div
+      className="min-h-screen flex flex-col justify-center items-center"
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
+    >
+      {/* Logo */}
+      <div className="mb-4">
+        <Image src="/logo.png" alt="SoulTrack Logo" width={90} height={90} />
+      </div>
+
+      {/* Titre */}
+      <h1 className="text-4xl font-handwriting text-white mb-8">
+        SoulTrack Login
+      </h1>
+
+      {/* Formulaire */}
       <form
         onSubmit={handleLogin}
-        className="bg-white p-8 rounded-3xl shadow-lg flex flex-col gap-6 w-full max-w-md"
+        className="bg-white p-8 rounded-2xl shadow-md w-80 flex flex-col gap-4"
       >
-        {/* Titre avec logo */}
-        <h2 className="text-2xl font-bold flex items-center justify-center gap-3">
-          <img
-            src="/logo.png"
-            alt="Logo SoulTrack"
-            className="w-8 h-8 object-contain"
-          />
-          Connexion SoulTrack
-        </h2>
-
         <input
           type="email"
-          placeholder="Email"
+          placeholder="Adresse e-mail"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="border rounded-xl px-4 py-2 w-full"
           required
+          className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
 
         <input
@@ -80,19 +68,18 @@ export default function LoginPage() {
           placeholder="Mot de passe"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="border rounded-xl px-4 py-2 w-full"
           required
+          className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
+
+        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
         <button
           type="submit"
-          disabled={loading}
-          className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-2xl transition-all duration-200"
+          className="bg-gradient-to-r from-blue-600 to-cyan-400 text-white py-2 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all"
         >
-          {loading ? "Connexion..." : "Se connecter"}
+          Se connecter
         </button>
-
-        {error && <p className="text-red-500 text-center">{error}</p>}
       </form>
     </div>
   );
