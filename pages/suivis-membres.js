@@ -20,10 +20,10 @@ export default function SuivisMembres() {
 
   const fetchCellules = async () => {
     const { data, error } = await supabase.from("cellules").select("*");
-    if (!error && data) setCellules(data);
+    if (!error) setCellules(data);
   };
 
-  const fetchSuivis = async (celluleId = null) => {
+  const fetchSuivis = async (cellule = null) => {
     let query = supabase
       .from("suivis_membres")
       .select(`
@@ -31,24 +31,23 @@ export default function SuivisMembres() {
         statut,
         created_at,
         membre:membre_id (
-          id, prenom, nom, telephone, email, ville, infos_supplementaires, statut
+          id, prenom, nom, telephone, statut
         ),
-        cellule:cellule_id (id, cellule, responsable, telephone)
-      `)
-      .order("created_at", { ascending: false });
+        cellule:cellule_id (id, cellule, responsable)
+      `);
 
-    if (celluleId) query = query.eq("cellule_id", celluleId);
+    if (cellule) query = query.eq("cellule_id", cellule);
 
-    const { data, error } = await query;
-    if (!error && data) {
-      // 🔹 Filtrer uniquement les membres "visiteur" ou "veut rejoindre ICC"
-      setSuivis(
-        data.filter(
-          (s) =>
-            s.membre?.statut === "visiteur" ||
-            s.membre?.statut === "veut rejoindre ICC"
-        )
+    const { data, error } = await query.order("created_at", { ascending: false });
+
+    if (!error) {
+      // ⚡ Filtrer uniquement les membres "visiteur" ou "veut rejoindre ICC"
+      const filtered = data.filter(
+        (s) =>
+          s.membre &&
+          (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC")
       );
+      setSuivis(filtered);
     }
   };
 
@@ -73,7 +72,7 @@ export default function SuivisMembres() {
       </div>
 
       {/* Titre */}
-      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-6">
+      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
         Suivi des membres
       </h1>
 
@@ -114,17 +113,9 @@ export default function SuivisMembres() {
                 <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
                 <td className="border px-4 py-2">{s.statut}</td>
                 <td className="border px-4 py-2">
-                  <details className="text-left">
-                    <summary className="cursor-pointer text-blue-600 underline">
-                      Afficher
-                    </summary>
-                    <div className="mt-2">
-                      <p>📱 {s.membre.telephone || "—"}</p>
-                      <p>📧 {s.membre.email || "—"}</p>
-                      <p>🏙️ {s.membre.ville || "—"}</p>
-                      <p>📝 {s.membre.infos_supplementaires || "—"}</p>
-                    </div>
-                  </details>
+                  <span className="text-blue-600 underline cursor-pointer hover:text-blue-800">
+                    Afficher
+                  </span>
                 </td>
               </tr>
             ))}
