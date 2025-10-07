@@ -1,3 +1,4 @@
+//pages/home.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,41 +16,52 @@ export default function Home() {
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
+
       if (error || !session) {
-        router.push("/"); // pas connecté
+        router.push("/"); // pas connecté → login
         return;
       }
 
       const userId = session.user.id;
-      const { data, error: profileError } = await supabase
+
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
 
-      if (profileError || !data) {
+      if (profileError || !profileData) {
         router.push("/"); // profil introuvable
         return;
       }
 
-      setProfile(data);
+      setProfile(profileData);
       setLoadingProfile(false);
     };
 
     checkSession();
   }, [router]);
 
-  if (loadingProfile) return <p className="text-center mt-10 text-gray-600">Chargement du profil...</p>;
+  if (loadingProfile) {
+    return <p className="text-center mt-10 text-gray-600">Chargement du profil...</p>;
+  }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-between p-6 gap-2"
-         style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+    <div
+      className="min-h-screen flex flex-col items-center justify-between p-6 gap-2"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
       <div className="mt-1">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
-      <h1 className="text-5xl sm:text-5xl font-handwriting text-white text-center mt-1">SoulTrack</h1>
+
+      <h1 className="text-5xl sm:text-5xl font-handwriting text-white text-center mt-1">
+        SoulTrack
+      </h1>
+
       <div className="mt-1 mb-2 text-center text-white text-lg font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous grandissons, et nous partageons l’amour de Christ dans chaque action ❤️
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous grandissons,
+        et nous partageons l’amour de Christ dans chaque action ❤️
       </div>
 
       <div className="flex flex-col md:flex-row flex-wrap gap-3 justify-center w-full max-w-5xl mt-2">
@@ -57,7 +69,9 @@ export default function Home() {
           <Link href="/membres-hub" className="flex-1 min-w-[250px]">
             <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
               <div className="text-4xl mb-1">👤</div>
-              <div className="text-lg font-bold text-gray-800 text-center">Suivis des membres</div>
+              <div className="text-lg font-bold text-gray-800 text-center">
+                Suivis des membres
+              </div>
             </div>
           </Link>
         )}
@@ -66,18 +80,31 @@ export default function Home() {
           <Link href="/evangelisation-hub" className="flex-1 min-w-[250px]">
             <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
               <div className="text-4xl mb-1">🙌</div>
-              <div className="text-lg font-bold text-gray-800 text-center">Évangélisation</div>
+              <div className="text-lg font-bold text-gray-800 text-center">
+                Évangélisation
+              </div>
             </div>
           </Link>
         )}
 
         {profile.role === "Admin" && (
-          <Link href="/admin/creation-utilisateur" className="flex-1 min-w-[250px]">
-            <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-              <div className="text-4xl mb-1">🧑‍💻</div>
-              <div className="text-lg font-bold text-gray-800 text-center">Créer un utilisateur</div>
-            </div>
-          </Link>
+          <>
+            <Link href="/rapport" className="flex-1 min-w-[250px]">
+              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
+                <div className="text-4xl mb-1">📊</div>
+                <div className="text-lg font-bold text-gray-800 text-center">Rapport</div>
+              </div>
+            </Link>
+
+            <Link href="/admin/creation-utilisateur" className="flex-1 min-w-[250px]">
+              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
+                <div className="text-4xl mb-1">🧑‍💻</div>
+                <div className="text-lg font-bold text-gray-800 text-center">
+                  Créer un utilisateur
+                </div>
+              </div>
+            </Link>
+          </>
         )}
       </div>
 
