@@ -67,7 +67,7 @@ export default function SuivisMembres() {
 
   const openPopup = (member) => {
     setCurrentMember(member);
-    setNewStatus(member.statut);
+    setNewStatus(member.statut); // statut actuel ("envoye", "en cours", etc.)
     setShowPopup(true);
   };
 
@@ -81,6 +81,7 @@ export default function SuivisMembres() {
       .update({ statut: newStatus })
       .eq("id", currentMember.id);
 
+    // si validé "actif" → mettre aussi le membre actif dans la table membres
     if (newStatus === "actif") {
       await supabase
         .from("membres")
@@ -165,7 +166,24 @@ export default function SuivisMembres() {
                 <td className="border px-4 py-2">{s.membre.nom}</td>
                 <td className="border px-4 py-2">{s.membre.prenom}</td>
                 <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
-                <td className="border px-4 py-2">{s.statut}</td>
+                <td className="border px-4 py-2">
+                  {/* Badge coloré en fonction du statut */}
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      s.statut === "envoye"
+                        ? "bg-blue-200 text-blue-800"
+                        : s.statut === "en cours"
+                        ? "bg-yellow-200 text-yellow-800"
+                        : s.statut === "actif"
+                        ? "bg-green-200 text-green-800"
+                        : s.statut === "refus"
+                        ? "bg-red-200 text-red-800"
+                        : "bg-gray-200 text-gray-800"
+                    }`}
+                  >
+                    {s.statut}
+                  </span>
+                </td>
                 <td className="border px-4 py-2">
                   <span
                     className="text-blue-600 underline cursor-pointer hover:text-blue-800"
@@ -184,7 +202,9 @@ export default function SuivisMembres() {
       {showPopup && currentMember && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl max-w-md w-full relative">
-            <h2 className="text-xl font-bold mb-4">{currentMember.membre.prenom} {currentMember.membre.nom}</h2>
+            <h2 className="text-xl font-bold mb-4">
+              {currentMember.membre.prenom} {currentMember.membre.nom}
+            </h2>
             <button
               className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
               onClick={() => setShowPopup(false)}
