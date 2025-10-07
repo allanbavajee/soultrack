@@ -163,8 +163,7 @@ export default function AddMember() {
               <option value="">-- Sélectionner --</option>
               <option value="invité">Invité</option>
               <option value="réseaux">Réseaux</option>
-              <option value="evangélisation">Evangélisation</option>
-              <option value="attirer par la Presence>attirer par la Presence</option>                
+              <option value="evangélisation">Evangélisation</option>                             
               <option value="autre">Autre</option>
             </select>
           </div>
