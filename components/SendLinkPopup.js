@@ -8,8 +8,8 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phone, setPhone] = useState("");
   const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Récupération du token seulement si ce n'est pas "voir_copier"
   useEffect(() => {
     if (type === "voir_copier") return;
 
@@ -27,33 +27,77 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
     fetchToken();
   }, [type]);
 
-  const handleSend = () => {
-    let message = "";
-    let waUrl = "";
+  const handleSend = async () => {
+    setLoading(true);
 
-    if (type === "ajouter_membre") {
-      message = `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre`;
-      waUrl = `https://wa.me/${phone.trim() || ''}?text=${encodeURIComponent(
-        message + ' ' + window.location.origin + '/access/' + token
-      )}`;
-    } else if (type === "ajouter_evangelise") {
-      message = `Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé`;
-      waUrl = `https://wa.me/${phone.trim() || ''}?text=${encodeURIComponent(
-        message + ' ' + window.location.origin + '/access/' + token
-      )}`;
-    } else if (type === "voir_copier") {
-      message = `Voici le lien pour accéder à l'application : 👉 Accéder à l'application`;
-      waUrl = `https://wa.me/${phone.trim() || ''}?text=${encodeURIComponent(
-        message + ' https://soultrack-beta.vercel.app/'
-      )}`;
+    try {
+      let membreId = null;
+
+      if (type === "ajouter_membre" || type === "ajouter_evangelise") {
+        // Vérifie si le numéro existe déjà
+        const { data: existingMembre } = await supabase
+          .from("membres")
+          .select("*")
+          .eq("telephone", phone.trim())
+          .single();
+
+        if (existingMembre) {
+          membreId = existingMembre.id;
+        } else {
+          // Crée le membre
+          const { data: newMembre, error: insertError } = await supabase
+            .from("membres")
+            .insert({
+              prenom: "—",
+              nom: "—",
+              telephone: phone.trim(),
+              statut: "envoye",
+              is_whatsapp: true,
+            })
+            .select()
+            .single();
+
+          if (insertError) throw insertError;
+          membreId = newMembre.id;
+        }
+
+        // Crée le suivi
+        await supabase.from("suivis_membres").insert({
+          membre_id: membreId,
+          statut: "envoye",
+        });
+      }
+
+      // Génère le lien WhatsApp
+      let message = "";
+      if (type === "ajouter_membre") {
+        message = `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre`;
+      } else if (type === "ajouter_evangelise") {
+        message = `Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé`;
+      } else if (type === "voir_copier") {
+        message = `Voici le lien pour accéder à l'application : 👉 Accéder à l'application`;
+      }
+
+      const waUrl =
+        type === "voir_copier"
+          ? `https://wa.me/${phone.trim()}?text=${encodeURIComponent(
+              message + " https://soultrack-beta.vercel.app/"
+            )}`
+          : `https://wa.me/${phone.trim()}?text=${encodeURIComponent(
+              message + " " + window.location.origin + "/access/" + token
+            )}`;
+
+      window.open(waUrl, "_blank");
+      setShowPopup(false);
+      setPhone("");
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de l'envoi ou de l'ajout du membre : " + err.message);
+    } finally {
+      setLoading(false);
     }
-
-    window.open(waUrl, "_blank");
-    setShowPopup(false);
-    setPhone("");
   };
 
-  // Si bouton nécessite un token et qu'il est introuvable
   if ((type === "ajouter_membre" || type === "ajouter_evangelise") && !token) {
     return (
       <button
@@ -99,9 +143,10 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
               </button>
               <button
                 onClick={handleSend}
+                disabled={loading}
                 className="px-4 py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
               >
-                Envoyer
+                {loading ? "Envoi..." : "Envoyer"}
               </button>
             </div>
           </div>
@@ -110,3 +155,4 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
     </div>
   );
 }
+
