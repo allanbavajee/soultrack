@@ -77,21 +77,18 @@ export default function ListMembers() {
       let whatsappLink = "";
       if (cellule?.telephone) {
         const message = encodeURIComponent(
-          `👋 Salut ${cellule.responsable},
-
-🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
-Voici ses infos :
-
-- 👤 Nom : ${member.prenom} ${member.nom}  
-- 📱 Téléphone : ${member.telephone || "—"}   
-- 📧 Email : ${member.email || "—"}  
-- 🏙 Ville : ${member.ville || "—"}  
-- 🙏 Besoin : ${member.besoin || "—"}  
-- 📝 Infos supplémentaires : ${member.how_came || "—"}  
-
-Merci pour ton cœur ❤ et son amour ✨`
+          `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${
+            member.telephone || "—"
+          }\n- 📧 Email : ${member.email || "—"}\n- 🏙 Ville : ${
+            member.ville || "—"
+          }\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${
+            member.how_came || "—"
+          }\n\nMerci pour ton cœur ❤ et son amour ✨`
         );
-        whatsappLink = `https://wa.me/${cellule.telephone.replace(/\D/g, "")}?text=${message}`;
+        whatsappLink = `https://wa.me/${cellule.telephone.replace(
+          /\D/g,
+          ""
+        )}?text=${message}`;
       }
 
       return (
@@ -101,21 +98,22 @@ Merci pour ton cœur ❤ et son amour ✨`
           style={{ borderColor: getBorderColor(member) }}
         >
           <div>
-            <h3 className="text-lg font-bold text-gray-800 mb-1 flex justify-between">
-              <span>
+            <h3 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
+              <span className="flex items-center gap-2">
                 {member.prenom} {member.nom}
+                {member.star && <span className="text-yellow-400">⭐</span>}
                 {(member.statut === "visiteur" ||
                   member.statut === "veut rejoindre ICC") && (
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full font-semibold">
+                  <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">
                     Nouveau
                   </span>
                 )}
-                {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
               </span>
+
               <select
                 value={member.statut}
                 onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                className="border rounded-lg px-2 py-1 text-sm h-8 focus:outline-none focus:ring-1 focus:ring-indigo-400"
               >
                 <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
                 <option value="visiteur">Visiteur</option>
@@ -166,11 +164,15 @@ Merci pour ton cœur ❤ et son amour ✨`
                     onChange={(e) =>
                       handleSelectCellule(member.id, e.target.value)
                     }
-                    className="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400 truncate"
                   >
                     <option value="">-- Choisir une cellule --</option>
                     {cellules.map((c) => (
-                      <option key={c.id} value={c.cellule}>
+                      <option
+                        key={c.id}
+                        value={c.cellule}
+                        className="truncate max-w-[250px]"
+                      >
                         {c.cellule} ({c.responsable})
                       </option>
                     ))}
@@ -198,7 +200,9 @@ Merci pour ton cœur ❤ et son amour ✨`
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
     >
       {/* Retour */}
       <button
@@ -220,8 +224,8 @@ Merci pour ton cœur ❤ et son amour ✨`
 
       {/* Message inspirant */}
       <p className="text-center text-white text-lg mb-6 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et partageons
-        l’amour de Christ dans chaque action ❤️
+        Chaque personne a une valeur infinie. Ensemble, nous avançons,
+        grandissons et partageons l’amour de Christ dans chaque action ❤️
       </p>
 
       {/* Filtres */}
@@ -229,7 +233,7 @@ Merci pour ton cœur ❤ et son amour ✨`
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400 h-10"
         >
           <option value="">-- Filtrer par statut --</option>
           <option value="actif">Actif</option>
@@ -250,13 +254,7 @@ Merci pour ton cœur ❤ et son amour ✨`
           <>
             <h2 className="text-2xl text-white font-semibold mb-2">
               Nouveaux membres arrivés le{" "}
-              {nouveaux[0].created_at
-                ? new Date(nouveaux[0].created_at).toLocaleDateString("fr-FR", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })
-                : ""}
+              {new Date(nouveaux[0].created_at).toLocaleDateString()}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {renderMembers(nouveaux)}
@@ -264,12 +262,8 @@ Merci pour ton cœur ❤ et son amour ✨`
           </>
         )}
 
-        {/* Séparateur stylé */}
-        {nouveaux.length > 0 && anciens.length > 0 && (
-          <div className="relative my-12 flex items-center justify-center">
-            <div className="w-full h-1 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 animate-pulse"></div>
-          </div>
-        )}
+        {/* Ligne de séparation bleu-gris */}
+        <div className="my-8 h-1 bg-gradient-to-r from-blue-200 via-blue-300 to-blue-400 rounded-full"></div>
 
         {anciens.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
