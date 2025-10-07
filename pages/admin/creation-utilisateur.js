@@ -1,4 +1,3 @@
-// pages/admin/creation-utilisateur.js
 import { useState, useEffect } from "react";
 import supabase from "../../lib/supabaseClient";
 import { useRouter } from "next/router";
@@ -15,24 +14,22 @@ export default function CreationUtilisateur() {
 
   const router = useRouter();
 
-  // ✅ Vérification de la session et rôle Admin
   useEffect(() => {
     const checkAdmin = async () => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         router.push("/"); // pas connecté
         return;
       }
 
       const userId = session.user.id;
-
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", userId)
         .single();
 
-      if (profileError || !profile || profile.role !== "Admin") {
+      if (!profile || profile.role !== "Admin") {
         router.push("/"); // pas admin
         return;
       }
@@ -43,7 +40,6 @@ export default function CreationUtilisateur() {
     checkAdmin();
   }, [router]);
 
-  // 🔹 Définir les pages accessibles selon rôle
   const getAccessPages = (role) => {
     switch (role) {
       case "ResponsableCelluleCpe":
@@ -59,7 +55,6 @@ export default function CreationUtilisateur() {
     }
   };
 
-  // 🔹 Création d'un utilisateur
   const handleCreateUser = async () => {
     setLoading(true);
     setMessage("");
@@ -71,7 +66,6 @@ export default function CreationUtilisateur() {
     }
 
     try {
-      // 1️⃣ Créer l'utilisateur Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email,
         password,
@@ -81,7 +75,6 @@ export default function CreationUtilisateur() {
       if (authError) throw authError;
       const userId = authData.id;
 
-      // 2️⃣ Ajouter le profil
       const { error: profileError } = await supabase.from("profiles").insert([
         {
           id: userId,
@@ -115,39 +108,11 @@ export default function CreationUtilisateur() {
 
       <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-md">
         <div className="flex flex-col gap-4">
-          <input
-            type="text"
-            placeholder="Nom complet / Responsable"
-            value={nomComplet}
-            onChange={(e) => setNomComplet(e.target.value)}
-            className="border p-2 rounded"
-          />
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="border p-2 rounded"
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border p-2 rounded"
-          />
-          <input
-            type="password"
-            placeholder="Mot de passe"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border p-2 rounded"
-          />
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="border p-2 rounded"
-          >
+          <input type="text" placeholder="Nom complet / Responsable" value={nomComplet} onChange={(e) => setNomComplet(e.target.value)} className="border p-2 rounded" />
+          <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} className="border p-2 rounded" />
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="border p-2 rounded" />
+          <input type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} className="border p-2 rounded" />
+          <select value={role} onChange={(e) => setRole(e.target.value)} className="border p-2 rounded">
             <option value="">-- Choisir un rôle --</option>
             <option value="ResponsableCelluleCpe">Responsable Suivi Membres</option>
             <option value="ResponsableCellule">Responsable Cellule</option>
@@ -155,11 +120,7 @@ export default function CreationUtilisateur() {
             <option value="Admin">Admin</option>
           </select>
 
-          <button
-            onClick={handleCreateUser}
-            disabled={loading}
-            className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
+          <button onClick={handleCreateUser} disabled={loading} className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50">
             {loading ? "Création..." : "Créer l'utilisateur"}
           </button>
 
