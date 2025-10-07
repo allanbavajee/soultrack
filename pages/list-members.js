@@ -1,3 +1,4 @@
+//pages/list-members.js
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -78,9 +79,12 @@ export default function ListMembers() {
       let whatsappLink = "";
       if (cellule?.telephone) {
         const message = encodeURIComponent(
-          `Bonjour ${cellule.responsable},\nJe te contacte à propos de ${member.prenom} ${member.nom} (${member.telephone || "—"}), que tu suis dans la cellule "${cellule.cellule}".`
+          `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom || ""} ${member.nom || ""}\n- 📱 Téléphone : ${member.telephone || "—"}\n- 📧 Email : ${member.email || "—"}\n- 🏙 Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${member.how_came || "—"}\n\nMerci pour ton cœur ❤ et son amour ✨`
         );
-        whatsappLink = `https://wa.me/${cellule.telephone.replace(/\D/g, "")}?text=${message}`;
+        whatsappLink = `https://wa.me/${cellule.telephone.replace(
+          /\D/g,
+          ""
+        )}?text=${message}`;
       }
 
       return (
