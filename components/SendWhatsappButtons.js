@@ -9,9 +9,13 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [sending, setSending] = useState(false);
 
+  // ⚡ Vérifie si une chaîne est un UUID valide
+  const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+
   // ⚡ Fonction pour créer le suivi du membre
   const markAsSent = async (memberId, celluleId = null) => {
-    if (!memberId) return;
+    if (!memberId || !isValidUUID(memberId)) throw new Error("membre_id invalide");
+    if (celluleId && !isValidUUID(celluleId)) throw new Error("cellule_id invalide");
 
     try {
       // 1️⃣ Mettre le statut du membre à "actif"
@@ -43,7 +47,7 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
       }
     } catch (err) {
       console.error("Erreur markAsSent:", err);
-      throw err; // on relance pour que handleSend capte l'erreur
+      throw err;
     }
   };
 
@@ -52,6 +56,11 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
     setSending(true);
 
     try {
+      if (!profile?.id) {
+        alert("Impossible d'envoyer : membre non défini");
+        return;
+      }
+
       // 1️⃣ Générer token via RPC Supabase
       const { data, error } = await supabase.rpc("generate_access_token", {
         p_access_type: type,
@@ -77,7 +86,7 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
       window.open(waUrl, "_blank");
 
       // 4️⃣ Marquer le membre comme envoyé
-      await markAsSent(profile?.id, profile?.cellule_id);
+      await markAsSent(profile.id, profile.cellule_id);
 
       // 5️⃣ Reset du popup
       setPhoneNumber("");
