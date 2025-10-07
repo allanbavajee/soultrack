@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
+import SendWhatsappButtons from "../components/SendWhatsappButtons";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
@@ -30,6 +31,16 @@ export default function ListMembers() {
     if (!error && data) setCellules(data);
   };
 
+  // ⚡ Nouvelle fonction pour changer le statut d’un membre à "envoye"
+  const markAsSent = async (memberId) => {
+    if (!memberId) return;
+    await supabase.from("membres").update({ statut: "envoye" }).eq("id", memberId);
+    // Mise à jour locale
+    setMembers((prev) =>
+      prev.map((m) => (m.id === memberId ? { ...m, statut: "envoye" } : m))
+    );
+  };
+
   const handleChangeStatus = async (id, newStatus) => {
     await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
     setMembers((prev) =>
@@ -42,17 +53,6 @@ export default function ListMembers() {
       ...prev,
       [memberId]: celluleName,
     }));
-  };
-
-  // --- Nouvelle fonction pour marquer le membre comme envoyé ---
-  const markAsSent = async (memberId) => {
-    await supabase
-      .from("membres")
-      .update({ statut: "actif" })
-      .eq("id", memberId);
-
-    // Rafraîchir la liste
-    fetchMembers();
   };
 
   const filteredMembers = members.filter((m) => {
@@ -73,6 +73,7 @@ export default function ListMembers() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
+  // ⚡ Séparer les membres nouveaux et anciens
   const nouveaux = filteredMembers.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
@@ -84,23 +85,6 @@ export default function ListMembers() {
     membersList.map((member) => {
       const cellule =
         cellules.find((c) => c.cellule === selectedCellule[member.id]) || null;
-
-      let whatsappLink = "";
-      if (cellule?.telephone) {
-        const message = encodeURIComponent(
-          `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${
-            member.telephone || "—"
-          }\n- 📧 Email : ${member.email || "—"}\n- 🏙 Ville : ${
-            member.ville || "—"
-          }\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${
-            member.how_came || "—"
-          }\n\nMerci pour ton cœur ❤ et son amour ✨`
-        );
-        whatsappLink = `https://wa.me/${cellule.telephone.replace(
-          /\D/g,
-          ""
-        )}?text=${message}`;
-      }
 
       return (
         <div
@@ -135,81 +119,20 @@ export default function ListMembers() {
               </select>
             </h3>
 
-            <p className="text-sm text-gray-600 mb-1">
-              📱 {member.telephone || "—"}
-            </p>
-            <p
-              className="text-sm font-semibold"
-              style={{ color: getBorderColor(member) }}
-            >
+            <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
+            <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
               {member.statut || "—"}
             </p>
 
-            {/* Bouton Détails */}
-            <p
-              className="mt-2 text-blue-500 underline cursor-pointer"
-              onClick={() =>
-                setDetailsOpen((prev) => ({
-                  ...prev,
-                  [member.id]: !prev[member.id],
-                }))
-              }
-            >
-              {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-            </p>
-
-            {/* Détails */}
-            {detailsOpen[member.id] && (
-              <div className="mt-3 text-sm text-gray-700 space-y-2 border-t pt-2">
-                <p>
-                  📧 <strong>Email:</strong> {member.email || "—"}
-                </p>
-                <p>
-                  🕊️ <strong>Comment est-il venu:</strong> {member.how_came || "—"}
-                </p>
-                <p>
-                  🙏 <strong>Besoins:</strong> {member.besoin || "—"}
-                </p>
-
-                {/* Menu déroulant des cellules */}
-                <div className="mt-3">
-                  <label className="block text-gray-600 font-semibold mb-1">
-                    👥 Sélectionner une cellule :
-                  </label>
-                  <select
-                    value={selectedCellule[member.id] || ""}
-                    onChange={(e) =>
-                      handleSelectCellule(member.id, e.target.value)
-                    }
-                    className="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400 truncate"
-                  >
-                    <option value="">-- Choisir une cellule --</option>
-                    {cellules.map((c) => (
-                      <option
-                        key={c.id}
-                        value={c.cellule}
-                        className="truncate max-w-[250px]"
-                      >
-                        {c.cellule} ({c.responsable})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Bouton WhatsApp */}
-                {cellule && (
-                  <a
-                    href={whatsappLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-semibold mt-3 w-full text-center"
-                    onClick={() => markAsSent(member.id)} // <-- mise à jour du statut après envoi
-                  >
-                    📲 Envoyer à {cellule.responsable} sur WhatsApp
-                  </a>
-                )}
-              </div>
-            )}
+            {/* Bouton WhatsApp */}
+            <div className="mt-2">
+              <SendWhatsappButtons
+                type="ajouter_membre"
+                profile={member}
+                gradient="linear-gradient(to right, #34D399, #10B981)"
+                onSent={() => markAsSent(member.id)} // ⚡ ici on change le statut à "envoye"
+              />
+            </div>
           </div>
         </div>
       );
@@ -240,12 +163,6 @@ export default function ListMembers() {
         SoulTrack
       </h1>
 
-      {/* Message inspirant */}
-      <p className="text-center text-white text-lg mb-6 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons,
-        grandissons et partageons l’amour de Christ dans chaque action ❤️
-      </p>
-
       {/* Filtres */}
       <div className="flex flex-col md:flex-row items-center gap-4 mb-6 w-full max-w-md">
         <select
@@ -266,29 +183,28 @@ export default function ListMembers() {
         </span>
       </div>
 
-      {/* Listes */}
-      <div className="w-full max-w-6xl space-y-8">
-        {nouveaux.length > 0 && (
-          <>
-            <h2 className="text-2xl text-white font-semibold mb-2">
-              Nouveaux membres arrivés le{" "}
-              {new Date(nouveaux[0].created_at).toLocaleDateString()}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {renderMembers(nouveaux)}
-            </div>
-          </>
-        )}
-
-        {/* Ligne de séparation bleu-gris */}
-        <div className="my-8 h-1 bg-gradient-to-r from-blue-200 via-blue-300 to-blue-400 rounded-full"></div>
-
-        {anciens.length > 0 && (
+      {/* Nouveaux membres */}
+      {nouveaux.length > 0 && (
+        <>
+          <h2 className="text-2xl text-white font-semibold mb-2">
+            Nouveaux membres arrivés le{" "}
+            {new Date(nouveaux[0].created_at).toLocaleDateString()}
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {renderMembers(anciens)}
+            {renderMembers(nouveaux)}
           </div>
-        )}
-      </div>
+        </>
+      )}
+
+      {/* Ligne de séparation */}
+      <div className="my-8 h-1 bg-gradient-to-r from-blue-200 via-blue-300 to-blue-400 rounded-full"></div>
+
+      {/* Anciens membres */}
+      {anciens.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {renderMembers(anciens)}
+        </div>
+      )}
 
       {/* Bouton retour haut */}
       <button
@@ -297,12 +213,7 @@ export default function ListMembers() {
       >
         ↑
       </button>
-
-      {/* Verset */}
-      <p className="mt-6 mb-4 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs.
-        <br />— 1 Corinthiens 12:14 ❤️
-      </p>
     </div>
   );
 }
+
