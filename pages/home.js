@@ -96,24 +96,23 @@ export default function Home() {
         )}
 
         {profile.role === "Admin" && (
-          <Link href="/rapport" className="flex-1 min-w-[250px]">
-            <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-              <div className="text-4xl mb-1">📊</div>
-              <div className="text-lg font-bold text-gray-800 text-center">Rapport</div>
-            </div>
-          </Link>
-        )}
-
-        {/* Nouvelle carte : Créer un utilisateur */}
-        {profile.role === "Admin" && (
-          <Link href="/admin/creation-utilisateur" className="flex-1 min-w-[250px]">
-            <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-              <div className="text-4xl mb-1">➕</div>
-              <div className="text-lg font-bold text-gray-800 text-center">
-                Créer un nouvel utilisateur
+          <>
+            <Link href="/rapport" className="flex-1 min-w-[250px]">
+              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
+                <div className="text-4xl mb-1">📊</div>
+                <div className="text-lg font-bold text-gray-800 text-center">Rapport</div>
               </div>
-            </div>
-          </Link>
+            </Link>
+
+            <Link href="/admin/creation-utilisateur" className="flex-1 min-w-[250px]">
+              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
+                <div className="text-4xl mb-1">🧑‍💻</div>
+                <div className="text-lg font-bold text-gray-800 text-center">
+                  Créer un utilisateur
+                </div>
+              </div>
+            </Link>
+          </>
         )}
       </div>
 
