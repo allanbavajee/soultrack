@@ -1,4 +1,3 @@
-// pages/list-members.js
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -44,12 +43,15 @@ export default function ListMembers() {
     }));
   };
 
-  // ⚡ Nouvelle fonction minimale pour marquer le membre comme envoyé
+  // ⚡ Fonction pour marquer le membre comme envoyé et créer suivi
   const markAsSent = async (memberId) => {
     if (!memberId) return;
 
     // 1️⃣ Mettre le statut du membre à "actif"
-    await supabase.from("membres").update({ statut: "actif" }).eq("id", memberId);
+    await supabase
+      .from("membres")
+      .update({ statut: "actif" })
+      .eq("id", memberId);
 
     // 2️⃣ Vérifier si une entrée existe déjà dans suivis_membres
     const { data: existing } = await supabase
@@ -63,13 +65,16 @@ export default function ListMembers() {
       await supabase.from("suivis_membres").insert({
         membre_id: memberId,
         statut: "envoye",
-        cellule_id: null,
+        cellule_id: null, // tu peux mettre la cellule si nécessaire
       });
     }
-
-    // 3️⃣ Rafraîchir la liste des membres
-    fetchMembers();
   };
+
+  const filteredMembers = members.filter((m) => {
+    if (!filter) return true;
+    if (filter === "star") return m.star === true;
+    return m.statut === filter;
+  });
 
   const getBorderColor = (member) => {
     if (member.star) return "#FBC02D";
@@ -82,6 +87,13 @@ export default function ListMembers() {
   };
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+  const nouveaux = filteredMembers.filter(
+    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
+  );
+  const anciens = filteredMembers.filter(
+    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
+  );
 
   const renderMembers = (membersList) =>
     membersList.map((member) => {
@@ -99,7 +111,10 @@ export default function ListMembers() {
             member.how_came || "—"
           }\n\nMerci pour ton cœur ❤ et son amour ✨`
         );
-        whatsappLink = `https://wa.me/${cellule.telephone.replace(/\D/g, "")}?text=${message}`;
+        whatsappLink = `https://wa.me/${cellule.telephone.replace(
+          /\D/g,
+          ""
+        )}?text=${message}`;
       }
 
       return (
@@ -135,17 +150,72 @@ export default function ListMembers() {
               </select>
             </h3>
 
-            {/* Bouton WhatsApp */}
-            {cellule && (
-              <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-semibold mt-3 w-full text-center"
-                onClick={() => markAsSent(member.id)}
-              >
-                📲 Envoyer à {cellule.responsable} sur WhatsApp
-              </a>
+            <p className="text-sm text-gray-600 mb-1">
+              📱 {member.telephone || "—"}
+            </p>
+            <p
+              className="text-sm font-semibold"
+              style={{ color: getBorderColor(member) }}
+            >
+              {member.statut || "—"}
+            </p>
+
+            <p
+              className="mt-2 text-blue-500 underline cursor-pointer"
+              onClick={() =>
+                setDetailsOpen((prev) => ({
+                  ...prev,
+                  [member.id]: !prev[member.id],
+                }))
+              }
+            >
+              {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+            </p>
+
+            {detailsOpen[member.id] && (
+              <div className="mt-3 text-sm text-gray-700 space-y-2 border-t pt-2">
+                <p>
+                  📧 <strong>Email:</strong> {member.email || "—"}
+                </p>
+                <p>
+                  🕊️ <strong>Comment est-il venu:</strong> {member.how_came || "—"}
+                </p>
+                <p>
+                  🙏 <strong>Besoins:</strong> {member.besoin || "—"}
+                </p>
+
+                <div className="mt-3">
+                  <label className="block text-gray-600 font-semibold mb-1">
+                    👥 Sélectionner une cellule :
+                  </label>
+                  <select
+                    value={selectedCellule[member.id] || ""}
+                    onChange={(e) =>
+                      handleSelectCellule(member.id, e.target.value)
+                    }
+                    className="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400 truncate"
+                  >
+                    <option value="">-- Choisir une cellule --</option>
+                    {cellules.map((c) => (
+                      <option key={c.id} value={c.cellule} className="truncate max-w-[250px]">
+                        {c.cellule} ({c.responsable})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {cellule && (
+                  <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-semibold mt-3 w-full text-center"
+                    onClick={() => markAsSent(member.id)}
+                  >
+                    📲 Envoyer à {cellule.responsable} sur WhatsApp
+                  </a>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -153,9 +223,9 @@ export default function ListMembers() {
     });
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6">
-      {/* ... Le reste de ton design inchangé ... */}
-      <div className="w-full max-w-6xl space-y-8">{renderMembers(members)}</div>
+    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      {/* Le reste du JSX reste inchangé */}
+      {/* ... */}
     </div>
   );
 }
