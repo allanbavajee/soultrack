@@ -1,3 +1,5 @@
+//pages/admin/creation-utilisateur.js
+"use client";
 import { useState, useEffect } from "react";
 import supabase from "../../lib/supabaseClient";
 import { useRouter } from "next/router";
@@ -10,31 +12,28 @@ export default function CreationUtilisateur() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [currentUser, setCurrentUser] = useState(null);
-
   const router = useRouter();
 
   useEffect(() => {
     const checkAdmin = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
         router.push("/"); // pas connecté
         return;
       }
 
       const userId = session.user.id;
-      const { data: profile } = await supabase
+
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", userId)
         .single();
 
-      if (!profile || profile.role !== "Admin") {
+      if (profileError || !profile || profile.role !== "Admin") {
         router.push("/"); // pas admin
         return;
       }
-
-      setCurrentUser(profile);
     };
 
     checkAdmin();
@@ -42,16 +41,11 @@ export default function CreationUtilisateur() {
 
   const getAccessPages = (role) => {
     switch (role) {
-      case "ResponsableCelluleCpe":
-        return ["/suivis-membres"];
-      case "ResponsableCellule":
-        return ["/membres"];
-      case "ResponsableEvangelisation":
-        return ["/evangelisation"];
-      case "Admin":
-        return ["/admin/creation-utilisateur", "/suivis-membres", "/membres"];
-      default:
-        return [];
+      case "ResponsableCelluleCpe": return ["/suivis-membres"];
+      case "ResponsableCellule": return ["/membres"];
+      case "ResponsableEvangelisation": return ["/evangelisation"];
+      case "Admin": return ["/admin/creation-utilisateur", "/suivis-membres", "/membres"];
+      default: return [];
     }
   };
 
@@ -66,6 +60,7 @@ export default function CreationUtilisateur() {
     }
 
     try {
+      // 🔹 Créer utilisateur via Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email,
         password,
@@ -75,28 +70,23 @@ export default function CreationUtilisateur() {
       if (authError) throw authError;
       const userId = authData.id;
 
-      const { error: profileError } = await supabase.from("profiles").insert([
-        {
-          id: userId,
-          username,
-          email,
-          role,
-          responsable: nomComplet,
-          access_pages: JSON.stringify(getAccessPages(role)),
-        },
-      ]);
+      // 🔹 Ajouter profil
+      const { error: profileError } = await supabase.from("profiles").insert([{
+        id: userId,
+        username,
+        email,
+        role,
+        responsable: nomComplet,
+        access_pages: JSON.stringify(getAccessPages(role)),
+      }]);
 
       if (profileError) throw profileError;
 
       setMessage("Utilisateur créé avec succès !");
-      setUsername("");
-      setEmail("");
-      setNomComplet("");
-      setRole("");
-      setPassword("");
-    } catch (error) {
-      console.error(error);
-      setMessage("Erreur : " + (error.message || error));
+      setUsername(""); setEmail(""); setNomComplet(""); setRole(""); setPassword("");
+    } catch (err) {
+      console.error(err);
+      setMessage("Erreur : " + (err.message || err));
     }
 
     setLoading(false);
