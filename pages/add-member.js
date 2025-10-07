@@ -146,7 +146,7 @@ export default function AddMember() {
             >
               <option value="">-- Sélectionner --</option>
               <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-              <option value="a déjà mon église">A déjà mon église</option>
+              <option value="a déjà mon église">A déjà son église</option>
               <option value="visiteur">Visiteur</option>
             </select>
           </div>
@@ -166,18 +166,23 @@ export default function AddMember() {
               <option value="autre">Autre</option>
             </select>
           </div>
-
           {/* Besoin */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Besoin de la personne</label>
-            <textarea
+            <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
+            <select
               name="besoin"
               value={formData.besoin}
               onChange={handleChange}
-              rows={3}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
-          </div>
+            >
+              <option value="">-- Sélectionner --</option>
+              <option value="Finances">Finances</option>
+              <option value="Santé">Santé</option>
+              <option value="Travail">Travail</option>
+              <option value="Les Enfants">Les Enfants</option>
+              <option value="La Famille">La Famille</option>
+            </select>
+          </div>          
 
           {/* Informations supplémentaires */}
           <div>
