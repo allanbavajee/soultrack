@@ -8,7 +8,7 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phone, setPhone] = useState("");
   const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (type === "voir_copier") return;
@@ -28,73 +28,68 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
   }, [type]);
 
   const handleSend = async () => {
-    setLoading(true);
+    setSending(true);
 
     try {
-      let membreId = null;
+      let memberId = null;
 
       if (type === "ajouter_membre" || type === "ajouter_evangelise") {
-        // Vérifie si le numéro existe déjà
-        const { data: existingMembre } = await supabase
+        // Vérifier si le membre existe déjà
+        const { data: existingMember, error: memberError } = await supabase
           .from("membres")
           .select("*")
           .eq("telephone", phone.trim())
           .single();
 
-        if (existingMembre) {
-          membreId = existingMembre.id;
-        } else {
-          // Crée le membre
-          const { data: newMembre, error: insertError } = await supabase
+        if (memberError && memberError.code !== "PGRST116") throw memberError;
+
+        if (!existingMember) {
+          // Créer un nouveau membre
+          const { data: newMember, error: insertError } = await supabase
             .from("membres")
-            .insert({
-              prenom: "—",
-              nom: "—",
-              telephone: phone.trim(),
-              statut: "envoye",
-              is_whatsapp: true,
-            })
+            .insert([{ telephone: phone.trim(), statut: "envoye" }])
             .select()
             .single();
-
           if (insertError) throw insertError;
-          membreId = newMembre.id;
+          memberId = newMember.id;
+        } else {
+          memberId = existingMember.id;
         }
 
-        // Crée le suivi
-        await supabase.from("suivis_membres").insert({
-          membre_id: membreId,
-          statut: "envoye",
-        });
+        // Créer le suivi
+        const { error: suiviError } = await supabase
+          .from("suivis_membres")
+          .insert([{ membre_id: memberId, statut: "envoye" }]);
+        if (suiviError) throw suiviError;
+
+        // Mettre à jour le statut du membre pour qu'il ne soit plus "Nouveau"
+        await supabase
+          .from("membres")
+          .update({ statut: "actif" })
+          .eq("id", memberId);
       }
 
-      // Génère le lien WhatsApp
-      let message = "";
-      if (type === "ajouter_membre") {
-        message = `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre`;
-      } else if (type === "ajouter_evangelise") {
-        message = `Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé`;
-      } else if (type === "voir_copier") {
-        message = `Voici le lien pour accéder à l'application : 👉 Accéder à l'application`;
-      }
+      // Générer le lien WhatsApp
+      const link = type !== "voir_copier" ? `${window.location.origin}/access/${token}` : "https://soultrack-beta.vercel.app/";
+      const message =
+        type === "ajouter_membre"
+          ? `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre ${link}`
+          : type === "ajouter_evangelise"
+          ? `Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé ${link}`
+          : `Voici le lien pour accéder à l'application : 👉 Accéder à l'application ${link}`;
 
-      const waUrl =
-        type === "voir_copier"
-          ? `https://wa.me/${phone.trim()}?text=${encodeURIComponent(
-              message + " https://soultrack-beta.vercel.app/"
-            )}`
-          : `https://wa.me/${phone.trim()}?text=${encodeURIComponent(
-              message + " " + window.location.origin + "/access/" + token
-            )}`;
+      const waUrl = phone
+        ? `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`
+        : `https://wa.me/?text=${encodeURIComponent(message)}`;
 
       window.open(waUrl, "_blank");
-      setShowPopup(false);
       setPhone("");
+      setShowPopup(false);
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de l'envoi ou de l'ajout du membre : " + err.message);
+      alert("Erreur lors de l'envoi du lien.");
     } finally {
-      setLoading(false);
+      setSending(false);
     }
   };
 
@@ -143,10 +138,10 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
               </button>
               <button
                 onClick={handleSend}
-                disabled={loading}
+                disabled={sending}
                 className="px-4 py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
               >
-                {loading ? "Envoi..." : "Envoyer"}
+                {sending ? "Envoi..." : "Envoyer"}
               </button>
             </div>
           </div>
@@ -155,4 +150,6 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
     </div>
   );
 }
+
+  
 
