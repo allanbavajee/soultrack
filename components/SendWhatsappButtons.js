@@ -9,65 +9,57 @@ export default function SendWhatsappButtons({ type, gradient }) {
   const [sending, setSending] = useState(false);
 
   const handleSend = async () => {
+    if (!phoneNumber) return alert("Veuillez entrer un numéro WhatsApp.");
     setSending(true);
 
     try {
-      // Générer token via RPC Supabase
-      const { data, error } = await supabase.rpc("generate_access_token", {
-        p_access_type: type,
-      });
+      // 1️⃣ Vérifier si le membre existe déjà
+      const { data: existingMember } = await supabase
+        .from("membres")
+        .select("*")
+        .eq("telephone", phoneNumber.trim())
+        .single();
 
-      if (error) throw error;
-      const token = data?.token;
-      if (!token) throw new Error("Token introuvable.");
-
-      // Créer le membre + suivi si c'est un nouveau membre
-      let memberId = null;
-      if (type === "ajouter_membre" || type === "ajouter_evangelise") {
-        const { data: existingMember } = await supabase
+      let memberId;
+      if (!existingMember) {
+        const { data: newMember } = await supabase
           .from("membres")
-          .select("*")
-          .eq("telephone", phoneNumber.trim())
+          .insert([{ telephone: phoneNumber.trim(), statut: "actif" }])
+          .select()
           .single();
-
-        if (!existingMember) {
-          const { data: newMember } = await supabase
-            .from("membres")
-            .insert([{ telephone: phoneNumber.trim(), statut: "envoye" }])
-            .select()
-            .single();
-          memberId = newMember.id;
-        } else {
-          memberId = existingMember.id;
-        }
-
-        await supabase
-          .from("suivis_membres")
-          .insert([{ membre_id: memberId, statut: "envoye" }]);
-
-        // Mettre à jour le statut pour qu'il devienne actif
+        memberId = newMember.id;
+      } else {
+        memberId = existingMember.id;
         await supabase
           .from("membres")
           .update({ statut: "actif" })
           .eq("id", memberId);
       }
 
-      const link = `${window.location.origin}/access/${token}`;
+      // 2️⃣ Créer un suivi
+      await supabase.from("suivis_membres").insert([
+        {
+          membre_id: memberId,
+          statut: "envoye",
+        },
+      ]);
+
+      // 3️⃣ Ouvrir WhatsApp
       const message =
         type === "ajouter_membre"
-          ? `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre ${link}`
-          : `Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé ${link}`;
+          ? `Voici le lien pour ajouter un nouveau membre : 👉 https://soultrack-beta.vercel.app/access/${memberId}`
+          : `Voici le lien pour ajouter un nouvel évangélisé : 👉 https://soultrack-beta.vercel.app/access/${memberId}`;
 
-      const waUrl = phoneNumber
-        ? `https://wa.me/${phoneNumber.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`
-        : `https://wa.me/?text=${encodeURIComponent(message)}`;
-
+      const waUrl = `https://wa.me/${phoneNumber.replace(/\D/g, "")}?text=${encodeURIComponent(
+        message
+      )}`;
       window.open(waUrl, "_blank");
+
       setPhoneNumber("");
       setShowPopup(false);
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de l'envoi du lien.");
+      alert("Erreur lors de l'envoi du lien et mise à jour du membre.");
     } finally {
       setSending(false);
     }
@@ -80,7 +72,9 @@ export default function SendWhatsappButtons({ type, gradient }) {
         style={{ background: gradient }}
         className="text-white font-bold py-2 px-4 rounded-xl w-full transition-all duration-200"
       >
-        {type === "ajouter_membre" ? "Envoyer l'appli – Nouveau membre" : "Envoyer l'appli – Évangélisé"}
+        {type === "ajouter_membre"
+          ? "Envoyer l'appli – Nouveau membre"
+          : "Envoyer l'appli – Évangélisé"}
       </button>
 
       {showPopup && (
@@ -93,7 +87,9 @@ export default function SendWhatsappButtons({ type, gradient }) {
               ❌
             </button>
 
-            <h3 className="text-lg font-semibold text-gray-800 text-center">Saisir le numéro WhatsApp</h3>
+            <h3 className="text-lg font-semibold text-gray-800 text-center">
+              Saisir le numéro WhatsApp
+            </h3>
             <input
               type="tel"
               placeholder="+230XXXXXXXX"
@@ -115,3 +111,4 @@ export default function SendWhatsappButtons({ type, gradient }) {
     </div>
   );
 }
+
