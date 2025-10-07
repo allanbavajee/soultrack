@@ -8,60 +8,58 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [sending, setSending] = useState(false);
+  const [statusMessage, setStatusMessage] = useState(""); // ✅ ou ❌ message
 
   // ⚡ Vérifie si une chaîne est un UUID valide
-  const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+  const isValidUUID = (str) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
 
   // ⚡ Fonction pour créer le suivi du membre
   const markAsSent = async (memberId, celluleId = null) => {
     if (!memberId || !isValidUUID(memberId)) throw new Error("membre_id invalide");
     if (celluleId && !isValidUUID(celluleId)) throw new Error("cellule_id invalide");
 
-    try {
-      // 1️⃣ Mettre le statut du membre à "actif"
-      const { error: updateError } = await supabase
-        .from("membres")
-        .update({ statut: "actif" })
-        .eq("id", memberId);
-      if (updateError) throw updateError;
+    // Mettre le statut du membre à "actif"
+    const { error: updateError } = await supabase
+      .from("membres")
+      .update({ statut: "actif" })
+      .eq("id", memberId);
+    if (updateError) throw updateError;
 
-      // 2️⃣ Vérifier si le suivi existe déjà
-      const { data: existing, error: selectError } = await supabase
+    // Vérifier si le suivi existe déjà
+    const { data: existing, error: selectError } = await supabase
+      .from("suivis_membres")
+      .select("*")
+      .eq("membre_id", memberId)
+      .eq("cellule_id", celluleId)
+      .maybeSingle();
+    if (selectError) throw selectError;
+
+    // Créer le suivi si inexistant
+    if (!existing) {
+      const { error: insertError } = await supabase
         .from("suivis_membres")
-        .select("*")
-        .eq("membre_id", memberId)
-        .eq("cellule_id", celluleId)
-        .maybeSingle();
-      if (selectError) throw selectError;
-
-      // 3️⃣ Créer le suivi si inexistant
-      if (!existing) {
-        const { error: insertError } = await supabase
-          .from("suivis_membres")
-          .insert({
-            membre_id: memberId,
-            cellule_id: celluleId,
-            statut: "envoye",
-          });
-        if (insertError) throw insertError;
-      }
-    } catch (err) {
-      console.error("Erreur markAsSent:", err);
-      throw err;
+        .insert({
+          membre_id: memberId,
+          cellule_id: celluleId,
+          statut: "envoye",
+        });
+      if (insertError) throw insertError;
     }
   };
 
   // ⚡ Fonction principale d'envoi
   const handleSend = async () => {
     setSending(true);
+    setStatusMessage("");
 
     try {
-      if (!profile?.id) {
-        alert("Impossible d'envoyer : membre non défini");
+      if (!profile?.id || !profile?.cellule_id) {
+        setStatusMessage("❌ Identifiants manquants");
         return;
       }
 
-      // 1️⃣ Générer token via RPC Supabase
+      // Générer token via RPC Supabase
       const { data, error } = await supabase.rpc("generate_access_token", {
         p_access_type: type,
       });
@@ -70,14 +68,14 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
       const token = data?.token;
       if (!token) throw new Error("Token introuvable.");
 
-      // 2️⃣ Préparer le lien et le message WhatsApp
+      // Préparer le lien et le message WhatsApp
       const link = `https://soultrack-beta.vercel.app/access/${token}`;
       const message =
         type === "ajouter_membre"
           ? `Voici le lien pour ajouter un nouveau membre : 👉 ${link}`
           : `Voici le lien pour ajouter un nouvel évangélisé : 👉 ${link}`;
 
-      // 3️⃣ Ouvrir WhatsApp
+      // Ouvrir WhatsApp
       const cleanedPhone = phoneNumber.replace(/\D/g, "");
       const waUrl = cleanedPhone
         ? `https://wa.me/${cleanedPhone}?text=${encodeURIComponent(message)}`
@@ -85,15 +83,16 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
 
       window.open(waUrl, "_blank");
 
-      // 4️⃣ Marquer le membre comme envoyé
+      // Marquer le membre comme envoyé
       await markAsSent(profile.id, profile.cellule_id);
 
-      // 5️⃣ Reset du popup
+      // Succès
+      setStatusMessage("✅ Lien envoyé et suivi créé !");
       setPhoneNumber("");
       setShowPopup(false);
     } catch (err) {
       console.error("Erreur handleSend:", err);
-      alert("Impossible de créer le suivi. Envoi annulé.");
+      setStatusMessage("❌ Impossible de créer le suivi. Envoi annulé.");
     } finally {
       setSending(false);
     }
@@ -110,6 +109,12 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
           ? "Envoyer l'appli – Nouveau membre"
           : "Envoyer l'appli – Évangélisé"}
       </button>
+
+      {statusMessage && (
+        <p className={`mt-2 font-semibold ${statusMessage.startsWith("✅") ? "text-green-600" : "text-red-600"}`}>
+          {statusMessage}
+        </p>
+      )}
 
       {showPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
