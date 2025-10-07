@@ -1,7 +1,9 @@
 // pages/list-members.js
+// pages/list-members.js
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
+import SendWhatsappButtons from "../components/SendWhatsappButtons";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
@@ -30,6 +32,7 @@ export default function ListMembers() {
     if (!error && data) setCellules(data);
   };
 
+  // Mise à jour du statut
   const handleChangeStatus = async (id, newStatus) => {
     await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
     setMembers((prev) =>
@@ -63,7 +66,9 @@ export default function ListMembers() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const nouveaux = filteredMembers.filter(
-    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
+    (m) =>
+      (m.statut === "visiteur" || m.statut === "veut rejoindre ICC") &&
+      m.statut !== "actif"
   );
   const anciens = filteredMembers.filter(
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
@@ -103,11 +108,12 @@ export default function ListMembers() {
                 {member.prenom} {member.nom}
                 {member.star && <span className="text-yellow-400">⭐</span>}
                 {(member.statut === "visiteur" ||
-                  member.statut === "veut rejoindre ICC") && (
-                  <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">
-                    Nouveau
-                  </span>
-                )}
+                  member.statut === "veut rejoindre ICC") &&
+                  member.statut !== "actif" && (
+                    <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">
+                      Nouveau
+                    </span>
+                  )}
               </span>
 
               <select
@@ -150,9 +156,15 @@ export default function ListMembers() {
             {/* Détails */}
             {detailsOpen[member.id] && (
               <div className="mt-3 text-sm text-gray-700 space-y-2 border-t pt-2">
-                <p>📧 <strong>Email:</strong> {member.email || "—"}</p>
-                <p>🕊️ <strong>Comment est-il venu:</strong> {member.how_came || "—"}</p>
-                <p>🙏 <strong>Besoins:</strong> {member.besoin || "—"}</p>
+                <p>
+                  📧 <strong>Email:</strong> {member.email || "—"}
+                </p>
+                <p>
+                  🕊️ <strong>Comment est-il venu:</strong> {member.how_came || "—"}
+                </p>
+                <p>
+                  🙏 <strong>Besoins:</strong> {member.besoin || "—"}
+                </p>
 
                 {/* Menu déroulant des cellules */}
                 <div className="mt-3">
@@ -181,14 +193,12 @@ export default function ListMembers() {
 
                 {/* Bouton WhatsApp */}
                 {cellule && (
-                  <a
-                    href={whatsappLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-semibold mt-3 w-full text-center"
-                  >
-                    📲 Envoyer à {cellule.responsable} sur WhatsApp
-                  </a>
+                  <SendWhatsappButtons
+                    type="ajouter_membre"
+                    profile={member}
+                    gradient="linear-gradient(to right, #34D399, #10B981)"
+                    refreshMembers={fetchMembers} // Rafraîchit la liste après envoi
+                  />
                 )}
               </div>
             )}
@@ -262,7 +272,6 @@ export default function ListMembers() {
           </>
         )}
 
-        {/* Ligne de séparation bleu-gris */}
         <div className="my-8 h-1 bg-gradient-to-r from-blue-200 via-blue-300 to-blue-400 rounded-full"></div>
 
         {anciens.length > 0 && (
@@ -272,7 +281,6 @@ export default function ListMembers() {
         )}
       </div>
 
-      {/* Bouton retour haut */}
       <button
         onClick={scrollToTop}
         className="fixed bottom-5 right-5 text-white text-2xl font-bold bg-transparent hover:text-gray-200"
@@ -280,7 +288,6 @@ export default function ListMembers() {
         ↑
       </button>
 
-      {/* Verset */}
       <p className="mt-6 mb-4 text-center text-white text-lg font-handwriting-light">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs.
         <br />— 1 Corinthiens 12:14 ❤️
