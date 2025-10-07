@@ -1,4 +1,4 @@
-//pages/suivis-membres.js
+// pages/suivis-membres.js
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -35,13 +35,21 @@ export default function SuivisMembres() {
         ),
         cellule:cellule_id (id, cellule, responsable, telephone)
       `)
-      .order("created_at", { ascending: false })
-      .in("membre.statut", ["visiteur", "veut rejoindre ICC"]); // <-- filtre obligatoire
+      .order("created_at", { ascending: false });
 
     if (celluleId) query = query.eq("cellule_id", celluleId);
 
     const { data, error } = await query;
-    if (!error && data) setSuivis(data);
+    if (!error && data) {
+      // 🔹 Filtrer uniquement les membres "visiteur" ou "veut rejoindre ICC"
+      setSuivis(
+        data.filter(
+          (s) =>
+            s.membre?.statut === "visiteur" ||
+            s.membre?.statut === "veut rejoindre ICC"
+        )
+      );
+    }
   };
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
@@ -134,4 +142,3 @@ export default function SuivisMembres() {
     </div>
   );
 }
-
