@@ -61,6 +61,41 @@ export default function ListMembers() {
   const handleWhatsAppSingle = async (member, cellule) => {
     if (!cellule) return;
 
+    // ⚡ Vérifier si le suivi existe déjà
+    const { data: existing, error: errCheck } = await supabase
+      .from("suivis_membres")
+      .select("*")
+      .eq("membre_id", member.id)
+      .eq("cellule_id", cellule.id)
+      .single();
+
+    if (errCheck && errCheck.code !== "PGRST116") console.error("Erreur check suivi:", errCheck);
+
+    if (!existing && ["visiteur", "veut rejoindre ICC"].includes(member.statut)) {
+      // ⚡ Créer l'entrée dans suivis_membres avant WhatsApp
+      const { error: insertError } = await supabase.from("suivis_membres").insert([
+        {
+          membre_id: member.id,
+          cellule_id: cellule.id,
+          statut: "envoye",
+          created_at: new Date(),
+        },
+      ]);
+
+      if (insertError) {
+        console.error("Erreur insertion suivi:", insertError);
+        alert("Impossible de créer le suivi. Envoi annulé.");
+        return;
+      }
+    }
+
+    // Mettre à jour le statut du membre
+    await supabase.from("membres").update({ statut: "actif" }).eq("id", member.id);
+    setMembers((prev) =>
+      prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m))
+    );
+
+    // Préparer et ouvrir WhatsApp
     const prenomResponsable = cellule.responsable.split(" ")[0];
     const message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
 Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}  
@@ -74,27 +109,9 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
       `https://wa.me/${cellule.telephone}?text=${encodeURIComponent(message)}`,
       "_blank"
     );
-
-    // Mettre à jour le statut du membre
-    await supabase.from("membres").update({ statut: "actif" }).eq("id", member.id);
-    setMembers((prev) =>
-      prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m))
-    );
-
-    // === Ajout dans suivis_membres si visiteur ou veut rejoindre ICC
-    if (["visiteur", "veut rejoindre ICC"].includes(member.statut)) {
-      await supabase.from("suivis_membres").insert([
-        {
-          membre_id: member.id,
-          cellule_id: cellule.id,
-          statut: "envoye",
-          created_at: new Date(),
-        },
-      ]);
-    }
   };
 
-  // Séparer nouveaux et anciens
+  // Séparer nouveaux et anciens membres
   const nouveaux = filteredMembers.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
@@ -107,7 +124,6 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
       className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* Retour */}
       <button
         onClick={() => window.history.back()}
         className="self-start mb-4 flex items-center text-white font-semibold hover:text-gray-200"
@@ -115,22 +131,18 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
         ← Retour
       </button>
 
-      {/* Logo */}
       <div className="mt-2 mb-2">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
 
-      {/* Titre */}
       <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
         SoulTrack
       </h1>
 
-      {/* Message */}
       <p className="text-center text-white text-lg mb-6 font-handwriting-light">
         Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et partageons l’amour de Christ dans chaque action ❤️
       </p>
 
-      {/* Filtre + compte */}
       <div className="flex flex-col md:flex-row items-center gap-4 mb-4 w-full max-w-md">
         <select
           value={filter}
@@ -148,7 +160,6 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
         <span className="text-white italic text-opacity-80">Résultats: {countFiltered}</span>
       </div>
 
-      {/* Liste des membres */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
         {nouveaux.map((member) => (
           <div
@@ -192,7 +203,6 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
                 <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
                 <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
 
-                {/* Cellule + WhatsApp */}
                 <label className="block mb-1 font-semibold mt-2">Choisir une cellule :</label>
                 <select
                   className="w-full p-2 border rounded-lg"
@@ -251,6 +261,23 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
             <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
               {member.statut || "—"}
             </p>
+            <p
+              className="mt-2 text-blue-500 underline cursor-pointer"
+              onClick={() =>
+                setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
+              }
+            >
+              {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+            </p>
+            {detailsOpen[member.id] && (
+              <div className="mt-2 text-sm text-gray-700 space-y-1">
+                <p>Email : {member.email || "—"}</p>
+                <p>Besoin : {member.besoin || "—"}</p>
+                <p>Ville : {member.ville || "—"}</p>
+                <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+                <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
+              </div>
+            )}
           </div>
         ))}
       </div>
