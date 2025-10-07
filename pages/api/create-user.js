@@ -1,21 +1,20 @@
 // pages/api/create-user.js
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // ⚠️ Service Role Key (jamais exposée au front)
-);
+import supabase from "../../lib/supabaseClient";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
-  const { email, password, username, nomComplet, role } = req.body;
+  const { username, email, nomComplet, role, password } = req.body;
+
+  if (!username || !email || !nomComplet || !role || !password) {
+    return res.status(400).json({ error: "Tous les champs sont obligatoires" });
+  }
 
   try {
-    // 1️⃣ Créer l’utilisateur dans Auth
-    const { data: user, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    // 1️⃣ Créer l'utilisateur Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
@@ -23,10 +22,10 @@ export default async function handler(req, res) {
 
     if (authError) throw authError;
 
-    const userId = user.user.id;
+    const userId = authData.id;
 
-    // 2️⃣ Ajouter profil
-    const { error: profileError } = await supabaseAdmin.from("profiles").insert([
+    // 2️⃣ Créer le profil dans Supabase
+    const { error: profileError } = await supabase.from("profiles").insert([
       {
         id: userId,
         username,
@@ -39,9 +38,10 @@ export default async function handler(req, res) {
 
     if (profileError) throw profileError;
 
-    res.status(200).json({ success: true, message: "Utilisateur créé avec succès" });
+    return res.status(200).json({ message: "Utilisateur créé avec succès !" });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error(error);
+    return res.status(500).json({ error: error.message || "Erreur serveur" });
   }
 }
 
