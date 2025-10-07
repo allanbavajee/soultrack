@@ -35,11 +35,7 @@ export default function Home() {
   }, [router]);
 
   if (loadingProfile) {
-    return (
-      <p className="text-center mt-10 text-gray-600">
-        Chargement du profil...
-      </p>
-    );
+    return <p className="text-center mt-10 text-gray-600">Chargement du profil...</p>;
   }
 
   if (!profile) {
@@ -47,10 +43,7 @@ export default function Home() {
       <div className="text-center mt-10 text-red-500">
         Profil introuvable. Connecte-toi.
         <br />
-        <a
-          href="/"
-          className="text-green-600 font-bold underline mt-2 inline-block"
-        >
+        <a href="/" className="text-green-600 font-bold underline mt-2 inline-block">
           Retour à la connexion
         </a>
       </div>
@@ -67,19 +60,19 @@ export default function Home() {
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
 
-      {/* Titre */}
+      {/* Titre SoulTrack */}
       <h1 className="text-5xl sm:text-5xl font-handwriting text-white text-center mt-1">
         SoulTrack
       </h1>
 
-      {/* Message */}
+      {/* Message en dessous du titre */}
       <div className="mt-1 mb-2 text-center text-white text-lg font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous
-        grandissons, et nous partageons l’amour de Christ dans chaque action ❤️
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous grandissons,
+        et nous partageons l’amour de Christ dans chaque action ❤️
       </div>
 
       {/* Cartes principales */}
-      <div className="flex flex-col md:flex-row gap-3 justify-center w-full max-w-5xl mt-2 flex-wrap">
+      <div className="flex flex-col md:flex-row flex-wrap gap-3 justify-center w-full max-w-5xl mt-2">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <Link href="/membres-hub" className="flex-1 min-w-[250px]">
             <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
@@ -103,33 +96,28 @@ export default function Home() {
         )}
 
         {profile.role === "Admin" && (
-          <>
-            <Link href="/rapport" className="flex-1 min-w-[250px]">
-              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-                <div className="text-4xl mb-1">📊</div>
-                <div className="text-lg font-bold text-gray-800 text-center">
-                  Rapport
-                </div>
-              </div>
-            </Link>
+          <Link href="/rapport" className="flex-1 min-w-[250px]">
+            <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
+              <div className="text-4xl mb-1">📊</div>
+              <div className="text-lg font-bold text-gray-800 text-center">Rapport</div>
+            </div>
+          </Link>
+        )}
 
-            {/* ✅ Nouvelle carte “Créer un utilisateur” */}
-            <Link
-              href="/admin/creation-utilisateur"
-              className="flex-1 min-w-[250px]"
-            >
-              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-                <div className="text-4xl mb-1">➕</div>
-                <div className="text-lg font-bold text-gray-800 text-center">
-                  Créer un utilisateur
-                </div>
+        {/* Nouvelle carte : Créer un utilisateur */}
+        {profile.role === "Admin" && (
+          <Link href="/admin/creation-utilisateur" className="flex-1 min-w-[250px]">
+            <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
+              <div className="text-4xl mb-1">➕</div>
+              <div className="text-lg font-bold text-gray-800 text-center">
+                Créer un nouvel utilisateur
               </div>
-            </Link>
-          </>
+            </div>
+          </Link>
         )}
       </div>
 
-      {/* Boutons popup */}
+      {/* Boutons avec popup */}
       <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
         {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
           <SendLinkPopup
@@ -151,15 +139,14 @@ export default function Home() {
           <SendLinkPopup
             label="Voir / Copier liens…"
             type="voir_copier"
-            buttonColor="from-[#FF5F6D] to-[#FFC371]"
+            buttonColor="from-[#005AA7] to-[#FFFDE4]"
           />
         )}
       </div>
 
       {/* Message final */}
       <div className="mt-4 mb-2 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs.
-        1 Corinthiens 12:14 ❤️
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
       </div>
     </div>
   );
