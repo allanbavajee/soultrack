@@ -41,7 +41,6 @@ export default function SuivisMembres() {
     const { data, error } = await query.order("created_at", { ascending: false });
 
     if (!error) {
-      // ⚡ Filtrer uniquement les membres "visiteur" ou "veut rejoindre ICC"
       const filtered = data.filter(
         (s) =>
           s.membre &&
@@ -54,82 +53,37 @@ export default function SuivisMembres() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      {/* Retour */}
-      <button
-        onClick={() => window.history.back()}
-        className="self-start mb-4 flex items-center text-white font-semibold hover:text-gray-200"
-      >
-        ← Retour
-      </button>
+    <div className="min-h-screen p-6 flex flex-col items-center">
+      <h1 className="text-2xl font-bold mb-6">Suivis des membres</h1>
 
-      {/* Logo */}
-      <div className="mt-2 mb-2">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+      <div className="w-full max-w-6xl">
+        {suivis.map((s) => (
+          <div
+            key={s.id}
+            className="bg-white p-4 mb-4 rounded-xl shadow flex justify-between items-center border-l-4"
+            style={{
+              borderColor:
+                s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC"
+                  ? "#34A853"
+                  : "#ccc",
+            }}
+          >
+            <div>
+              <p className="font-semibold">{s.membre.prenom} {s.membre.nom}</p>
+              <p className="text-sm text-gray-600">{s.membre.telephone || "—"}</p>
+              <p className="text-sm text-gray-500">Statut : {s.membre.statut}</p>
+              <p className="text-sm text-gray-400">Date : {new Date(s.created_at).toLocaleString()}</p>
+            </div>
+            <div>
+              {s.cellule && (
+                <p className="text-sm font-semibold text-indigo-600">
+                  {s.cellule.cellule} ({s.cellule.responsable})
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
-
-      {/* Titre */}
-      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
-        Suivi des membres
-      </h1>
-
-      {/* Filtre cellule */}
-      <div className="mb-6 max-w-md w-full">
-        <label className="block mb-2 text-white font-semibold">Filtrer par cellule :</label>
-        <select
-          className="w-full p-2 border rounded-lg"
-          value={selectedCellule}
-          onChange={(e) => setSelectedCellule(e.target.value)}
-        >
-          <option value="">-- Toutes les cellules --</option>
-          {cellules.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.cellule} ({c.responsable})
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Tableau des suivis */}
-      <div className="overflow-x-auto w-full max-w-5xl mb-6">
-        <table className="table-auto w-full border-collapse border border-white text-center">
-          <thead>
-            <tr className="bg-white bg-opacity-20 text-gray-800">
-              <th className="border px-4 py-2">Nom</th>
-              <th className="border px-4 py-2">Prénom</th>
-              <th className="border px-4 py-2">Cellule</th>
-              <th className="border px-4 py-2">Statut</th>
-              <th className="border px-4 py-2">Détails</th>
-            </tr>
-          </thead>
-          <tbody className="text-gray-800">
-            {suivis.map((s) => (
-              <tr key={s.id}>
-                <td className="border px-4 py-2">{s.membre.nom}</td>
-                <td className="border px-4 py-2">{s.membre.prenom}</td>
-                <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
-                <td className="border px-4 py-2">{s.statut}</td>
-                <td className="border px-4 py-2">
-                  <span className="text-blue-600 underline cursor-pointer hover:text-blue-800">
-                    Afficher
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Flèche pour remonter en haut */}
-      <button
-        onClick={scrollToTop}
-        className="fixed bottom-5 right-5 text-white text-2xl font-bold bg-transparent hover:text-gray-200"
-      >
-        ↑
-      </button>
     </div>
   );
 }
