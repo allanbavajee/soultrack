@@ -37,10 +37,11 @@ export default function SuivisMembres() {
         statut,
         created_at,
         membre:membre_id (
-          id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp, statut
+          id, prenom, nom, telephone, email, ville, infos_supplementaires, besoin, statut
         ),
         cellule:cellule_id (id, cellule, responsable, telephone)
-      `);
+      `)
+      .in("membre.statut", ["visiteur", "veut rejoindre ICC"]); // 🔥 filtre
 
     if (cellule) query = query.eq("cellule_id", cellule);
 
@@ -55,7 +56,7 @@ export default function SuivisMembres() {
         id,
         statut,
         membre:membre_id (
-          id, prenom, nom, telephone, email, ville, infos_supplementaires, is_whatsapp
+          id, prenom, nom, telephone, email, ville, infos_supplementaires, besoin
         ),
         cellule:cellule_id (id, cellule)
       `)
@@ -67,7 +68,7 @@ export default function SuivisMembres() {
 
   const openPopup = (member) => {
     setCurrentMember(member);
-    setNewStatus(member.statut); // statut actuel ("envoye", "en cours", etc.)
+    setNewStatus(member.statut);
     setShowPopup(true);
   };
 
@@ -81,7 +82,6 @@ export default function SuivisMembres() {
       .update({ statut: newStatus })
       .eq("id", currentMember.id);
 
-    // si validé "actif" → mettre aussi le membre actif dans la table membres
     if (newStatus === "actif") {
       await supabase
         .from("membres")
@@ -166,24 +166,7 @@ export default function SuivisMembres() {
                 <td className="border px-4 py-2">{s.membre.nom}</td>
                 <td className="border px-4 py-2">{s.membre.prenom}</td>
                 <td className="border px-4 py-2">{s.cellule?.cellule || "—"}</td>
-                <td className="border px-4 py-2">
-                  {/* Badge coloré en fonction du statut */}
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      s.statut === "envoye"
-                        ? "bg-blue-200 text-blue-800"
-                        : s.statut === "en cours"
-                        ? "bg-yellow-200 text-yellow-800"
-                        : s.statut === "actif"
-                        ? "bg-green-200 text-green-800"
-                        : s.statut === "refus"
-                        ? "bg-red-200 text-red-800"
-                        : "bg-gray-200 text-gray-800"
-                    }`}
-                  >
-                    {s.statut}
-                  </span>
-                </td>
+                <td className="border px-4 py-2">{s.statut}</td>
                 <td className="border px-4 py-2">
                   <span
                     className="text-blue-600 underline cursor-pointer hover:text-blue-800"
@@ -212,11 +195,11 @@ export default function SuivisMembres() {
               ✖
             </button>
             <div className="space-y-1 text-gray-700">
-              <p>📱 {currentMember.membre.telephone}</p>
+              <p>📱 {currentMember.membre.telephone || "—"}</p>
               <p>📧 {currentMember.membre.email || "—"}</p>
               <p>🏙️ {currentMember.membre.ville || "—"}</p>
+              <p>🙏 {currentMember.membre.besoin || "—"}</p>
               <p>📝 {currentMember.membre.infos_supplementaires || "—"}</p>
-              <p>WhatsApp : {currentMember.membre.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
               <p>Cellule : {currentMember.cellule?.cellule || "—"}</p>
             </div>
             <div className="mt-4">
@@ -224,7 +207,7 @@ export default function SuivisMembres() {
               <select
                 className="w-full p-2 border rounded-lg"
                 value={newStatus}
-                onChange={handleStatusChange}
+                onChange={(e) => setNewStatus(e.target.value)}
               >
                 <option value="envoye">Envoyé</option>
                 <option value="en cours">En cours</option>
