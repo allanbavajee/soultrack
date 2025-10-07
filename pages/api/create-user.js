@@ -7,13 +7,11 @@ export default async function handler(req, res) {
   }
 
   const { username, email, nomComplet, role, password } = req.body;
-
   if (!username || !email || !nomComplet || !role || !password) {
     return res.status(400).json({ error: "Tous les champs sont obligatoires !" });
   }
 
   try {
-    // 1️⃣ Créer l'utilisateur dans Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -23,7 +21,6 @@ export default async function handler(req, res) {
     if (authError) throw authError;
     const userId = authData.id;
 
-    // 2️⃣ Ajouter le profil dans la table profiles
     const { error: profileError } = await supabase.from("profiles").insert([
       {
         id: userId,
@@ -58,3 +55,4 @@ function getAccessPages(role) {
       return [];
   }
 }
+
