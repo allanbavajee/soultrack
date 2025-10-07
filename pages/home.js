@@ -1,4 +1,4 @@
-//pages/home.js
+/* pages/home.js */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -50,6 +50,42 @@ export default function Home() {
     );
   }
 
+  const cards = [];
+
+  if (profile.role === "ResponsableIntegration" || profile.role === "Admin") {
+    cards.push({
+      href: "/membres-hub",
+      icon: "👤",
+      label: "Suivis des membres",
+      borderColor: "border-blue-500",
+    });
+  }
+
+  if (profile.role === "ResponsableEvangelisation" || profile.role === "Admin") {
+    cards.push({
+      href: "/evangelisation-hub",
+      icon: "🙌",
+      label: "Évangélisation",
+      borderColor: "border-green-500",
+    });
+  }
+
+  if (profile.role === "Admin") {
+    cards.push({
+      href: "/rapport",
+      icon: "📊",
+      label: "Rapport",
+      borderColor: "border-red-500",
+    });
+
+    cards.push({
+      href: "/admin/creation-utilisateur",
+      icon: "👤➕",
+      label: "Créer un utilisateur",
+      borderColor: "border-cyan-500",
+    });
+  }
+
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-between p-6 gap-2"
@@ -67,53 +103,21 @@ export default function Home() {
 
       {/* Message en dessous du titre */}
       <div className="mt-1 mb-2 text-center text-white text-lg font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous grandissons,
-        et nous partageons l’amour de Christ dans chaque action ❤️
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous grandissons, et nous partageons l’amour de Christ dans chaque action ❤️
       </div>
 
       {/* Cartes principales */}
-      <div className="flex flex-col md:flex-row flex-wrap gap-3 justify-center w-full max-w-5xl mt-2">
-        {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
-          <Link href="/membres-hub" className="flex-1 min-w-[250px]">
-            <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-              <div className="text-4xl mb-1">👤</div>
-              <div className="text-lg font-bold text-gray-800 text-center">
-                Suivis des membres
-              </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 w-full max-w-5xl mt-2">
+        {cards.map((card, index) => (
+          <Link key={index} href={card.href} className="w-full">
+            <div
+              className={`w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center p-3 hover:shadow-lg transition-all duration-200 cursor-pointer border-t-4 ${card.borderColor}`}
+            >
+              <div className="text-4xl mb-1">{card.icon}</div>
+              <div className="text-lg font-bold text-gray-800 text-center">{card.label}</div>
             </div>
           </Link>
-        )}
-
-        {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
-          <Link href="/evangelisation-hub" className="flex-1 min-w-[250px]">
-            <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-              <div className="text-4xl mb-1">🙌</div>
-              <div className="text-lg font-bold text-gray-800 text-center">
-                Évangélisation
-              </div>
-            </div>
-          </Link>
-        )}
-
-        {profile.role === "Admin" && (
-          <>
-            <Link href="/rapport" className="flex-1 min-w-[250px]">
-              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-                <div className="text-4xl mb-1">📊</div>
-                <div className="text-lg font-bold text-gray-800 text-center">Rapport</div>
-              </div>
-            </Link>
-
-            <Link href="/admin/creation-utilisateur" className="flex-1 min-w-[250px]">
-              <div className="w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
-                <div className="text-4xl mb-1">🧑‍💻</div>
-                <div className="text-lg font-bold text-gray-800 text-center">
-                  Créer un utilisateur
-                </div>
-              </div>
-            </Link>
-          </>
-        )}
+        ))}
       </div>
 
       {/* Boutons avec popup */}
@@ -138,13 +142,13 @@ export default function Home() {
           <SendLinkPopup
             label="Voir / Copier liens…"
             type="voir_copier"
-            buttonColor="from-[#005AA7] to-[#FFFDE4]"
+            buttonColor="from-[#00C9FF] to-[#92FE9D]"
           />
         )}
       </div>
 
       {/* Message final */}
-      <div className="mt-4 mb-2 text-center text-white text-lg font-handwriting-light">
+      <div className="mt-2 mb-2 text-center text-white text-lg font-handwriting-light">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
       </div>
     </div>
