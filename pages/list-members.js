@@ -1,4 +1,5 @@
-// pages/list-members.js
+
+
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -44,30 +45,26 @@ export default function ListMembers() {
     }));
   };
 
-  // ⚡ Fonction pour marquer le membre comme envoyé (suivis_membres)
-  const markAsSent = async (member) => {
-    if (!member) return;
+  // ⚡ Marquer membre comme envoyé dans suivis_membres
+  const markAsSent = async (memberId) => {
+    if (!memberId) return;
 
-    // On ne fait le suivi que si le statut est "visiteur" ou "veut rejoindre ICC"
-    if (member.statut !== "visiteur" && member.statut !== "veut rejoindre ICC")
-      return;
-
-    // Mettre le membre actif
+    // 1️⃣ Mettre le statut du membre à "actif"
     await supabase
       .from("membres")
       .update({ statut: "actif" })
-      .eq("id", member.id);
+      .eq("id", memberId);
 
-    // Vérifier si une entrée existe déjà dans suivis_membres
+    // 2️⃣ Vérifier si une entrée existe déjà dans suivis_membres
     const { data: existing } = await supabase
       .from("suivis_membres")
       .select("*")
-      .eq("membre_id", member.id)
+      .eq("membre_id", memberId)
       .single();
 
     if (!existing) {
       await supabase.from("suivis_membres").insert({
-        membre_id: member.id,
+        membre_id: memberId,
         statut: "envoye",
         cellule_id: null,
       });
@@ -154,9 +151,7 @@ export default function ListMembers() {
               </select>
             </h3>
 
-            <p className="text-sm text-gray-600 mb-1">
-              📱 {member.telephone || "—"}
-            </p>
+            <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
             <p
               className="text-sm font-semibold"
               style={{ color: getBorderColor(member) }}
@@ -178,15 +173,9 @@ export default function ListMembers() {
 
             {detailsOpen[member.id] && (
               <div className="mt-3 text-sm text-gray-700 space-y-2 border-t pt-2">
-                <p>
-                  📧 <strong>Email:</strong> {member.email || "—"}
-                </p>
-                <p>
-                  🕊️ <strong>Comment est-il venu:</strong> {member.how_came || "—"}
-                </p>
-                <p>
-                  🙏 <strong>Besoins:</strong> {member.besoin || "—"}
-                </p>
+                <p>📧 <strong>Email:</strong> {member.email || "—"}</p>
+                <p>🕊️ <strong>Comment est-il venu:</strong> {member.how_came || "—"}</p>
+                <p>🙏 <strong>Besoins:</strong> {member.besoin || "—"}</p>
 
                 <div className="mt-3">
                   <label className="block text-gray-600 font-semibold mb-1">
@@ -201,11 +190,7 @@ export default function ListMembers() {
                   >
                     <option value="">-- Choisir une cellule --</option>
                     {cellules.map((c) => (
-                      <option
-                        key={c.id}
-                        value={c.cellule}
-                        className="truncate max-w-[250px]"
-                      >
+                      <option key={c.id} value={c.cellule}>
                         {c.cellule} ({c.responsable})
                       </option>
                     ))}
@@ -218,7 +203,7 @@ export default function ListMembers() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-semibold mt-3 w-full text-center"
-                    onClick={() => markAsSent(member)}
+                    onClick={() => markAsSent(member.id)}
                   >
                     📲 Envoyer à {cellule.responsable} sur WhatsApp
                   </a>
@@ -249,31 +234,10 @@ export default function ListMembers() {
       </div>
 
       <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
-        SoulTrack
+        Liste des membres
       </h1>
 
-      <p className="text-center text-white text-lg mb-6 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons,
-        grandissons et partageons l’amour de Christ dans chaque action ❤️
-      </p>
-
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-6 w-full max-w-md">
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="border rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        >
-          <option value="">Tous les membres</option>
-          <option value="visiteur">Visiteurs</option>
-          <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-          <option value="actif">Actifs</option>
-          <option value="a déjà mon église">A déjà mon église</option>
-          <option value="ancien">Anciens</option>
-          <option value="star">⭐ Star</option>
-        </select>
-      </div>
-
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 w-full max-w-6xl">
+      <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
         {renderMembers(nouveaux)}
         {renderMembers(anciens)}
       </div>
