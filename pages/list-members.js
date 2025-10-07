@@ -1,4 +1,4 @@
-//pages/list-members.js
+// pages/list-members.js
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -72,19 +72,26 @@ export default function ListMembers() {
   const renderMembers = (membersList) =>
     membersList.map((member) => {
       const cellule =
-        cellules.find(
-          (c) => c.cellule === selectedCellule[member.id]
-        ) || null;
+        cellules.find((c) => c.cellule === selectedCellule[member.id]) || null;
 
       let whatsappLink = "";
       if (cellule?.telephone) {
         const message = encodeURIComponent(
-          `👋 Salut ${cellule.responsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.\nVoici ses infos :\n\n- 👤 Nom : ${member.prenom || ""} ${member.nom || ""}\n- 📱 Téléphone : ${member.telephone || "—"}\n- 📧 Email : ${member.email || "—"}\n- 🏙 Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${member.how_came || "—"}\n\nMerci pour ton cœur ❤ et son amour ✨`
+          `👋 Salut ${cellule.responsable},
+
+🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
+Voici ses infos :
+
+- 👤 Nom : ${member.prenom} ${member.nom}  
+- 📱 Téléphone : ${member.telephone || "—"}   
+- 📧 Email : ${member.email || "—"}  
+- 🏙 Ville : ${member.ville || "—"}  
+- 🙏 Besoin : ${member.besoin || "—"}  
+- 📝 Infos supplémentaires : ${member.how_came || "—"}  
+
+Merci pour ton cœur ❤ et son amour ✨`
         );
-        whatsappLink = `https://wa.me/${cellule.telephone.replace(
-          /\D/g,
-          ""
-        )}?text=${message}`;
+        whatsappLink = `https://wa.me/${cellule.telephone.replace(/\D/g, "")}?text=${message}`;
       }
 
       return (
@@ -97,6 +104,12 @@ export default function ListMembers() {
             <h3 className="text-lg font-bold text-gray-800 mb-1 flex justify-between">
               <span>
                 {member.prenom} {member.nom}
+                {(member.statut === "visiteur" ||
+                  member.statut === "veut rejoindre ICC") && (
+                  <span className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full font-semibold">
+                    Nouveau
+                  </span>
+                )}
                 {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
               </span>
               <select
@@ -235,20 +248,33 @@ export default function ListMembers() {
       <div className="w-full max-w-6xl space-y-8">
         {nouveaux.length > 0 && (
           <>
-            <h2 className="text-2xl text-white font-semibold mb-2">Nouveaux membres</h2>
+            <h2 className="text-2xl text-white font-semibold mb-2">
+              Nouveaux membres arrivés le{" "}
+              {nouveaux[0].created_at
+                ? new Date(nouveaux[0].created_at).toLocaleDateString("fr-FR", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })
+                : ""}
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {renderMembers(nouveaux)}
             </div>
           </>
         )}
 
+        {/* Séparateur stylé */}
+        {nouveaux.length > 0 && anciens.length > 0 && (
+          <div className="relative my-12 flex items-center justify-center">
+            <div className="w-full h-1 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 animate-pulse"></div>
+          </div>
+        )}
+
         {anciens.length > 0 && (
-          <>
-            <h2 className="text-2xl text-white font-semibold mb-2">Membres existants</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {renderMembers(anciens)}
-            </div>
-          </>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {renderMembers(anciens)}
+          </div>
         )}
       </div>
 
