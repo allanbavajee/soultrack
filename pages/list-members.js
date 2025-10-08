@@ -1,7 +1,7 @@
 // pages/list-members.js
 "use client";
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient"; // <-- correction ici
+import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 
 export default function ListMembers() {
@@ -55,58 +55,76 @@ export default function ListMembers() {
       return "#34A853";
   };
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollToTop = () =>
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
   // === WhatsApp & suivi ===
   const handleWhatsAppSingle = async (member, cellule) => {
-    if (!cellule) return;
-
-    const { data: existing, error: errCheck } = await supabase
-      .from("suivis_membres")
-      .select("*")
-      .eq("membre_id", member.id)
-      .eq("cellule_id", cellule.id)
-      .single();
-
-    if (errCheck && errCheck.code !== "PGRST116") console.error("Erreur check suivi:", errCheck);
-
-    if (!existing && ["visiteur", "veut rejoindre ICC"].includes(member.statut)) {
-      const { error: insertError } = await supabase.from("suivis_membres").insert([
-        {
-          membre_id: member.id,
-          cellule_id: cellule.id,
-          statut: "envoye",
-          created_at: new Date(),
-        },
-      ]);
-
-      if (insertError) {
-        console.error("Erreur insertion suivi:", insertError);
-        alert("Impossible de créer le suivi. Envoi annulé.");
-        return;
-      }
+    if (!cellule || !cellule.id) {
+      alert("Veuillez sélectionner une cellule valide avant d'envoyer WhatsApp.");
+      return;
     }
 
-    await supabase.from("membres").update({ statut: "actif" }).eq("id", member.id);
-    setMembers((prev) =>
-      prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m))
-    );
+    try {
+      // Vérifier si le suivi existe déjà
+      const { data: existing, error: errCheck } = await supabase
+        .from("suivis_membres")
+        .select("*")
+        .eq("membre_id", member.id)
+        .eq("cellule_id", cellule.id)
+        .single();
 
-    const prenomResponsable = cellule.responsable.split(" ")[0];
-    const message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre.  
-Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}  
-- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}  
-- 📧 Email : ${member.email || "—"}  
-- 🏙️ Ville : ${member.ville || "—"}  
-- 🙏 Besoin : ${member.besoin || "—"}  
-- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\nMerci pour ton cœur ❤️ et son amour ✨`;
+      if (errCheck && errCheck.code !== "PGRST116") {
+        console.error("Erreur check suivi:", errCheck);
+        alert("Erreur lors de la vérification du suivi.");
+        return;
+      }
 
-    window.open(
-      `https://wa.me/${cellule.telephone}?text=${encodeURIComponent(message)}`,
-      "_blank"
-    );
+      // Créer le suivi si inexistant et statut autorisé
+      if (!existing && ["visiteur", "veut rejoindre ICC"].includes(member.statut)) {
+        const { error: insertError } = await supabase.from("suivis_membres").insert([
+          {
+            membre_id: member.id,
+            cellule_id: cellule.id,
+            statut: "envoye",
+            created_at: new Date(),
+          },
+        ]);
+
+        if (insertError) {
+          console.error("Erreur insertion suivi:", insertError);
+          alert("Impossible de créer le suivi. Envoi annulé.");
+          return;
+        }
+      }
+
+      // Mettre à jour le statut du membre
+      await supabase.from("membres").update({ statut: "actif" }).eq("id", member.id);
+      setMembers((prev) =>
+        prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m))
+      );
+
+      // Préparer le message WhatsApp
+      const prenomResponsable = cellule.responsable.split(" ")[0];
+      const message = `👋 Salut ${prenomResponsable},\n\n🙏 Voici les infos du nouveau membre :\n\n- Nom : ${member.prenom} ${member.nom}\n- Téléphone : ${member.telephone} ${
+        member.is_whatsapp ? "(WhatsApp ✅)" : ""
+      }\n- Ville : ${member.ville || "—"}\n- Besoin : ${member.besoin || "—"}\n- Infos sup. : ${
+        member.infos_supplementaires || "—"
+      }`;
+
+      window.open(
+        `https://wa.me/${cellule.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
+          message
+        )}`,
+        "_blank"
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de l'envoi WhatsApp et création du suivi.");
+    }
   };
 
+  // Séparer nouveaux et anciens membres
   const nouveaux = filteredMembers.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
@@ -135,9 +153,11 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
       </h1>
 
       <p className="text-center text-white text-lg mb-6 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et partageons l’amour de Christ dans chaque action ❤️
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et partageons
+        l’amour de Christ dans chaque action ❤️
       </p>
 
+      {/* Filtre et compteur */}
       <div className="flex flex-col md:flex-row items-center gap-4 mb-4 w-full max-w-md">
         <select
           value={filter}
@@ -155,6 +175,7 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
         <span className="text-white italic text-opacity-80">Résultats: {countFiltered}</span>
       </div>
 
+      {/* Liste membres */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
         {nouveaux.map((member) => (
           <div
@@ -163,7 +184,8 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
           >
             <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
               <span>
-                {member.prenom} {member.nom} <span className="text-green-600 font-semibold ml-1">Nouveau</span>
+                {member.prenom} {member.nom}{" "}
+                <span className="text-green-600 font-semibold ml-1">Nouveau</span>
               </span>
               <select
                 value={member.statut}
@@ -178,10 +200,12 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
                 <option value="ancien">Ancien</option>
               </select>
             </h2>
+
             <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
             <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
               {member.statut || "—"}
             </p>
+
             <p
               className="mt-2 text-blue-500 underline cursor-pointer"
               onClick={() =>
@@ -190,6 +214,7 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
             >
               {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
             </p>
+
             {detailsOpen[member.id] && (
               <div className="mt-2 text-sm text-gray-700 space-y-1">
                 <p>Email : {member.email || "—"}</p>
@@ -214,6 +239,7 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
                     </option>
                   ))}
                 </select>
+
                 {selectedCellules[member.id] && (
                   <button
                     onClick={() => handleWhatsAppSingle(member, selectedCellules[member.id])}
@@ -252,10 +278,12 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
                 <option value="ancien">Ancien</option>
               </select>
             </h2>
+
             <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
             <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
               {member.statut || "—"}
             </p>
+
             <p
               className="mt-2 text-blue-500 underline cursor-pointer"
               onClick={() =>
@@ -264,6 +292,7 @@ Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}
             >
               {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
             </p>
+
             {detailsOpen[member.id] && (
               <div className="mt-2 text-sm text-gray-700 space-y-1">
                 <p>Email : {member.email || "—"}</p>
