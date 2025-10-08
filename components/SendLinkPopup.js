@@ -1,4 +1,4 @@
-/* components/SendLinkPopup.js */
+//components/SendLinkPopup.js/
 "use client";
 
 import { useState, useEffect } from "react";
@@ -43,11 +43,14 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
       let memberId;
       if (!existingMember) {
         // Créer le membre si inexistant
-        const { data: newMember } = await supabase
+        const { data: newMember, error: insertError } = await supabase
           .from("membres")
-          .insert([{ telephone: phone.trim(), statut: "actif" }])
+          .insert([{ telephone: phone.trim(), statut: "actif", created_at: new Date() }])
           .select()
           .single();
+
+        if (insertError) throw insertError;
+
         memberId = newMember.id;
       } else {
         memberId = existingMember.id;
@@ -58,13 +61,26 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
           .eq("id", memberId);
       }
 
-      // 2️⃣ Créer un suivi
-      await supabase.from("suivis_membres").insert([
-        {
-          membre_id: memberId,
-          statut: "envoye",
-        },
-      ]);
+      // 2️⃣ Créer un suivi si inexistant
+      const { data: existingSuivi, error: errCheck } = await supabase
+        .from("suivis_membres")
+        .select("*")
+        .eq("membre_id", memberId)
+        .single();
+
+      if (errCheck && errCheck.code !== "PGRST116") throw errCheck;
+
+      if (!existingSuivi) {
+        const { error: insertSuiviError } = await supabase.from("suivis_membres").insert([
+          {
+            membre_id: memberId,
+            statut: "envoye",
+            created_at: new Date(),
+          },
+        ]);
+
+        if (insertSuiviError) throw insertSuiviError;
+      }
 
       // 3️⃣ Préparer le lien WhatsApp
       const message =
@@ -81,7 +97,7 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
       setShowPopup(false);
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de l'envoi du lien et mise à jour du membre.");
+      alert("Erreur lors de l'envoi du lien et création du suivi.");
     } finally {
       setSending(false);
     }
@@ -144,5 +160,3 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
     </div>
   );
 }
-
-
