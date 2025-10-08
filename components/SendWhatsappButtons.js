@@ -1,3 +1,4 @@
+//components/SendWhatsappButtons.js/
 "use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -13,7 +14,7 @@ export default function SendWhatsappButtons({ type }) {
     setSending(true);
 
     try {
-      // Vérifier si le membre existe déjà
+      // 1️⃣ Vérifier si le membre existe déjà
       const { data: existingMember } = await supabase
         .from("membres")
         .select("*")
@@ -22,38 +23,41 @@ export default function SendWhatsappButtons({ type }) {
 
       let memberId;
       if (!existingMember) {
-        const { data: newMember } = await supabase
+        const { data: newMember, error: insertError } = await supabase
           .from("membres")
-          .insert([{ telephone: phoneNumber.trim(), statut: "actif" }])
+          .insert([{ telephone: phoneNumber.trim(), statut: "actif", created_at: new Date() }])
           .select()
           .single();
+        if (insertError) throw insertError;
         memberId = newMember.id;
       } else {
         memberId = existingMember.id;
         await supabase.from("membres").update({ statut: "actif" }).eq("id", memberId);
       }
 
-      // Créer un suivi si inexistant
+      // 2️⃣ Créer un suivi si inexistant
       const { data: existingFollow } = await supabase
         .from("suivis_membres")
         .select("*")
-        .eq("membre_id", memberId)
-        .single();
+        .eq("membre_id", memberId);
 
-      if (!existingFollow) {
-        await supabase.from("suivis_membres").insert([
+      if (!existingFollow || existingFollow.length === 0) {
+        const { error: insertSuiviError } = await supabase.from("suivis_membres").insert([
           { membre_id: memberId, statut: "envoye", created_at: new Date() },
         ]);
+        if (insertSuiviError) throw insertSuiviError;
       }
 
+      // 3️⃣ Préparer le lien WhatsApp
       const link = `https://soultrack-beta.vercel.app/access/${type}`;
-      window.open(`https://wa.me/${phoneNumber.replace(/\D/g, "")}?text=${encodeURIComponent(link)}`, "_blank");
+      const waUrl = `https://wa.me/${phoneNumber.replace(/\D/g, "")}?text=${encodeURIComponent(link)}`;
+      window.open(waUrl, "_blank");
 
       setPhoneNumber("");
       setShowPopup(false);
     } catch (err) {
       console.error("Erreur envoi WhatsApp:", err);
-      alert("Erreur lors de l'envoi du lien.");
+      alert("Erreur lors de l'envoi du lien et création du suivi.");
     } finally {
       setSending(false);
     }
