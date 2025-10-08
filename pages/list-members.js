@@ -1,3 +1,4 @@
+//pages/list-members.js
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -8,7 +9,7 @@ export default function ListMembers() {
   const [filter, setFilter] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
-  const [selectedCellule, setSelectedCellule] = useState({}); // { memberId: celluleId }
+  const [selectedCellules, setSelectedCellules] = useState({});
 
   useEffect(() => {
     fetchMembers();
@@ -21,7 +22,6 @@ export default function ListMembers() {
         .from("membres")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       setMembers(data || []);
     } catch (err) {
@@ -35,7 +35,6 @@ export default function ListMembers() {
       const { data, error } = await supabase
         .from("cellules")
         .select("id, cellule, responsable, telephone");
-
       if (error) throw error;
       setCellules(data || []);
     } catch (err) {
@@ -75,22 +74,28 @@ export default function ListMembers() {
 
   const countFiltered = filteredMembers.length;
 
-  // Fonction pour envoyer WhatsApp via le numéro de la cellule
   const sendWhatsapp = (celluleId) => {
-    const cellule = cellules.find((c) => c.id === parseInt(celluleId));
-    if (!cellule || !cellule.telephone) return alert("Numéro de la cellule introuvable.");
+    const cellule = cellules.find((c) => String(c.id) === String(celluleId));
+    if (!cellule) return alert("Cellule introuvable.");
+    if (!cellule.telephone) return alert("Numéro de la cellule introuvable.");
 
     const phone = cellule.telephone.replace(/\D/g, "");
+    if (!phone) return alert("Numéro de la cellule invalide.");
+
     const message = `Bonjour ${cellule.responsable}, veuillez prendre contact avec le membre.`;
     const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.open(waUrl, "_blank");
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6"
-         style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      <button onClick={() => window.history.back()}
-              className="self-start mb-4 flex items-center text-white font-semibold hover:text-gray-200">
+    <div
+      className="min-h-screen flex flex-col items-center p-6"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
+      <button
+        onClick={() => window.history.back()}
+        className="self-start mb-4 flex items-center text-white font-semibold hover:text-gray-200"
+      >
         ← Retour
       </button>
 
@@ -98,15 +103,20 @@ export default function ListMembers() {
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
 
-      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">SoulTrack</h1>
+      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
+        SoulTrack
+      </h1>
       <p className="text-center text-white text-lg mb-6 font-handwriting-light">
         Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et
         partageons l’amour de Christ dans chaque action ❤️
       </p>
 
       <div className="flex flex-col md:flex-row items-center gap-4 mb-4 w-full max-w-md">
-        <select value={filter} onChange={(e) => setFilter(e.target.value)}
-                className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400">
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        >
           <option value="">-- Filtrer par statut --</option>
           <option value="actif">Actif</option>
           <option value="ancien">Ancien</option>
@@ -124,13 +134,18 @@ export default function ListMembers() {
         )}
 
         {filteredMembers.map((member) => (
-          <div key={member.id}
-               className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4"
-               style={{ borderTopColor: getBorderColor(member) }}>
+          <div
+            key={member.id}
+            className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4"
+            style={{ borderTopColor: getBorderColor(member) }}
+          >
             <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
               {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-              <select value={member.statut} onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                      className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400">
+              <select
+                value={member.statut}
+                onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+                className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              >
                 <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
                 <option value="visiteur">Visiteur</option>
                 <option value="a déjà mon église">A déjà mon église</option>
@@ -145,42 +160,52 @@ export default function ListMembers() {
               {member.statut || "—"}
             </p>
 
-            <p className="mt-2 text-blue-500 underline cursor-pointer"
-               onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}>
+            <p
+              className="mt-2 text-blue-500 underline cursor-pointer"
+              onClick={() =>
+                setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
+              }
+            >
               {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
             </p>
 
             {detailsOpen[member.id] && (
-              <div className="mt-2 text-sm text-gray-700 space-y-2">
+              <div className="mt-2 text-sm text-gray-700 space-y-1">
                 <p>Email : {member.email || "—"}</p>
                 <p>Besoin : {member.besoin || "—"}</p>
                 <p>Ville : {member.ville || "—"}</p>
                 <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
                 <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
 
-                {/* Dropdown pour choisir cellule */}
-                <select
-                  value={selectedCellule[member.id] || ""}
-                  onChange={(e) =>
-                    setSelectedCellule((prev) => ({ ...prev, [member.id]: e.target.value }))
-                  }
-                  className="border rounded-lg px-2 py-1 w-full text-sm"
-                >
-                  <option value="">-- Choisir une cellule --</option>
-                  {cellules.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.cellule} ({c.responsable})
-                    </option>
-                  ))}
-                </select>
-
-                {/* Bouton WhatsApp visible seulement si cellule sélectionnée */}
-                {selectedCellule[member.id] && (
-                  <button
-                    onClick={() => sendWhatsapp(selectedCellule[member.id])}
-                    className="mt-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl w-full transition-all"
+                {/* Dropdown pour choisir la cellule */}
+                <div className="mt-2">
+                  <label className="text-sm font-semibold">Choisir cellule :</label>
+                  <select
+                    value={selectedCellules[member.id] || ""}
+                    onChange={(e) =>
+                      setSelectedCellules((prev) => ({
+                        ...prev,
+                        [member.id]: e.target.value,
+                      }))
+                    }
+                    className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
                   >
-                    Envoyer WhatsApp à la cellule
+                    <option value="">-- Sélectionner cellule --</option>
+                    {cellules.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.cellule} ({c.responsable})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Bouton WhatsApp qui s'affiche uniquement si une cellule est sélectionnée */}
+                {selectedCellules[member.id] && (
+                  <button
+                    onClick={() => sendWhatsapp(selectedCellules[member.id])}
+                    className="mt-2 w-full py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
+                  >
+                    Envoyer WhatsApp
                   </button>
                 )}
               </div>
@@ -189,7 +214,12 @@ export default function ListMembers() {
         ))}
       </div>
 
-      <button onClick={scrollToTop} className="fixed bottom-5 right-5 text-white text-2xl font-bold">↑</button>
+      <button
+        onClick={scrollToTop}
+        className="fixed bottom-5 right-5 text-white text-2xl font-bold"
+      >
+        ↑
+      </button>
 
       <p className="mt-6 mb-6 text-center text-white text-lg font-handwriting-light">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
