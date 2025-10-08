@@ -10,6 +10,7 @@ export default function ListMembers() {
   const [filter, setFilter] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
+  const [selectedCellules, setSelectedCellules] = useState({});
 
   useEffect(() => {
     fetchMembers();
@@ -22,7 +23,9 @@ export default function ListMembers() {
         .from("membres")
         .select("*")
         .order("created_at", { ascending: false });
+
       if (error) throw error;
+      console.log("💡 Données récupérées (debug) :", data);
       setMembers(data || []);
     } catch (err) {
       console.error("Exception fetchMembers:", err.message);
@@ -35,6 +38,7 @@ export default function ListMembers() {
       const { data, error } = await supabase
         .from("cellules")
         .select("id, cellule, responsable, telephone");
+
       if (error) throw error;
       setCellules(data || []);
     } catch (err) {
@@ -66,6 +70,7 @@ export default function ListMembers() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
+  // Filtrage simple
   const filteredMembers = members.filter((m) => {
     if (!filter) return true;
     if (filter === "star") return m.star === true;
@@ -73,6 +78,14 @@ export default function ListMembers() {
   });
 
   const countFiltered = filteredMembers.length;
+
+  // Séparer nouveaux et anciens
+  const nouveaux = filteredMembers.filter(
+    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
+  );
+  const anciens = filteredMembers.filter(
+    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
+  );
 
   return (
     <div
@@ -117,15 +130,13 @@ export default function ListMembers() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
         {filteredMembers.length === 0 && (
-          <p className="text-white col-span-full text-center">
-            Aucun contact trouvé
-          </p>
+          <p className="text-white col-span-full text-center">Aucun contact trouvé</p>
         )}
 
         {filteredMembers.map((member) => (
           <div
             key={member.id}
-            className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between border-t-4"
+            className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4"
             style={{ borderTopColor: getBorderColor(member) }}
           >
             <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
@@ -149,12 +160,14 @@ export default function ListMembers() {
               {member.statut || "—"}
             </p>
 
-            {/* --- Bouton WhatsApp corrigé --- */}
-            <SendWhatsappLink
-              type="ajouter_membre"
-              label="Envoyer sur WhatsApp"
-              buttonColor="bg-green-500"
-            />
+            {/* Bouton WhatsApp corrigé */}
+            {member.telephone && (
+              <SendWhatsappLink
+                type="ajouter_membre"
+                label="Envoyer WhatsApp"
+                memberPhone={member.telephone}
+              />
+            )}
 
             <p
               className="mt-2 text-blue-500 underline cursor-pointer"
