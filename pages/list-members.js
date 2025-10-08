@@ -83,7 +83,15 @@ export default function ListMembers() {
     const phone = cellule.telephone.replace(/\D/g, "");
     if (!phone) return alert("Numéro de la cellule invalide.");
 
-    const message = `Bonjour ${cellule.responsable}, veuillez prendre contact avec ${member.prenom} ${member.nom}.`;
+    const message = `👋 Salut ${cellule.responsable},
+
+- 👤 Nom : ${member.prenom} ${member.nom}
+- 📱 Téléphone : ${member.telephone || "—"}
+- 🏙 Ville : ${member.ville || "—"}
+- 🙏 Besoin : ${member.besoin || "—"}
+- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}
+- 💬 Comment est-il venu ? : ${member.comment || "—"}`;
+
     const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.open(waUrl, "_blank");
   };
@@ -119,12 +127,12 @@ export default function ListMembers() {
         partageons l’amour de Christ dans chaque action ❤️
       </p>
 
-      {/* Toggle vue */}
+      {/* Vue active */}
       <p
         className="self-end text-orange-500 cursor-pointer mb-4"
-        onClick={() => setView(view === "card" ? "table" : "card")}
       >
-        {view === "card" ? "Vue Card" : "Vue Table"}
+        <span onClick={() => setView("card")}>Vue Card</span> |{" "}
+        <span onClick={() => setView("table")}>Vue Table</span>
       </p>
 
       {/* Filtre */}
@@ -149,17 +157,14 @@ export default function ListMembers() {
         <div className="w-full max-w-5xl">
           {/* Cartes */}
           {filteredMembers.map((member) => (
-            <div
-              key={member.id}
-              className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4 mb-4"
-              style={{ borderTopColor: getBorderColor(member) }}
-            >
+            <div key={member.id} className="bg-white p-4 rounded-2xl shadow-md mb-4 border-t-4"
+                 style={{ borderTopColor: getBorderColor(member) }}>
               <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
                 {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
                 <select
                   value={member.statut}
                   onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                  className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  className="border rounded-lg px-2 py-1 text-sm"
                 >
                   <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
                   <option value="visiteur">Visiteur</option>
@@ -188,7 +193,7 @@ export default function ListMembers() {
                   <p>Besoin : {member.besoin || "—"}</p>
                   <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
                   <p>Comment est-il venu ? : {member.comment || "—"}</p>
-                  <p className="text-green-600">Cellule :</p>
+                  <p>Cellule :</p>
                   <select
                     value={selectedCellules[member.id] || ""}
                     onChange={(e) =>
@@ -203,10 +208,11 @@ export default function ListMembers() {
                       </option>
                     ))}
                   </select>
+
                   {selectedCellules[member.id] && (
                     <button
                       onClick={() => sendWhatsapp(selectedCellules[member.id], member)}
-                      className="mt-2 w-full py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
+                      className="mt-2 w-full py-2 rounded-xl text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600"
                     >
                       Envoyer par WhatsApp
                     </button>
@@ -219,9 +225,9 @@ export default function ListMembers() {
       ) : (
         <div className="w-full max-w-5xl overflow-x-auto">
           {/* Table */}
-          <table className="min-w-full bg-white rounded-xl">
+          <table className="min-w-full bg-white rounded-2xl overflow-hidden">
             <thead>
-              <tr className="bg-gray-200">
+              <tr className="bg-gray-100">
                 <th className="py-2 px-4">Prénom</th>
                 <th className="py-2 px-4">Nom</th>
                 <th className="py-2 px-4">Statut</th>
@@ -233,9 +239,7 @@ export default function ListMembers() {
                 <tr key={member.id} className="border-b">
                   <td className="py-2 px-4">{member.prenom}</td>
                   <td className="py-2 px-4">{member.nom}</td>
-                  <td className="py-2 px-4" style={{ color: getBorderColor(member) }}>
-                    {member.statut}
-                  </td>
+                  <td className="py-2 px-4" style={{ color: getBorderColor(member) }}>{member.statut}</td>
                   <td className="py-2 px-4">
                     <p
                       className="text-blue-500 underline cursor-pointer"
@@ -255,7 +259,7 @@ export default function ListMembers() {
                         <p><strong>Besoin:</strong> {member.besoin || "—"}</p>
                         <p><strong>Infos supplémentaires:</strong> {member.infos_supplementaires || "—"}</p>
                         <p><strong>Comment est-il venu ?</strong> {member.comment || "—"}</p>
-                        <p><strong>Cellule:</strong></p>
+                        <p>Cellule :</p>
                         <select
                           value={selectedCellules[member.id] || ""}
                           onChange={(e) =>
@@ -270,10 +274,11 @@ export default function ListMembers() {
                             </option>
                           ))}
                         </select>
+
                         {selectedCellules[member.id] && (
                           <button
                             onClick={() => sendWhatsapp(selectedCellules[member.id], member)}
-                            className="mt-2 w-full py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600 col-span-2"
+                            className="mt-2 w-full py-2 rounded-xl text-white bg-gradient-to-r from-green-400 via-green-500 to-green-600 col-span-2"
                           >
                             Envoyer par WhatsApp
                           </button>
