@@ -3,12 +3,17 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SendWhatsappButtons({ type, profile, gradient }) {
+export default function SendWhatsappButtons({ type, profile }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [sending, setSending] = useState(false);
 
   const handleSend = async () => {
+    if (!phoneNumber) {
+      alert("Veuillez saisir un numéro de téléphone.");
+      return;
+    }
+
     setSending(true);
 
     try {
@@ -23,18 +28,9 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
       if (!token) throw new Error("Token introuvable.");
 
       const link = `https://soultrack-beta.vercel.app/access/${token}`;
-      const message =
-        type === "ajouter_membre"
-          ? `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre ${link}`
-          : `Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé ${link}`;
 
-      if (!phoneNumber) {
-        // Choisir un contact existant
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-      } else {
-        const cleanedPhone = phoneNumber.replace(/\D/g, "");
-        window.open(`https://wa.me/${cleanedPhone}?text=${encodeURIComponent(message)}`, "_blank");
-      }
+      // Ouvrir WhatsApp
+      window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(link)}`, "_blank");
 
       setPhoneNumber("");
       setShowPopup(false);
@@ -50,8 +46,7 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
     <div className="flex flex-col items-center w-full">
       <button
         onClick={() => setShowPopup(true)}
-        style={{ background: gradient }}
-        className="text-white font-bold py-2 px-4 rounded-xl w-full transition-all duration-200"
+        className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl transition-all duration-200 w-full"
       >
         {type === "ajouter_membre" ? "Envoyer l'appli – Nouveau membre" : "Envoyer l'appli – Évangélisé"}
       </button>
@@ -77,8 +72,7 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
             <button
               onClick={handleSend}
               disabled={sending}
-              style={{ background: gradient }}
-              className="text-white font-bold py-2 px-4 rounded-xl w-full transition-all duration-200"
+              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl transition-all duration-200 w-full"
             >
               {sending ? "Envoi..." : "Envoyer"}
             </button>
