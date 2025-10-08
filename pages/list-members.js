@@ -1,4 +1,5 @@
 // pages/list-members.js
+
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -75,13 +76,22 @@ export default function ListMembers() {
 
   const countFiltered = filteredMembers.length;
 
-  const sendWhatsapp = (celluleId, member) => {
+  const sendWhatsapp = async (celluleId, member) => {
     const cellule = cellules.find((c) => String(c.id) === String(celluleId));
     if (!cellule) return alert("Cellule introuvable.");
     if (!cellule.telephone) return alert("Numéro de la cellule introuvable.");
 
     const phone = cellule.telephone.replace(/\D/g, "");
     if (!phone) return alert("Numéro de la cellule invalide.");
+
+    try {
+      // Création du suivi "envoye"
+      await supabase.from("suivis_membres").insert([
+        { membre_id: member.id, statut: "envoye", created_at: new Date() },
+      ]);
+    } catch (err) {
+      console.error("Erreur création suivi :", err.message);
+    }
 
     const message = `👋 Salut ${cellule.responsable},
 
@@ -99,10 +109,6 @@ Merci pour ton cœur ❤ et son amour ✨`;
 
     const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.open(waUrl, "_blank");
-
-    if (member.statut === "visiteur" || member.statut === "veut rejoindre ICC") {
-      handleChangeStatus(member.id, "actif");
-    }
   };
 
   // Séparer nouveaux et anciens
@@ -165,7 +171,7 @@ Merci pour ton cœur ❤ et son amour ✨`;
 
       {view === "card" ? (
         <div className="w-full max-w-5xl">
-          {/* Nouveau membres en haut */}
+          {/* Nouveau membres */}
           {nouveaux.length > 0 && (
             <div className="mb-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -244,7 +250,7 @@ Merci pour ton cœur ❤ et son amour ✨`;
             </div>
           )}
 
-          {/* Ligne de séparation */}
+          {/* Ligne séparation */}
           {nouveaux.length > 0 && <div className="w-full max-w-5xl h-1 mb-4" style={{ background: "linear-gradient(to right, #d1d5db, #93c5fd)" }} />}
 
           {/* Anciens membres */}
@@ -354,9 +360,6 @@ Merci pour ton cœur ❤ et son amour ✨`;
 
                     {detailsOpen[member.id] && (
                       <div className="mt-2 text-sm text-gray-700 space-y-1">
-                        <p><strong>Prénom:</strong> {member.prenom}</p>
-                        <p><strong>Nom:</strong> {member.nom}</p>
-                        <p><strong>Statut:</strong> {member.statut}</p>
                         <p><strong>Besoin:</strong> {member.besoin || "—"}</p>
                         <p><strong>Infos supplémentaires:</strong> {member.infos_supplementaires || "—"}</p>
                         <p><strong>Comment est-il venu ?</strong> {member.comment || "—"}</p>
@@ -396,14 +399,10 @@ Merci pour ton cœur ❤ et son amour ✨`;
 
       <button
         onClick={scrollToTop}
-        className="fixed bottom-5 right-5 text-white text-2xl font-bold"
+        className="fixed bottom-4 right-4 bg-indigo-500 text-white rounded-full p-3 shadow-lg hover:bg-indigo-600 transition-all"
       >
         ↑
       </button>
-
-      <p className="mt-6 mb-6 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
-      </p>
     </div>
   );
 }
