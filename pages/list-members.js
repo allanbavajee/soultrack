@@ -23,6 +23,7 @@ export default function ListMembers() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
+      console.log("💡 Données récupérées (debug) :", data);
       setMembers(data || []);
     } catch (err) {
       console.error("Exception fetchMembers:", err.message);
@@ -66,6 +67,7 @@ export default function ListMembers() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
+  // Filtrage simple
   const filteredMembers = members.filter((m) => {
     if (!filter) return true;
     if (filter === "star") return m.star === true;
@@ -74,18 +76,13 @@ export default function ListMembers() {
 
   const countFiltered = filteredMembers.length;
 
-  const sendWhatsapp = (celluleId) => {
-    const cellule = cellules.find((c) => String(c.id) === String(celluleId));
-    if (!cellule) return alert("Cellule introuvable.");
-    if (!cellule.telephone) return alert("Numéro de la cellule introuvable.");
-
-    const phone = cellule.telephone.replace(/\D/g, "");
-    if (!phone) return alert("Numéro de la cellule invalide.");
-
-    const message = `Bonjour ${cellule.responsable}, veuillez prendre contact avec le membre.`;
-    const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    window.open(waUrl, "_blank");
-  };
+  // Séparer nouveaux et anciens
+  const nouveaux = filteredMembers.filter(
+    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
+  );
+  const anciens = filteredMembers.filter(
+    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
+  );
 
   return (
     <div
@@ -128,16 +125,72 @@ export default function ListMembers() {
         <span className="text-white italic text-opacity-80">Résultats: {countFiltered}</span>
       </div>
 
+      {/* Nouveau membres */}
+      {nouveaux.length > 0 && (
+        <div className="w-full max-w-5xl mb-4">
+          <p className="text-white mb-2">contact venu le {new Date().toLocaleDateString()}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {nouveaux.map((member) => (
+              <div
+                key={member.id}
+                className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4"
+                style={{ borderTopColor: getBorderColor(member), minHeight: "200px" }}
+              >
+                <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
+                  {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                  <select
+                    value={member.statut}
+                    onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+                    className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  >
+                    <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                    <option value="visiteur">Visiteur</option>
+                    <option value="a déjà mon église">A déjà mon église</option>
+                    <option value="evangelisé">Evangelisé</option>
+                    <option value="actif">Actif</option>
+                    <option value="ancien">Ancien</option>
+                  </select>
+                </h2>
+                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
+                <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
+                  {member.statut || "—"}
+                </p>
+                <p
+                  className="mt-2 text-blue-500 underline cursor-pointer"
+                  onClick={() =>
+                    setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
+                  }
+                >
+                  {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                </p>
+                {detailsOpen[member.id] && (
+                  <div className="mt-2 text-sm text-gray-700 space-y-1">
+                    <p>Email : {member.email || "—"}</p>
+                    <p>Besoin : {member.besoin || "—"}</p>
+                    <p>Ville : {member.ville || "—"}</p>
+                    <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+                    <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Ligne de séparation avec gradient gris/bleu */}
+      {nouveaux.length > 0 && <div className="w-full max-w-5xl h-1 mb-4" style={{ background: "linear-gradient(to right, #d1d5db, #93c5fd)" }} />}
+
+      {/* Anciens membres */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
-        {filteredMembers.length === 0 && (
+        {anciens.length === 0 && (
           <p className="text-white col-span-full text-center">Aucun contact trouvé</p>
         )}
-
-        {filteredMembers.map((member) => (
+        {anciens.map((member) => (
           <div
             key={member.id}
             className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4"
-            style={{ borderTopColor: getBorderColor(member) }}
+            style={{ borderTopColor: getBorderColor(member), minHeight: "200px" }}
           >
             <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
               {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
@@ -154,12 +207,10 @@ export default function ListMembers() {
                 <option value="ancien">Ancien</option>
               </select>
             </h2>
-
             <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
             <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
               {member.statut || "—"}
             </p>
-
             <p
               className="mt-2 text-blue-500 underline cursor-pointer"
               onClick={() =>
@@ -168,7 +219,6 @@ export default function ListMembers() {
             >
               {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
             </p>
-
             {detailsOpen[member.id] && (
               <div className="mt-2 text-sm text-gray-700 space-y-1">
                 <p>Email : {member.email || "—"}</p>
@@ -176,38 +226,6 @@ export default function ListMembers() {
                 <p>Ville : {member.ville || "—"}</p>
                 <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
                 <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-
-                {/* Dropdown pour choisir la cellule */}
-                <div className="mt-2">
-                  <label className="text-sm font-semibold">Choisir cellule :</label>
-                  <select
-                    value={selectedCellules[member.id] || ""}
-                    onChange={(e) =>
-                      setSelectedCellules((prev) => ({
-                        ...prev,
-                        [member.id]: e.target.value,
-                      }))
-                    }
-                    className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
-                  >
-                    <option value="">-- Sélectionner cellule --</option>
-                    {cellules.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.cellule} ({c.responsable})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Bouton WhatsApp qui s'affiche uniquement si une cellule est sélectionnée */}
-                {selectedCellules[member.id] && (
-                  <button
-                    onClick={() => sendWhatsapp(selectedCellules[member.id])}
-                    className="mt-2 w-full py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
-                  >
-                    Envoyer WhatsApp
-                  </button>
-                )}
               </div>
             )}
           </div>
@@ -227,3 +245,4 @@ export default function ListMembers() {
     </div>
   );
 }
+
