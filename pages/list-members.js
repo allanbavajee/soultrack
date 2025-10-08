@@ -22,7 +22,6 @@ export default function ListMembers() {
         .from("membres")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       console.log("💡 Données récupérées (debug) :", data);
       setMembers(data || []);
@@ -37,7 +36,6 @@ export default function ListMembers() {
       const { data, error } = await supabase
         .from("cellules")
         .select("id, cellule, responsable, telephone");
-
       if (error) throw error;
       setCellules(data || []);
     } catch (err) {
@@ -127,22 +125,31 @@ export default function ListMembers() {
         <span className="text-white italic text-opacity-80">Résultats: {countFiltered}</span>
       </div>
 
-      {/* ------------------- Nouveaux membres ------------------- */}
+      {/* Nouveau membres */}
       {nouveaux.length > 0 && (
-        <>
-          <p className="text-white font-semibold mb-2 w-full text-left">
-            Nouveaux contacts
-          </p>
-          <div className="flex flex-col gap-4 w-full max-w-5xl mb-6">
+        <div className="w-full max-w-5xl mb-4">
+          <p className="text-white mb-2">contact venu le {new Date().toLocaleDateString()}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {nouveaux.map((member) => (
               <div
                 key={member.id}
-                className="bg-white p-4 rounded-2xl shadow-md flex flex-col justify-between border-t-4 min-h-[160px]"
-                style={{ borderTopColor: getBorderColor(member) }}
+                className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4"
+                style={{ borderTopColor: getBorderColor(member), minHeight: "200px" }}
               >
                 <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
-                  {member.prenom} {member.nom}{" "}
-                  {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                  {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                  <select
+                    value={member.statut}
+                    onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+                    className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  >
+                    <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                    <option value="visiteur">Visiteur</option>
+                    <option value="a déjà mon église">A déjà mon église</option>
+                    <option value="evangelisé">Evangelisé</option>
+                    <option value="actif">Actif</option>
+                    <option value="ancien">Ancien</option>
+                  </select>
                 </h2>
                 <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
                 <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
@@ -163,88 +170,67 @@ export default function ListMembers() {
                     <p>Ville : {member.ville || "—"}</p>
                     <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
                     <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-                    {/* Menu déroulant cellule */}
-                    <select
-                      className="border rounded-lg px-2 py-1 mt-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                      value={selectedCellules[member.id] || ""}
-                      onChange={(e) =>
-                        setSelectedCellules((prev) => ({
-                          ...prev,
-                          [member.id]: e.target.value,
-                        }))
-                      }
-                    >
-                      <option value="">-- Sélectionner une cellule --</option>
-                      {cellules.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.cellule} ({c.responsable})
-                        </option>
-                      ))}
-                    </select>
                   </div>
                 )}
               </div>
             ))}
           </div>
-          <div className="w-full h-[4px] bg-gradient-to-r from-gray-400 via-gray-300 to-blue-400 mb-6"></div>
-        </>
-      )}
-
-      {/* ------------------- Anciens membres ------------------- */}
-      {anciens.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
-          {anciens.map((member) => (
-            <div
-              key={member.id}
-              className="bg-white p-4 rounded-2xl shadow-md flex flex-col justify-between border-t-4 min-h-[160px]"
-              style={{ borderTopColor: getBorderColor(member) }}
-            >
-              <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
-                {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-              </h2>
-              <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
-              <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
-                {member.statut || "—"}
-              </p>
-              <p
-                className="mt-2 text-blue-500 underline cursor-pointer"
-                onClick={() =>
-                  setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                }
-              >
-                {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-              </p>
-              {detailsOpen[member.id] && (
-                <div className="mt-2 text-sm text-gray-700 space-y-1">
-                  <p>Email : {member.email || "—"}</p>
-                  <p>Besoin : {member.besoin || "—"}</p>
-                  <p>Ville : {member.ville || "—"}</p>
-                  <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
-                  <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-                  {/* Menu déroulant cellule */}
-                  <select
-                    className="border rounded-lg px-2 py-1 mt-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                    value={selectedCellules[member.id] || ""}
-                    onChange={(e) =>
-                      setSelectedCellules((prev) => ({
-                        ...prev,
-                        [member.id]: e.target.value,
-                      }))
-                    }
-                  >
-                    <option value="">-- Sélectionner une cellule --</option>
-                    {cellules.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.cellule} ({c.responsable})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-          ))}
         </div>
       )}
+
+      {/* Ligne de séparation avec gradient gris/bleu */}
+      {nouveaux.length > 0 && <div className="w-full max-w-5xl h-1 mb-4" style={{ background: "linear-gradient(to right, #d1d5db, #93c5fd)" }} />}
+
+      {/* Anciens membres */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
+        {anciens.length === 0 && (
+          <p className="text-white col-span-full text-center">Aucun contact trouvé</p>
+        )}
+        {anciens.map((member) => (
+          <div
+            key={member.id}
+            className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4"
+            style={{ borderTopColor: getBorderColor(member), minHeight: "200px" }}
+          >
+            <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
+              {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+              <select
+                value={member.statut}
+                onChange={(e) => handleChangeStatus(member.id, e.target.value)}
+                className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              >
+                <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                <option value="visiteur">Visiteur</option>
+                <option value="a déjà mon église">A déjà mon église</option>
+                <option value="evangelisé">Evangelisé</option>
+                <option value="actif">Actif</option>
+                <option value="ancien">Ancien</option>
+              </select>
+            </h2>
+            <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
+            <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
+              {member.statut || "—"}
+            </p>
+            <p
+              className="mt-2 text-blue-500 underline cursor-pointer"
+              onClick={() =>
+                setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
+              }
+            >
+              {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+            </p>
+            {detailsOpen[member.id] && (
+              <div className="mt-2 text-sm text-gray-700 space-y-1">
+                <p>Email : {member.email || "—"}</p>
+                <p>Besoin : {member.besoin || "—"}</p>
+                <p>Ville : {member.ville || "—"}</p>
+                <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+                <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
 
       <button
         onClick={scrollToTop}
@@ -259,3 +245,4 @@ export default function ListMembers() {
     </div>
   );
 }
+
