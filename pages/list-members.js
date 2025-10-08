@@ -1,4 +1,3 @@
-//pages/list-members.js
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -23,7 +22,6 @@ export default function ListMembers() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      console.log("💡 Données récupérées (debug) :", data);
       setMembers(data || []);
     } catch (err) {
       console.error("Exception fetchMembers:", err.message);
@@ -84,6 +82,35 @@ export default function ListMembers() {
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
 
+  // Fonction envoyer WhatsApp
+  const sendWhatsapp = (member) => {
+    const cellule = cellules.find((c) => c.id === selectedCellules[member.id]);
+    if (!cellule || !cellule.telephone) {
+      alert("Numéro de la cellule introuvable");
+      return;
+    }
+
+    const message = `👋 Salut ${cellule.responsable},
+
+🙏 Dieu nous a envoyé une nouvelle âme à suivre.
+Voici ses infos :
+
+- 👤 Nom : ${member.prenom} ${member.nom}
+- 📱 Téléphone : ${member.telephone || "—"}
+- 📧 Email : ${member.email || "—"}
+- 🏙 Ville : ${member.ville || "—"}
+- 🙏 Besoin : ${member.besoin || "—"}
+- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}
+
+Merci pour ton cœur ❤ et son amour ✨`;
+
+    const url = `https://wa.me/${cellule.telephone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
+
+    // Changer statut en actif
+    handleChangeStatus(member.id, "actif");
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
@@ -128,7 +155,9 @@ export default function ListMembers() {
       {/* Nouveau membres */}
       {nouveaux.length > 0 && (
         <div className="w-full max-w-5xl mb-4">
-          <p className="text-white mb-2">contact venu le {new Date().toLocaleDateString()}</p>
+          <p className="text-white mb-2">
+            contact venu le {new Date().toLocaleDateString()}
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {nouveaux.map((member) => (
               <div
@@ -137,7 +166,8 @@ export default function ListMembers() {
                 style={{ borderTopColor: getBorderColor(member), minHeight: "200px" }}
               >
                 <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
-                  {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                  {member.prenom} {member.nom}{" "}
+                  {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
                   <select
                     value={member.statut}
                     onChange={(e) => handleChangeStatus(member.id, e.target.value)}
@@ -168,7 +198,39 @@ export default function ListMembers() {
                     <p>Email : {member.email || "—"}</p>
                     <p>Besoin : {member.besoin || "—"}</p>
                     <p>Ville : {member.ville || "—"}</p>
-                    <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+
+                    {/* Menu déroulant cellule */}
+                    <div>
+                      <label className="block text-sm font-semibold mb-1">Cellule :</label>
+                      <select
+                        value={selectedCellules[member.id] || ""}
+                        onChange={(e) =>
+                          setSelectedCellules((prev) => ({
+                            ...prev,
+                            [member.id]: e.target.value,
+                          }))
+                        }
+                        className="border rounded-lg px-2 py-1 text-sm w-full focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                      >
+                        <option value="">-- Choisir cellule --</option>
+                        {cellules.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.cellule} ({c.responsable})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Bouton WhatsApp */}
+                    {selectedCellules[member.id] && (
+                      <button
+                        onClick={() => sendWhatsapp(member)}
+                        className="mt-2 bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600"
+                      >
+                        Envoyer WhatsApp
+                      </button>
+                    )}
+
                     <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
                   </div>
                 )}
@@ -179,7 +241,12 @@ export default function ListMembers() {
       )}
 
       {/* Ligne de séparation avec gradient gris/bleu */}
-      {nouveaux.length > 0 && <div className="w-full max-w-5xl h-1 mb-4" style={{ background: "linear-gradient(to right, #d1d5db, #93c5fd)" }} />}
+      {nouveaux.length > 0 && (
+        <div
+          className="w-full max-w-5xl h-1 mb-4"
+          style={{ background: "linear-gradient(to right, #d1d5db, #93c5fd)" }}
+        />
+      )}
 
       {/* Anciens membres */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
@@ -193,7 +260,8 @@ export default function ListMembers() {
             style={{ borderTopColor: getBorderColor(member), minHeight: "200px" }}
           >
             <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
-              {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+              {member.prenom} {member.nom}{" "}
+              {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
               <select
                 value={member.statut}
                 onChange={(e) => handleChangeStatus(member.id, e.target.value)}
@@ -224,7 +292,39 @@ export default function ListMembers() {
                 <p>Email : {member.email || "—"}</p>
                 <p>Besoin : {member.besoin || "—"}</p>
                 <p>Ville : {member.ville || "—"}</p>
-                <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
+
+                {/* Menu déroulant cellule */}
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Cellule :</label>
+                  <select
+                    value={selectedCellules[member.id] || ""}
+                    onChange={(e) =>
+                      setSelectedCellules((prev) => ({
+                        ...prev,
+                        [member.id]: e.target.value,
+                      }))
+                    }
+                    className="border rounded-lg px-2 py-1 text-sm w-full focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  >
+                    <option value="">-- Choisir cellule --</option>
+                    {cellules.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.cellule} ({c.responsable})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Bouton WhatsApp */}
+                {selectedCellules[member.id] && (
+                  <button
+                    onClick={() => sendWhatsapp(member)}
+                    className="mt-2 bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600"
+                  >
+                    Envoyer WhatsApp
+                  </button>
+                )}
+
                 <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
               </div>
             )}
@@ -240,9 +340,9 @@ export default function ListMembers() {
       </button>
 
       <p className="mt-6 mb-6 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens
+        12:14 ❤️
       </p>
     </div>
   );
 }
-
