@@ -1,33 +1,19 @@
-/* components/SendWhatsappButtons.js */
 "use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SendWhatsappButtons({ type, profile }) {
+export default function SendWhatsappButtons({ type }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [sending, setSending] = useState(false);
 
   const handleSend = async () => {
-    if (!phoneNumber) {
-      alert("Veuillez saisir un numéro de téléphone.");
-      return;
-    }
+    if (!phoneNumber) return alert("Veuillez saisir un numéro de téléphone.");
 
     setSending(true);
 
     try {
-      // Appel RPC Supabase pour générer token
-      const { data, error } = await supabase.rpc("generate_access_token", {
-        p_access_type: type,
-      });
-
-      if (error) throw error;
-
-      const token = data?.token;
-      if (!token) throw new Error("Token introuvable.");
-
-      // 1️⃣ Vérifier si le membre existe
+      // Vérifier si le membre existe déjà
       const { data: existingMember } = await supabase
         .from("membres")
         .select("*")
@@ -36,47 +22,38 @@ export default function SendWhatsappButtons({ type, profile }) {
 
       let memberId;
       if (!existingMember) {
-        const { data: newMember, error: insertError } = await supabase
+        const { data: newMember } = await supabase
           .from("membres")
-          .insert([{ telephone: phoneNumber.trim(), statut: "actif", created_at: new Date() }])
+          .insert([{ telephone: phoneNumber.trim(), statut: "actif" }])
           .select()
           .single();
-        if (insertError) throw insertError;
         memberId = newMember.id;
       } else {
         memberId = existingMember.id;
         await supabase.from("membres").update({ statut: "actif" }).eq("id", memberId);
       }
 
-      // 2️⃣ Créer suivi si inexistant
-      const { data: existingSuivi, error: errCheck } = await supabase
+      // Créer un suivi si inexistant
+      const { data: existingFollow } = await supabase
         .from("suivis_membres")
         .select("*")
         .eq("membre_id", memberId)
         .single();
 
-      if (errCheck && errCheck.code !== "PGRST116") throw errCheck;
-
-      if (!existingSuivi) {
-        const { error: insertSuiviError } = await supabase.from("suivis_membres").insert([
-          {
-            membre_id: memberId,
-            statut: "envoye",
-            created_at: new Date(),
-          },
+      if (!existingFollow) {
+        await supabase.from("suivis_membres").insert([
+          { membre_id: memberId, statut: "envoye", created_at: new Date() },
         ]);
-        if (insertSuiviError) throw insertSuiviError;
       }
 
-      // 3️⃣ Préparer le lien WhatsApp
-      const link = `https://soultrack-beta.vercel.app/access/${token}`;
+      const link = `https://soultrack-beta.vercel.app/access/${type}`;
       window.open(`https://wa.me/${phoneNumber.replace(/\D/g, "")}?text=${encodeURIComponent(link)}`, "_blank");
 
       setPhoneNumber("");
       setShowPopup(false);
     } catch (err) {
-      console.error(err);
-      alert("Erreur lors de l'envoi du lien et création du suivi.");
+      console.error("Erreur envoi WhatsApp:", err);
+      alert("Erreur lors de l'envoi du lien.");
     } finally {
       setSending(false);
     }
@@ -88,9 +65,7 @@ export default function SendWhatsappButtons({ type, profile }) {
         onClick={() => setShowPopup(true)}
         className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl transition-all duration-200 w-full"
       >
-        {type === "ajouter_membre"
-          ? "Envoyer l'appli – Nouveau membre"
-          : "Envoyer l'appli – Évangélisé"}
+        {type === "ajouter_membre" ? "Envoyer l'appli – Nouveau membre" : "Envoyer l'appli – Évangélisé"}
       </button>
 
       {showPopup && (
@@ -103,9 +78,7 @@ export default function SendWhatsappButtons({ type, profile }) {
               ❌
             </button>
 
-            <h3 className="text-lg font-semibold text-gray-800 text-center">
-              Saisir le numéro WhatsApp
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-800 text-center">Saisir le numéro WhatsApp</h3>
             <input
               type="tel"
               placeholder="+230XXXXXXXX"
@@ -126,4 +99,3 @@ export default function SendWhatsappButtons({ type, profile }) {
     </div>
   );
 }
-
