@@ -1,278 +1,275 @@
 // pages/list-members.js
 "use client";
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
-  const [cellules, setCellules] = useState([]);
-  const [selectedCellules, setSelectedCellules] = useState({});
-  const [detailsOpen, setDetailsOpen] = useState({});
-  const [filter, setFilter] = useState("");
-  const [viewMode, setViewMode] = useState("card");
-  const [sending, setSending] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [expandedMember, setExpandedMember] = useState(null);
+  const [viewMode, setViewMode] = useState("card"); // "card" ou "table"
 
   useEffect(() => {
     fetchMembers();
-    fetchCellules();
   }, []);
 
   async function fetchMembers() {
-    const { data, error } = await supabase
-      .from("membres")
-      .select("*")
-      .order("created_at", { ascending: false });
+    setLoading(true);
+    const { data, error } = await supabase.from("members").select("*").order("created_at", { ascending: false });
     if (!error) setMembers(data || []);
+    setLoading(false);
   }
-
-  async function fetchCellules() {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("id, cellule, responsable, telephone");
-    if (!error) setCellules(data || []);
-  }
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const d = new Date(dateString);
-    return d.toLocaleDateString("fr-FR", {
-      weekday: "long",
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-  };
-
-  const getColor = (statut, star) => {
-    if (star) return "#FBC02D"; // jaune
-    if (statut === "actif") return "#4285F4"; // bleu
-    if (statut === "a déjà mon église") return "#EA4335"; // rouge
-    if (statut === "ancien") return "#999999"; // gris
-    if (statut === "veut rejoindre ICC" || statut === "visiteur") return "#34A853"; // vert
-    return "#444";
-  };
-
-  const filteredMembers = members.filter((m) => {
-    if (!filter) return true;
-    if (filter === "star") return m.star === true;
-    return m.statut === filter;
-  });
-
-  const countFiltered = filteredMembers.length;
-
-  const nouveaux = filteredMembers.filter(
-    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
-  );
-  const anciens = filteredMembers.filter(
-    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
-  );
-
-  const handleChangeStatus = async (id, newStatus) => {
-    await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
-    setMembers((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
-    );
-  };
 
   const handleSendWhatsapp = async (member) => {
-    const celluleId = selectedCellules[member.id];
-    const cellule = cellules.find((c) => String(c.id) === String(celluleId));
-    if (!cellule || !cellule.telephone) {
-      alert("Numéro de la cellule introuvable.");
-      return;
-    }
-    setSending((s) => ({ ...s, [member.id]: true }));
-
     try {
-      const { data: existingSuivis } = await supabase
-        .from("suivis_membres")
-        .select("*")
-        .eq("membre_id", member.id)
-        .limit(1);
+      const { data: celluleData, error } = await supabase
+        .from("cellules")
+        .select("telephone, nom")
+        .eq("id", member.cellule_id)
+        .single();
 
-      if (!existingSuivis || existingSuivis.length === 0) {
-        await supabase.from("suivis_membres").insert([
-          { membre_id: member.id, statut: "envoye", created_at: new Date() },
-        ]);
+      if (error || !celluleData?.telephone) {
+        alert("Numéro de la cellule introuvable.");
+        return;
       }
 
-      if (member.statut === "visiteur" || member.statut === "veut rejoindre ICC") {
-        await supabase.from("membres").update({ statut: "actif" }).eq("id", member.id);
-        setMembers((prev) =>
-          prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m))
-        );
-      }
-
-      const message = `👋 Salut ${cellule.responsable},
+      const celluleTel = celluleData.telephone;
+      const message = `👋 Salut ${celluleData.nom},
 
 🙏 Dieu nous a envoyé une nouvelle âme à suivre.
 Voici ses infos :
 
-- 👤 Nom : ${member.prenom || ""} ${member.nom || ""}
+- 👤 Nom : ${member.nom} ${member.prenom}
 - 📱 Téléphone : ${member.telephone || "—"}
 - 📧 Email : ${member.email || "—"}
 - 🏙 Ville : ${member.ville || "—"}
 - 🙏 Besoin : ${member.besoin || "—"}
-- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}
+- 📝 Infos supplémentaires : ${member.info_supplementaire || "—"}
 
-Merci pour ton cœur ❤`;
+Merci pour ton cœur ❤ et son amour ✨`;
 
-      const phone = String(cellule.telephone).replace(/\D/g, "");
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-    } catch (err) {
-      console.error("WhatsApp error:", err);
+      const url = `https://wa.me/${celluleTel}?text=${encodeURIComponent(message)}`;
+      window.open(url, "_blank");
+
+      // mise à jour du statut
+      if (member.statut === "visiteur" || member.statut === "veut rejoindre ICC") {
+        await supabase.from("members").update({ statut: "actif" }).eq("id", member.id);
+        fetchMembers();
+      }
+    } catch {
       alert("Erreur lors de l'envoi du WhatsApp.");
-    } finally {
-      setSending((s) => ({ ...s, [member.id]: false }));
     }
   };
 
+  const statutColors = {
+    actif: "bg-green-500 text-white px-2 py-1 rounded",
+    visiteur: "bg-blue-500 text-white px-2 py-1 rounded",
+    "veut rejoindre ICC": "bg-blue-500 text-white px-2 py-1 rounded",
+    ancien: "bg-gray-500 text-white px-2 py-1 rounded",
+    star: "bg-yellow-500 text-black px-2 py-1 rounded",
+  };
+
+  const nouveaux = members.filter(m => m.statut === "visiteur" || m.statut === "veut rejoindre ICC");
+  const anciens = members.filter(m => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC");
+
+  if (loading) return <p className="text-center text-white">Chargement...</p>;
+
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
-    >
-      <h1 className="text-4xl text-white mb-2">Chaque personne compte ❤️</h1>
+    <div className="p-6">
+      <h1 className="text-center text-2xl font-bold text-white mb-4">
+        Chaque personne compte ❤️
+      </h1>
 
-      {/* Toggle à droite */}
-      <div className="w-full flex justify-end mb-4">
-        <p
-          className="cursor-pointer text-black font-semibold"
-          onClick={() => setViewMode((v) => (v === "card" ? "table" : "card"))}
+      {/* Toggle Vue */}
+      <div className="flex justify-end mb-4">
+        <span
+          onClick={() => setViewMode("card")}
+          className={`mr-4 cursor-pointer ${viewMode === "card" ? "font-bold underline" : ""}`}
         >
-          {viewMode === "card" ? "Vue Table" : "Vue Card"}
-        </p>
+          Vue Card
+        </span>
+        <span
+          onClick={() => setViewMode("table")}
+          className={`cursor-pointer ${viewMode === "table" ? "font-bold underline" : ""}`}
+        >
+          Vue Table
+        </span>
       </div>
 
-      {/* filtre */}
-      <div className="flex gap-4 mb-4">
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="border rounded-lg px-4 py-2"
-        >
-          <option value="">-- Filtrer --</option>
-          <option value="actif">Actif</option>
-          <option value="ancien">Ancien</option>
-          <option value="visiteur">Visiteur</option>
-          <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-          <option value="a déjà mon église">A déjà mon église</option>
-          <option value="star">⭐ Star</option>
-        </select>
-        <span className="text-white">Résultats: {countFiltered}</span>
-      </div>
+      {/* Nouveaux contacts */}
+      {nouveaux.length > 0 && (
+        <>
+          <h2 className="text-xl text-white mb-2">
+            Nouveaux contacts (venus le{" "}
+            {new Date(nouveaux[0].created_at).toLocaleDateString("fr-FR", {
+              weekday: "long",
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+            })}
+            )
+          </h2>
 
-      {/* vue card */}
-      {viewMode === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
-          {nouveaux.map((m) => (
-            <div key={m.id} className="bg-white p-4 rounded-xl shadow-md border-t-4"
-              style={{ borderTopColor: getColor(m.statut, m.star) }}>
-              <h2 className="font-bold">{m.prenom} {m.nom}</h2>
-              <p className="text-sm">{m.telephone}</p>
-              <p className="font-semibold" style={{ color: getColor(m.statut, m.star) }}>{m.statut}</p>
-              <p className="text-blue-500 underline cursor-pointer"
-                onClick={() => setDetailsOpen((p) => ({ ...p, [m.id]: !p[m.id] }))}>
-                {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
-              </p>
-              {detailsOpen[m.id] && (
-                <div className="mt-2 text-sm">
-                  <p>Email: {m.email || "—"}</p>
-                  <p>Ville: {m.ville || "—"}</p>
-                  <p>Besoin: {m.besoin || "—"}</p>
-                  <select
-                    value={selectedCellules[m.id] || ""}
-                    onChange={(e) =>
-                      setSelectedCellules((p) => ({ ...p, [m.id]: e.target.value }))
-                    }
-                    className="border rounded-lg px-2 py-1 text-sm mt-2"
+          {viewMode === "card" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {nouveaux.map((member) => (
+                <div key={member.id} className="bg-white p-4 rounded-lg shadow-md">
+                  <h3 className="text-lg font-bold">{member.nom} {member.prenom}</h3>
+                  <p className="text-gray-700">{member.telephone}</p>
+                  <p className={`inline-block mt-2 ${statutColors[member.statut]}`}>{member.statut}</p>
+                  <p
+                    className="text-blue-600 mt-2 cursor-pointer underline"
+                    onClick={() => setExpandedMember(expandedMember === member.id ? null : member.id)}
                   >
-                    <option value="">-- Choisir cellule --</option>
-                    {cellules.map((c) => (
-                      <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>
-                    ))}
-                  </select>
-                  {selectedCellules[m.id] && (
-                    <button
-                      onClick={() => handleSendWhatsapp(m)}
-                      className="mt-2 bg-green-500 text-white px-3 py-1 rounded"
-                    >
-                      {sending[m.id] ? "Envoi..." : "Envoyer par WhatsApp"}
-                    </button>
+                    Détails
+                  </p>
+
+                  {expandedMember === member.id && (
+                    <div className="mt-2 text-sm text-gray-700">
+                      <p>Email : {member.email || "—"}</p>
+                      <p>Ville : {member.ville || "—"}</p>
+                      <p>Besoin : {member.besoin || "—"}</p>
+                      <p>Infos : {member.info_supplementaire || "—"}</p>
+                      <p className="text-green-600">Cellule : {member.cellule_id || "—"}</p>
+                      <button
+                        onClick={() => handleSendWhatsapp(member)}
+                        className="mt-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl w-full"
+                      >
+                        Envoyer par WhatsApp
+                      </button>
+                    </div>
                   )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <table className="w-full bg-white rounded-lg shadow-md mb-6">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="p-2">Nom</th>
+                  <th className="p-2">Prénom</th>
+                  <th className="p-2">Statut</th>
+                  <th className="p-2">Détails</th>
+                </tr>
+              </thead>
+              <tbody>
+                {nouveaux.map((member) => (
+                  <tr key={member.id} className="border-t">
+                    <td className="p-2">{member.nom}</td>
+                    <td className="p-2">{member.prenom}</td>
+                    <td className="p-2"><span className={statutColors[member.statut]}>{member.statut}</span></td>
+                    <td
+                      className="p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => setExpandedMember(expandedMember === member.id ? null : member.id)}
+                    >
+                      Détails
+                    </td>
+                    {expandedMember === member.id && (
+                      <tr>
+                        <td colSpan="4" className="p-2 bg-gray-50 text-sm">
+                          <p>Email : {member.email || "—"}</p>
+                          <p>Ville : {member.ville || "—"}</p>
+                          <p>Besoin : {member.besoin || "—"}</p>
+                          <p>Infos : {member.info_supplementaire || "—"}</p>
+                          <p className="text-green-600">Cellule : {member.cellule_id || "—"}</p>
+                          <button
+                            onClick={() => handleSendWhatsapp(member)}
+                            className="mt-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl"
+                          >
+                            Envoyer par WhatsApp
+                          </button>
+                        </td>
+                      </tr>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </>
+      )}
+
+      {/* Séparateur si nouveaux existent */}
+      {nouveaux.length > 0 && (
+        <div className="my-6 h-1 bg-gradient-to-r from-gray-300 via-blue-300 to-gray-300"></div>
+      )}
+
+      {/* Anciens contacts */}
+      {viewMode === "card" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {anciens.map((member) => (
+            <div key={member.id} className="bg-white p-4 rounded-lg shadow-md">
+              <h3 className="text-lg font-bold">{member.nom} {member.prenom}</h3>
+              <p className="text-gray-700">{member.telephone}</p>
+              <p className={`inline-block mt-2 ${statutColors[member.statut]}`}>{member.statut}</p>
+              <p
+                className="text-blue-600 mt-2 cursor-pointer underline"
+                onClick={() => setExpandedMember(expandedMember === member.id ? null : member.id)}
+              >
+                Détails
+              </p>
+
+              {expandedMember === member.id && (
+                <div className="mt-2 text-sm text-gray-700">
+                  <p>Email : {member.email || "—"}</p>
+                  <p>Ville : {member.ville || "—"}</p>
+                  <p>Besoin : {member.besoin || "—"}</p>
+                  <p>Infos : {member.info_supplementaire || "—"}</p>
+                  <p className="text-green-600">Cellule : {member.cellule_id || "—"}</p>
+                  <button
+                    onClick={() => handleSendWhatsapp(member)}
+                    className="mt-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl w-full"
+                  >
+                    Envoyer par WhatsApp
+                  </button>
                 </div>
               )}
             </div>
           ))}
         </div>
       ) : (
-        /* vue table */
-        <div className="w-full max-w-5xl">
-          <table className="w-full bg-white rounded-xl shadow-md">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="px-4 py-2">Nom</th>
-                <th className="px-4 py-2">Prénom</th>
-                <th className="px-4 py-2">Statut</th>
-                <th className="px-4 py-2">Détails</th>
+        <table className="w-full bg-white rounded-lg shadow-md">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="p-2">Nom</th>
+              <th className="p-2">Prénom</th>
+              <th className="p-2">Statut</th>
+              <th className="p-2">Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            {anciens.map((member) => (
+              <tr key={member.id} className="border-t">
+                <td className="p-2">{member.nom}</td>
+                <td className="p-2">{member.prenom}</td>
+                <td className="p-2"><span className={statutColors[member.statut]}>{member.statut}</span></td>
+                <td
+                  className="p-2 text-blue-600 cursor-pointer underline"
+                  onClick={() => setExpandedMember(expandedMember === member.id ? null : member.id)}
+                >
+                  Détails
+                </td>
+                {expandedMember === member.id && (
+                  <tr>
+                    <td colSpan="4" className="p-2 bg-gray-50 text-sm">
+                      <p>Email : {member.email || "—"}</p>
+                      <p>Ville : {member.ville || "—"}</p>
+                      <p>Besoin : {member.besoin || "—"}</p>
+                      <p>Infos : {member.info_supplementaire || "—"}</p>
+                      <p className="text-green-600">Cellule : {member.cellule_id || "—"}</p>
+                      <button
+                        onClick={() => handleSendWhatsapp(member)}
+                        className="mt-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl"
+                      >
+                        Envoyer par WhatsApp
+                      </button>
+                    </td>
+                  </tr>
+                )}
               </tr>
-            </thead>
-            <tbody>
-              {filteredMembers.map((m) => (
-                <tr key={m.id} className="border-b">
-                  <td className="px-4 py-2">{m.nom}</td>
-                  <td className="px-4 py-2">{m.prenom}</td>
-                  <td className="px-4 py-2 font-semibold" style={{ color: getColor(m.statut, m.star) }}>{m.statut}</td>
-                  <td className="px-4 py-2">
-                    <span
-                      className="text-blue-500 underline cursor-pointer"
-                      onClick={() => setDetailsOpen((p) => ({ ...p, [m.id]: !p[m.id] }))}
-                    >
-                      {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {filteredMembers.map(
-            (m) =>
-              detailsOpen[m.id] && (
-                <div key={m.id + "-details"} className="bg-white p-4 rounded-xl shadow-md mt-4">
-                  <p className="font-bold">{m.prenom} {m.nom}</p>
-                  <p className="text-sm">📱 {m.telephone}</p>
-                  <p className="text-sm">Email : {m.email}</p>
-                  <p className="text-sm">Ville : {m.ville}</p>
-                  <p className="text-sm">Besoin : {m.besoin}</p>
-
-                  <select
-                    value={selectedCellules[m.id] || ""}
-                    onChange={(e) =>
-                      setSelectedCellules((p) => ({ ...p, [m.id]: e.target.value }))
-                    }
-                    className="border rounded-lg px-2 py-1 text-sm mt-2"
-                  >
-                    <option value="">-- Choisir cellule --</option>
-                    {cellules.map((c) => (
-                      <option key={c.id} value={c.id}>{c.cellule} ({c.responsable})</option>
-                    ))}
-                  </select>
-                  {selectedCellules[m.id] && (
-                    <button
-                      onClick={() => handleSendWhatsapp(m)}
-                      className="mt-2 bg-green-500 text-white px-3 py-1 rounded"
-                    >
-                      {sending[m.id] ? "Envoi..." : "Envoyer par WhatsApp"}
-                    </button>
-                  )}
-                </div>
-              )
-          )}
-        </div>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
