@@ -1,5 +1,4 @@
 // pages/list-members.js
-// pages/list-members.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -18,76 +17,42 @@ export default function ListMembers() {
     fetchCellules();
   }, []);
 
-  // ================= fetch members =================
   const fetchMembers = async () => {
     try {
       const { data, error } = await supabase
         .from("membres")
         .select("*")
-        .order("id", { ascending: false });
+        .order("created_at", { ascending: false });
 
-      console.log("DATA fetched:", data);
-      console.log("ERROR fetchMembers:", error);
-
-      if (error) {
-        alert("Erreur fetchMembers: " + error.message);
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        console.warn("Aucun membre trouvé dans la table 'membres'");
-        setMembers([]);
-        return;
-      }
-
-      setMembers(data);
+      if (error) throw error;
+      if (data) setMembers(data);
     } catch (err) {
       console.error("Exception fetchMembers:", err);
-      alert("Exception fetchMembers: " + err.message);
     }
   };
 
-  // ================= fetch cellules =================
   const fetchCellules = async () => {
     try {
       const { data, error } = await supabase
         .from("cellules")
         .select("id, cellule, responsable, telephone");
 
-      console.log("DATA cellules:", data);
-      console.log("ERROR cellules:", error);
-
-      if (error) {
-        alert("Erreur fetchCellules: " + error.message);
-        return;
-      }
-
-      setCellules(data || []);
+      if (error) throw error;
+      if (data) setCellules(data);
     } catch (err) {
       console.error("Exception fetchCellules:", err);
     }
   };
 
-  // ================= change statut =================
   const handleChangeStatus = async (id, newStatus) => {
     try {
-      const { error } = await supabase
-        .from("membres")
-        .update({ statut: newStatus })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      setMembers((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
-      );
+      await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
+      setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m)));
     } catch (err) {
-      console.error("Erreur handleChangeStatus:", err);
-      alert("Impossible de changer le statut: " + err.message);
+      console.error("Erreur update statut:", err);
     }
   };
 
-  // ================= filtre membres =================
   const filteredMembers = members.filter((m) => {
     if (!filter) return true;
     if (filter === "star") return m.star === true;
@@ -103,15 +68,14 @@ export default function ListMembers() {
     if (member.statut === "ancien") return "#999999";
     if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
       return "#34A853";
-    return "#000"; // fallback
   };
 
   const scrollToTop = () =>
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-  // ================= WhatsApp =================
+  // WhatsApp & suivi
   const handleWhatsAppSingle = async (member, cellule) => {
-    if (!cellule) return alert("Veuillez sélectionner une cellule !");
+    if (!cellule) return;
 
     try {
       // Vérifier si le suivi existe déjà
@@ -127,17 +91,15 @@ export default function ListMembers() {
       }
 
       if (!existing && ["visiteur", "veut rejoindre ICC"].includes(member.statut)) {
-        // Créer l'entrée dans suivis_membres
-        const { error: insertError } = await supabase
-          .from("suivis_membres")
-          .insert([
-            {
-              membre_id: member.id,
-              cellule_id: cellule.id,
-              statut: "envoye",
-              created_at: new Date(),
-            },
-          ]);
+        // Créer l'entrée dans suivis_membres avant WhatsApp
+        const { error: insertError } = await supabase.from("suivis_membres").insert([
+          {
+            membre_id: member.id,
+            cellule_id: cellule.id,
+            statut: "envoye",
+            created_at: new Date(),
+          },
+        ]);
 
         if (insertError) {
           console.error("Erreur insertion suivi:", insertError);
@@ -147,35 +109,25 @@ export default function ListMembers() {
       }
 
       // Mettre à jour le statut du membre
-      await supabase
-        .from("membres")
-        .update({ statut: "actif" })
-        .eq("id", member.id);
-
+      await supabase.from("membres").update({ statut: "actif" }).eq("id", member.id);
       setMembers((prev) =>
         prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m))
       );
 
+      // Préparer et ouvrir WhatsApp
       const prenomResponsable = cellule.responsable.split(" ")[0];
-      const message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre. Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${member.telephone} ${
-        member.is_whatsapp ? "(WhatsApp ✅)" : ""
-      }\n- 📧 Email : ${member.email || "—"}\n- 🏙️ Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${
-        member.infos_supplementaires || "—"
-      }\n\nMerci pour ton cœur ❤️ et son amour ✨`;
-
+      const message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre. Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}\n- 📧 Email : ${member.email || "—"}\n- 🏙️ Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\nMerci pour ton cœur ❤️ et son amour ✨`;
       window.open(
-        `https://wa.me/${cellule.telephone}?text=${encodeURIComponent(
-          message
-        )}`,
+        `https://wa.me/${cellule.telephone}?text=${encodeURIComponent(message)}`,
         "_blank"
       );
     } catch (err) {
-      console.error("Erreur handleWhatsAppSingle:", err);
+      console.error("Erreur WhatsApp:", err);
       alert("Impossible de créer le suivi. Envoi annulé.");
     }
   };
 
-  // ================= séparer nouveaux / anciens =================
+  // Séparer nouveaux et anciens membres
   const nouveaux = filteredMembers.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
@@ -183,7 +135,6 @@ export default function ListMembers() {
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
 
-  // ===================== RENDER =====================
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
@@ -203,12 +154,12 @@ export default function ListMembers() {
       <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
         SoulTrack
       </h1>
+
       <p className="text-center text-white text-lg mb-6 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et partageons
-        l’amour de Christ dans chaque action ❤️
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et
+        partageons l’amour de Christ dans chaque action ❤️
       </p>
 
-      {/* Filtre */}
       <div className="flex flex-col md:flex-row items-center gap-4 mb-4 w-full max-w-md">
         <select
           value={filter}
@@ -226,7 +177,6 @@ export default function ListMembers() {
         <span className="text-white italic text-opacity-80">Résultats: {countFiltered}</span>
       </div>
 
-      {/* Membres */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
         {nouveaux.map((member) => (
           <div
@@ -255,7 +205,6 @@ export default function ListMembers() {
             <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
               {member.statut || "—"}
             </p>
-
             <p
               className="mt-2 text-blue-500 underline cursor-pointer"
               onClick={() =>
@@ -264,7 +213,6 @@ export default function ListMembers() {
             >
               {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
             </p>
-
             {detailsOpen[member.id] && (
               <div className="mt-2 text-sm text-gray-700 space-y-1">
                 <p>Email : {member.email || "—"}</p>
@@ -272,7 +220,6 @@ export default function ListMembers() {
                 <p>Ville : {member.ville || "—"}</p>
                 <p>WhatsApp : {member.is_whatsapp ? "✅ Oui" : "❌ Non"}</p>
                 <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-
                 <label className="block mb-1 font-semibold mt-2">Choisir une cellule :</label>
                 <select
                   className="w-full p-2 border rounded-lg"
@@ -289,7 +236,6 @@ export default function ListMembers() {
                     </option>
                   ))}
                 </select>
-
                 {selectedCellules[member.id] && (
                   <button
                     onClick={() => handleWhatsAppSingle(member, selectedCellules[member.id])}
@@ -332,7 +278,6 @@ export default function ListMembers() {
             <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
               {member.statut || "—"}
             </p>
-
             <p
               className="mt-2 text-blue-500 underline cursor-pointer"
               onClick={() =>
@@ -341,7 +286,6 @@ export default function ListMembers() {
             >
               {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
             </p>
-
             {detailsOpen[member.id] && (
               <div className="mt-2 text-sm text-gray-700 space-y-1">
                 <p>Email : {member.email || "—"}</p>
@@ -368,5 +312,3 @@ export default function ListMembers() {
     </div>
   );
 }
-
-
