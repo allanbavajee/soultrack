@@ -1,3 +1,4 @@
+//SendWhatsappLink.js
 "use client";
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
@@ -31,6 +32,7 @@ export default function SendWhatsappLink({ type, label, buttonColor = "bg-green-
     setSending(true);
 
     try {
+      // ✅ Crée le membre s'il n'existe pas
       const { data: existingMember } = await supabase
         .from("membres")
         .select("*")
@@ -41,28 +43,21 @@ export default function SendWhatsappLink({ type, label, buttonColor = "bg-green-
       if (!existingMember) {
         const { data: newMember, error: insertError } = await supabase
           .from("membres")
-          .insert([{ telephone: phone.trim(), statut: "actif", created_at: new Date() }])
+          .insert([{ telephone: phone.trim(), statut: "visiteur", created_at: new Date() }])
           .select()
           .single();
         if (insertError) throw insertError;
         memberId = newMember.id;
       } else {
         memberId = existingMember.id;
-        await supabase.from("membres").update({ statut: "actif" }).eq("id", memberId);
       }
 
-      const { data: existingFollow } = await supabase
-        .from("suivis_membres")
-        .select("*")
-        .eq("membre_id", memberId);
+      // ✅ Crée un suivi "envoye"
+      await supabase.from("suivis_membres").insert([
+        { membre_id: memberId, statut: "envoye", created_at: new Date() },
+      ]);
 
-      if (!existingFollow || existingFollow.length === 0) {
-        const { error: insertSuiviError } = await supabase.from("suivis_membres").insert([
-          { membre_id: memberId, statut: "envoye", created_at: new Date() },
-        ]);
-        if (insertSuiviError) throw insertSuiviError;
-      }
-
+      // ✅ Préparer le message WhatsApp
       let message;
       if (type === "ajouter_membre") {
         message = `Voici le lien pour ajouter un nouveau membre : 👉 ${window.location.origin}/access/${token}`;
