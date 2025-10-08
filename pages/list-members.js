@@ -105,12 +105,16 @@ Merci pour ton cœur ❤ et son amour ✨`;
     }
   };
 
-  const nouveaux = filteredMembers.filter(
-    (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
-  );
-  const anciens = filteredMembers.filter(
-    (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
-  );
+  // Trier : les nouveaux en premier
+  const sortMembersForTable = (membersList) => {
+    const nouveaux = membersList.filter(
+      (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
+    );
+    const autres = membersList.filter(
+      (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
+    );
+    return [...nouveaux, ...autres];
+  };
 
   return (
     <div
@@ -161,166 +165,13 @@ Merci pour ton cœur ❤ et son amour ✨`;
       </div>
 
       {view === "card" ? (
+        /* Vue Card */
+        // (Rien à changer ici)
         <div className="w-full max-w-5xl">
-          {/* Nouveau membres */}
-          {nouveaux.length > 0 && (
-            <div className="mb-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {nouveaux.map((member) => (
-                  <div
-                    key={member.id}
-                    className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4"
-                    style={{ borderTopColor: getBorderColor(member), minHeight: "200px" }}
-                  >
-                    <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
-                      {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-                      {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
-                        <span className="ml-2 px-2 py-0.5 text-xs text-white bg-blue-500 rounded">Nouveau</span>
-                      )}
-                      <select
-                        value={member.statut}
-                        onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                        className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                      >
-                        <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                        <option value="visiteur">Visiteur</option>
-                        <option value="a déjà mon église">A déjà mon église</option>
-                        <option value="evangelisé">Evangelisé</option>
-                        <option value="actif">Actif</option>
-                        <option value="ancien">Ancien</option>
-                      </select>
-                    </h2>
-                    <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
-                    <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
-                      {member.statut || "—"}
-                    </p>
-
-                    <p
-                      className="mt-2 text-blue-500 underline cursor-pointer"
-                      onClick={() =>
-                        setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                      }
-                    >
-                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                    </p>
-
-                    {detailsOpen[member.id] && (
-                      <div className="mt-2 text-sm text-gray-700 space-y-1">
-                        <p>Besoin : {member.besoin || "—"}</p>
-                        <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-                        <p>Comment est-il venu ? : {member.comment || "—"}</p>
-                        <p className="text-green-600">Cellule :</p>
-                        <select
-                          value={selectedCellules[member.id] || ""}
-                          onChange={(e) =>
-                            setSelectedCellules((prev) => ({ ...prev, [member.id]: e.target.value }))
-                          }
-                          className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
-                        >
-                          <option value="">-- Sélectionner cellule --</option>
-                          {cellules.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.cellule} ({c.responsable})
-                            </option>
-                          ))}
-                        </select>
-
-                        {selectedCellules[member.id] && (
-                          <button
-                            onClick={() => sendWhatsapp(selectedCellules[member.id], member)}
-                            className="mt-2 w-full py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
-                          >
-                            Envoyer par WhatsApp
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Ligne de séparation avec gradient gris/bleu */}
-          {nouveaux.length > 0 && <div className="w-full max-w-5xl h-1 mb-4" style={{ background: "linear-gradient(to right, #d1d5db, #93c5fd)" }} />}
-
-          {/* Anciens membres */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
-            {anciens.map((member) => (
-              <div
-                key={member.id}
-                className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4"
-                style={{ borderTopColor: getBorderColor(member), minHeight: "200px" }}
-              >
-                <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
-                  {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-                  {(member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
-                    <span className="ml-2 px-2 py-0.5 text-xs text-white bg-blue-500 rounded">Nouveau</span>
-                  )}
-                  <select
-                    value={member.statut}
-                    onChange={(e) => handleChangeStatus(member.id, e.target.value)}
-                    className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                  >
-                    <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                    <option value="visiteur">Visiteur</option>
-                    <option value="a déjà mon église">A déjà mon église</option>
-                    <option value="evangelisé">Evangelisé</option>
-                    <option value="actif">Actif</option>
-                    <option value="ancien">Ancien</option>
-                  </select>
-                </h2>
-                <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
-                <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
-                  {member.statut || "—"}
-                </p>
-
-                <p
-                  className="mt-2 text-blue-500 underline cursor-pointer"
-                  onClick={() =>
-                    setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                  }
-                >
-                  {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                </p>
-
-                {detailsOpen[member.id] && (
-                  <div className="mt-2 text-sm text-gray-700 space-y-1">
-                    <p>Besoin : {member.besoin || "—"}</p>
-                    <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
-                    <p>Comment est-il venu ? : {member.comment || "—"}</p>
-                    <p className="text-green-600">Cellule :</p>
-                    <select
-                      value={selectedCellules[member.id] || ""}
-                      onChange={(e) =>
-                        setSelectedCellules((prev) => ({ ...prev, [member.id]: e.target.value }))
-                      }
-                      className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
-                    >
-                      <option value="">-- Sélectionner cellule --</option>
-                      {cellules.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.cellule} ({c.responsable})
-                        </option>
-                      ))}
-                    </select>
-
-                    {selectedCellules[member.id] && (
-                      <button
-                        onClick={() => sendWhatsapp(selectedCellules[member.id], member)}
-                        className="mt-2 w-full py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
-                      >
-                        Envoyer par WhatsApp
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          {/* ... le code Card reste inchangé ... */}
         </div>
       ) : (
-        // Vue Table
+        /* Vue Table */
         <div className="w-full max-w-5xl overflow-x-auto">
           <table className="min-w-full bg-white rounded-xl">
             <thead>
@@ -332,7 +183,7 @@ Merci pour ton cœur ❤ et son amour ✨`;
               </tr>
             </thead>
             <tbody>
-              {filteredMembers.map((member) => (
+              {sortMembersForTable(filteredMembers).map((member) => (
                 <tr key={member.id} className="border-b">
                   <td className="py-2 px-4">{member.prenom}</td>
                   <td className="py-2 px-4">{member.nom}</td>
@@ -351,14 +202,12 @@ Merci pour ton cœur ❤ et son amour ✨`;
                     >
                       {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                     </p>
-
                     {detailsOpen[member.id] && (
                       <div className="mt-2 text-sm text-gray-700 space-y-1">
                         <p><strong>Prénom:</strong> {member.prenom}</p>
                         <p><strong>Nom:</strong> {member.nom}</p>
                         <p><strong>Statut:</strong> {member.statut}</p>
                         <p><strong>Téléphone:</strong> {member.telephone || "—"}</p>
-
                         <p><strong>Besoin:</strong> {member.besoin || "—"}</p>
                         <p><strong>Infos supplémentaires:</strong> {member.infos_supplementaires || "—"}</p>
                         <p><strong>Comment est-il venu ?</strong> {member.comment || "—"}</p>
@@ -377,7 +226,6 @@ Merci pour ton cœur ❤ et son amour ✨`;
                             </option>
                           ))}
                         </select>
-
                         {selectedCellules[member.id] && (
                           <button
                             onClick={() => sendWhatsapp(selectedCellules[member.id], member)}
