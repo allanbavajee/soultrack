@@ -1,98 +1,65 @@
 /* components/SendWhatsappButtons.js */
 "use client";
-
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SendWhatsappButtons({ type, profile, gradient }) {
+export default function SendWhatsappButtons({ type, gradient }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [sending, setSending] = useState(false);
-  const [statusMessage, setStatusMessage] = useState(""); // ✅ ou ❌ message
 
-  // ⚡ Vérifie si une chaîne est un UUID valide
-  const isValidUUID = (str) =>
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
-
-  // ⚡ Fonction pour créer le suivi du membre
-  const markAsSent = async (memberId, celluleId = null) => {
-    if (!memberId || !isValidUUID(memberId)) throw new Error("membre_id invalide");
-    if (celluleId && !isValidUUID(celluleId)) throw new Error("cellule_id invalide");
-
-    // Mettre le statut du membre à "actif"
-    const { error: updateError } = await supabase
-      .from("membres")
-      .update({ statut: "actif" })
-      .eq("id", memberId);
-    if (updateError) throw updateError;
-
-    // Vérifier si le suivi existe déjà
-    const { data: existing, error: selectError } = await supabase
-      .from("suivis_membres")
-      .select("*")
-      .eq("membre_id", memberId)
-      .eq("cellule_id", celluleId)
-      .maybeSingle();
-    if (selectError) throw selectError;
-
-    // Créer le suivi si inexistant
-    if (!existing) {
-      const { error: insertError } = await supabase
-        .from("suivis_membres")
-        .insert({
-          membre_id: memberId,
-          cellule_id: celluleId,
-          statut: "envoye",
-        });
-      if (insertError) throw insertError;
-    }
-  };
-
-  // ⚡ Fonction principale d'envoi
   const handleSend = async () => {
+    if (!phoneNumber) return alert("Veuillez entrer un numéro WhatsApp.");
     setSending(true);
-    setStatusMessage("");
 
     try {
-      if (!profile?.id || !profile?.cellule_id) {
-        setStatusMessage("❌ Identifiants manquants");
-        return;
+      // 1️⃣ Vérifier si le membre existe déjà
+      const { data: existingMember } = await supabase
+        .from("membres")
+        .select("*")
+        .eq("telephone", phoneNumber.trim())
+        .single();
+
+      let memberId;
+      if (!existingMember) {
+        const { data: newMember } = await supabase
+          .from("membres")
+          .insert([{ telephone: phoneNumber.trim(), statut: "actif" }])
+          .select()
+          .single();
+        memberId = newMember.id;
+      } else {
+        memberId = existingMember.id;
+        await supabase
+          .from("membres")
+          .update({ statut: "actif" })
+          .eq("id", memberId);
       }
 
-      // Générer token via RPC Supabase
-      const { data, error } = await supabase.rpc("generate_access_token", {
-        p_access_type: type,
-      });
-      if (error) throw error;
+      // 2️⃣ Créer un suivi
+      await supabase.from("suivis_membres").insert([
+        {
+          membre_id: memberId,
+          statut: "envoye",
+        },
+      ]);
 
-      const token = data?.token;
-      if (!token) throw new Error("Token introuvable.");
-
-      // Préparer le lien et le message WhatsApp
-      const link = `https://soultrack-beta.vercel.app/access/${token}`;
+      // 3️⃣ Ouvrir WhatsApp
       const message =
         type === "ajouter_membre"
-          ? `Voici le lien pour ajouter un nouveau membre : 👉 ${link}`
-          : `Voici le lien pour ajouter un nouvel évangélisé : 👉 ${link}`;
+          ? `Voici le lien pour ajouter un nouveau membre : 👉 https://soultrack-beta.vercel.app/access/${memberId}`
+          : `Voici le lien pour ajouter un nouvel évangélisé : 👉 https://soultrack-beta.vercel.app/access/${memberId}`;
 
-      // Ouvrir WhatsApp
-      const cleanedPhone = phoneNumber.replace(/\D/g, "");
-      const waUrl = cleanedPhone
-        ? `https://wa.me/${cleanedPhone}?text=${encodeURIComponent(message)}`
-        : `https://wa.me/?text=${encodeURIComponent(message)}`;
-
+      const waUrl = `https://wa.me/${phoneNumber.replace(/\D/g, "")}?text=${encodeURIComponent(
+        message
+      )}`;
       window.open(waUrl, "_blank");
 
-      // Marquer le membre comme envoyé
-      await markAsSent(profile.id, profile.cellule_id);
-
-      // Succès
-      setStatusMessage("✅ Lien envoyé et suivi créé !");
       setPhoneNumber("");
       setShowPopup(false);
     } catch (err) {
-      console.error("Erreur handleSend:", err);
-      setStatusMessage("❌ Impossible de créer le suivi. Envoi annulé.");
+      console.error(err);
+      alert("Erreur lors de l'envoi du lien et mise à jour du membre.");
     } finally {
       setSending(false);
     }
@@ -110,12 +77,6 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
           : "Envoyer l'appli – Évangélisé"}
       </button>
 
-      {statusMessage && (
-        <p className={`mt-2 font-semibold ${statusMessage.startsWith("✅") ? "text-green-600" : "text-red-600"}`}>
-          {statusMessage}
-        </p>
-      )}
-
       {showPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-3xl p-6 w-80 relative flex flex-col gap-4 shadow-lg">
@@ -127,7 +88,7 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
             </button>
 
             <h3 className="text-lg font-semibold text-gray-800 text-center">
-              Saisir le numéro WhatsApp (optionnel)
+              Saisir le numéro WhatsApp
             </h3>
             <input
               type="tel"
@@ -136,7 +97,6 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
             />
-
             <button
               onClick={handleSend}
               disabled={sending}
@@ -151,3 +111,4 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
     </div>
   );
 }
+
