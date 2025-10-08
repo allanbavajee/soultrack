@@ -1,4 +1,5 @@
 // pages/list-members.js
+// pages/list-members.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,49 +13,81 @@ export default function ListMembers() {
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
 
-  // ⚡ Charger les membres et cellules
   useEffect(() => {
     fetchMembers();
     fetchCellules();
   }, []);
 
+  // ================= fetch members =================
   const fetchMembers = async () => {
     try {
       const { data, error } = await supabase
         .from("membres")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("id", { ascending: false });
 
-      if (error) throw error;
-      if (data) setMembers(data);
+      console.log("DATA fetched:", data);
+      console.log("ERROR fetchMembers:", error);
+
+      if (error) {
+        alert("Erreur fetchMembers: " + error.message);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        console.warn("Aucun membre trouvé dans la table 'membres'");
+        setMembers([]);
+        return;
+      }
+
+      setMembers(data);
     } catch (err) {
-      console.error("Erreur fetchMembers:", err.message);
+      console.error("Exception fetchMembers:", err);
+      alert("Exception fetchMembers: " + err.message);
     }
   };
 
+  // ================= fetch cellules =================
   const fetchCellules = async () => {
     try {
       const { data, error } = await supabase
         .from("cellules")
         .select("id, cellule, responsable, telephone");
-      if (error) throw error;
-      if (data) setCellules(data);
+
+      console.log("DATA cellules:", data);
+      console.log("ERROR cellules:", error);
+
+      if (error) {
+        alert("Erreur fetchCellules: " + error.message);
+        return;
+      }
+
+      setCellules(data || []);
     } catch (err) {
-      console.error("Erreur fetchCellules:", err.message);
+      console.error("Exception fetchCellules:", err);
     }
   };
 
+  // ================= change statut =================
   const handleChangeStatus = async (id, newStatus) => {
     try {
-      await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
+      const { error } = await supabase
+        .from("membres")
+        .update({ statut: newStatus })
+        .eq("id", id);
+
+      if (error) throw error;
+
       setMembers((prev) =>
         prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
       );
     } catch (err) {
-      console.error("Erreur update statut:", err.message);
+      console.error("Erreur handleChangeStatus:", err);
+      alert("Impossible de changer le statut: " + err.message);
     }
   };
 
+  // ================= filtre membres =================
   const filteredMembers = members.filter((m) => {
     if (!filter) return true;
     if (filter === "star") return m.star === true;
@@ -70,15 +103,15 @@ export default function ListMembers() {
     if (member.statut === "ancien") return "#999999";
     if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
       return "#34A853";
-    return "#CCCCCC";
+    return "#000"; // fallback
   };
 
   const scrollToTop = () =>
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-  // ⚡ WhatsApp et suivi
+  // ================= WhatsApp =================
   const handleWhatsAppSingle = async (member, cellule) => {
-    if (!cellule) return;
+    if (!cellule) return alert("Veuillez sélectionner une cellule !");
 
     try {
       // Vérifier si le suivi existe déjà
@@ -91,19 +124,21 @@ export default function ListMembers() {
 
       if (errCheck && errCheck.code !== "PGRST116") {
         console.error("Erreur check suivi:", errCheck);
-        alert("Erreur lors du check du suivi.");
-        return;
       }
 
       if (!existing && ["visiteur", "veut rejoindre ICC"].includes(member.statut)) {
-        const { error: insertError } = await supabase.from("suivis_membres").insert([
-          {
-            membre_id: member.id,
-            cellule_id: cellule.id,
-            statut: "envoye",
-            created_at: new Date(),
-          },
-        ]);
+        // Créer l'entrée dans suivis_membres
+        const { error: insertError } = await supabase
+          .from("suivis_membres")
+          .insert([
+            {
+              membre_id: member.id,
+              cellule_id: cellule.id,
+              statut: "envoye",
+              created_at: new Date(),
+            },
+          ]);
+
         if (insertError) {
           console.error("Erreur insertion suivi:", insertError);
           alert("Impossible de créer le suivi. Envoi annulé.");
@@ -111,25 +146,36 @@ export default function ListMembers() {
         }
       }
 
-      // Mettre à jour le statut
-      await supabase.from("membres").update({ statut: "actif" }).eq("id", member.id);
+      // Mettre à jour le statut du membre
+      await supabase
+        .from("membres")
+        .update({ statut: "actif" })
+        .eq("id", member.id);
+
       setMembers((prev) =>
         prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m))
       );
 
-      // Préparer message WhatsApp
       const prenomResponsable = cellule.responsable.split(" ")[0];
-      const message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre. Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${member.telephone} ${member.is_whatsapp ? "(WhatsApp ✅)" : ""}\n- 📧 Email : ${member.email || "—"}\n- 🏙️ Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${member.infos_supplementaires || "—"}\n\nMerci pour ton cœur ❤️ et son amour ✨`;
+      const message = `👋 Salut ${prenomResponsable},\n\n🙏 Dieu nous a envoyé une nouvelle âme à suivre. Voici ses infos :\n\n- 👤 Nom : ${member.prenom} ${member.nom}\n- 📱 Téléphone : ${member.telephone} ${
+        member.is_whatsapp ? "(WhatsApp ✅)" : ""
+      }\n- 📧 Email : ${member.email || "—"}\n- 🏙️ Ville : ${member.ville || "—"}\n- 🙏 Besoin : ${member.besoin || "—"}\n- 📝 Infos supplémentaires : ${
+        member.infos_supplementaires || "—"
+      }\n\nMerci pour ton cœur ❤️ et son amour ✨`;
+
       window.open(
-        `https://wa.me/${cellule.telephone}?text=${encodeURIComponent(message)}`,
+        `https://wa.me/${cellule.telephone}?text=${encodeURIComponent(
+          message
+        )}`,
         "_blank"
       );
     } catch (err) {
-      console.error("Erreur WhatsApp:", err.message);
-      alert("Impossible d'envoyer sur WhatsApp.");
+      console.error("Erreur handleWhatsAppSingle:", err);
+      alert("Impossible de créer le suivi. Envoi annulé.");
     }
   };
 
+  // ================= séparer nouveaux / anciens =================
   const nouveaux = filteredMembers.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
@@ -137,6 +183,7 @@ export default function ListMembers() {
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
 
+  // ===================== RENDER =====================
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
@@ -157,8 +204,8 @@ export default function ListMembers() {
         SoulTrack
       </h1>
       <p className="text-center text-white text-lg mb-6 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons
-        et partageons l’amour de Christ dans chaque action ❤️
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et partageons
+        l’amour de Christ dans chaque action ❤️
       </p>
 
       {/* Filtre */}
@@ -179,7 +226,7 @@ export default function ListMembers() {
         <span className="text-white italic text-opacity-80">Résultats: {countFiltered}</span>
       </div>
 
-      {/* Liste Membres */}
+      {/* Membres */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
         {nouveaux.map((member) => (
           <div
@@ -204,7 +251,6 @@ export default function ListMembers() {
                 <option value="ancien">Ancien</option>
               </select>
             </h2>
-
             <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
             <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
               {member.statut || "—"}
@@ -282,7 +328,6 @@ export default function ListMembers() {
                 <option value="ancien">Ancien</option>
               </select>
             </h2>
-
             <p className="text-sm text-gray-600 mb-1">📱 {member.telephone || "—"}</p>
             <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
               {member.statut || "—"}
@@ -323,4 +368,5 @@ export default function ListMembers() {
     </div>
   );
 }
+
 
