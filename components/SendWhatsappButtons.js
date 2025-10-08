@@ -3,63 +3,93 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SendWhatsappButtons({ type, gradient }) {
+export default function SendWhatsappButtons({ type, profile, gradient }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [sending, setSending] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
 
-  const handleSend = async () => {
-    if (!phoneNumber) return alert("Veuillez entrer un numéro WhatsApp.");
-    setSending(true);
+  // ⚡ Crée ou récupère le membre avant de créer le suivi
+  const ensureMemberExists = async (phone, profile) => {
+    let memberId = profile?.id;
 
-    try {
-      // 1️⃣ Vérifier si le membre existe déjà
-      const { data: existingMember } = await supabase
+    if (!memberId && phone) {
+      // Vérifier si le numéro existe déjà
+      const { data: existing, error: selectError } = await supabase
         .from("membres")
         .select("*")
-        .eq("telephone", phoneNumber.trim())
-        .single();
+        .eq("telephone", phone.trim())
+        .maybeSingle();
 
-      let memberId;
-      if (!existingMember) {
-        const { data: newMember } = await supabase
+      if (selectError) throw selectError;
+
+      if (existing) {
+        memberId = existing.id;
+        // Mettre le statut à actif
+        await supabase.from("membres").update({ statut: "actif" }).eq("id", memberId);
+      } else {
+        // Créer un nouveau membre
+        const { data: newMember, error: insertError } = await supabase
           .from("membres")
-          .insert([{ telephone: phoneNumber.trim(), statut: "actif" }])
+          .insert([{ telephone: phone.trim(), statut: "actif" }])
           .select()
           .single();
+        if (insertError) throw insertError;
         memberId = newMember.id;
-      } else {
-        memberId = existingMember.id;
-        await supabase
-          .from("membres")
-          .update({ statut: "actif" })
-          .eq("id", memberId);
       }
+    }
 
-      // 2️⃣ Créer un suivi
-      await supabase.from("suivis_membres").insert([
+    return memberId;
+  };
+
+  const handleSend = async () => {
+    setSending(true);
+    setStatusMessage("");
+
+    try {
+      // 1️⃣ Générer token
+      const { data, error } = await supabase.rpc("generate_access_token", {
+        p_access_type: type,
+      });
+      if (error) throw error;
+
+      const token = data?.token;
+      if (!token) throw new Error("Token introuvable.");
+
+      // 2️⃣ Vérifier/créer membre
+      const memberId = await ensureMemberExists(phoneNumber, profile);
+      if (!memberId) throw new Error("Impossible d'identifier ou créer le membre.");
+
+      // 3️⃣ Créer un suivi
+      const { error: insertError } = await supabase.from("suivis_membres").insert([
         {
           membre_id: memberId,
+          cellule_id: profile?.cellule_id || null,
           statut: "envoye",
         },
       ]);
+      if (insertError) throw insertError;
 
-      // 3️⃣ Ouvrir WhatsApp
+      // 4️⃣ Préparer message WhatsApp
+      const link = `https://soultrack-beta.vercel.app/access/${token}`;
       const message =
         type === "ajouter_membre"
-          ? `Voici le lien pour ajouter un nouveau membre : 👉 https://soultrack-beta.vercel.app/access/${memberId}`
-          : `Voici le lien pour ajouter un nouvel évangélisé : 👉 https://soultrack-beta.vercel.app/access/${memberId}`;
+          ? `Voici le lien pour ajouter un nouveau membre : 👉 ${link}`
+          : `Voici le lien pour ajouter un nouvel évangélisé : 👉 ${link}`;
 
-      const waUrl = `https://wa.me/${phoneNumber.replace(/\D/g, "")}?text=${encodeURIComponent(
-        message
-      )}`;
+      const cleanedPhone = phoneNumber.replace(/\D/g, "");
+      const waUrl = cleanedPhone
+        ? `https://wa.me/${cleanedPhone}?text=${encodeURIComponent(message)}`
+        : `https://wa.me/?text=${encodeURIComponent(message)}`;
+
       window.open(waUrl, "_blank");
 
+      setStatusMessage("✅ Suivi créé et lien envoyé !");
       setPhoneNumber("");
       setShowPopup(false);
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de l'envoi du lien et mise à jour du membre.");
+      setStatusMessage("❌ Impossible de créer le suivi. Envoi annulé.");
     } finally {
       setSending(false);
     }
@@ -72,10 +102,14 @@ export default function SendWhatsappButtons({ type, gradient }) {
         style={{ background: gradient }}
         className="text-white font-bold py-2 px-4 rounded-xl w-full transition-all duration-200"
       >
-        {type === "ajouter_membre"
-          ? "Envoyer l'appli – Nouveau membre"
-          : "Envoyer l'appli – Évangélisé"}
+        {type === "ajouter_membre" ? "Envoyer l'appli – Nouveau membre" : "Envoyer l'appli – Évangélisé"}
       </button>
+
+      {statusMessage && (
+        <p className={`mt-2 font-semibold ${statusMessage.startsWith("✅") ? "text-green-600" : "text-red-600"}`}>
+          {statusMessage}
+        </p>
+      )}
 
       {showPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -87,9 +121,7 @@ export default function SendWhatsappButtons({ type, gradient }) {
               ❌
             </button>
 
-            <h3 className="text-lg font-semibold text-gray-800 text-center">
-              Saisir le numéro WhatsApp
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-800 text-center">Saisir le numéro WhatsApp</h3>
             <input
               type="tel"
               placeholder="+230XXXXXXXX"
@@ -111,4 +143,3 @@ export default function SendWhatsappButtons({ type, gradient }) {
     </div>
   );
 }
-
