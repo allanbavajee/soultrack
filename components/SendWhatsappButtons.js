@@ -7,89 +7,40 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [sending, setSending] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
-
-  // ⚡ Crée ou récupère le membre avant de créer le suivi
-  const ensureMemberExists = async (phone, profile) => {
-    let memberId = profile?.id;
-
-    if (!memberId && phone) {
-      // Vérifier si le numéro existe déjà
-      const { data: existing, error: selectError } = await supabase
-        .from("membres")
-        .select("*")
-        .eq("telephone", phone.trim())
-        .maybeSingle();
-
-      if (selectError) throw selectError;
-
-      if (existing) {
-        memberId = existing.id;
-        // Mettre le statut à actif
-        await supabase.from("membres").update({ statut: "actif" }).eq("id", memberId);
-      } else {
-        // Créer un nouveau membre
-        const { data: newMember, error: insertError } = await supabase
-          .from("membres")
-          .insert([{ telephone: phone.trim(), statut: "actif" }])
-          .select()
-          .single();
-        if (insertError) throw insertError;
-        memberId = newMember.id;
-      }
-    }
-
-    return memberId;
-  };
 
   const handleSend = async () => {
     setSending(true);
-    setStatusMessage("");
 
     try {
-      // 1️⃣ Générer token
+      // Appel RPC Supabase pour générer token
       const { data, error } = await supabase.rpc("generate_access_token", {
         p_access_type: type,
       });
+
       if (error) throw error;
 
       const token = data?.token;
       if (!token) throw new Error("Token introuvable.");
 
-      // 2️⃣ Vérifier/créer membre
-      const memberId = await ensureMemberExists(phoneNumber, profile);
-      if (!memberId) throw new Error("Impossible d'identifier ou créer le membre.");
-
-      // 3️⃣ Créer un suivi
-      const { error: insertError } = await supabase.from("suivis_membres").insert([
-        {
-          membre_id: memberId,
-          cellule_id: profile?.cellule_id || null,
-          statut: "envoye",
-        },
-      ]);
-      if (insertError) throw insertError;
-
-      // 4️⃣ Préparer message WhatsApp
       const link = `https://soultrack-beta.vercel.app/access/${token}`;
       const message =
         type === "ajouter_membre"
-          ? `Voici le lien pour ajouter un nouveau membre : 👉 ${link}`
-          : `Voici le lien pour ajouter un nouvel évangélisé : 👉 ${link}`;
+          ? `Voici le lien pour ajouter un nouveau membre : 👉 Ajouter nouveau membre ${link}`
+          : `Voici le lien pour ajouter un nouveau évangélisé : 👉 Ajouter nouveau évangélisé ${link}`;
 
-      const cleanedPhone = phoneNumber.replace(/\D/g, "");
-      const waUrl = cleanedPhone
-        ? `https://wa.me/${cleanedPhone}?text=${encodeURIComponent(message)}`
-        : `https://wa.me/?text=${encodeURIComponent(message)}`;
+      if (!phoneNumber) {
+        // Choisir un contact existant
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+      } else {
+        const cleanedPhone = phoneNumber.replace(/\D/g, "");
+        window.open(`https://wa.me/${cleanedPhone}?text=${encodeURIComponent(message)}`, "_blank");
+      }
 
-      window.open(waUrl, "_blank");
-
-      setStatusMessage("✅ Suivi créé et lien envoyé !");
       setPhoneNumber("");
       setShowPopup(false);
     } catch (err) {
       console.error(err);
-      setStatusMessage("❌ Impossible de créer le suivi. Envoi annulé.");
+      alert("Erreur lors de l'envoi du lien.");
     } finally {
       setSending(false);
     }
@@ -104,12 +55,6 @@ export default function SendWhatsappButtons({ type, profile, gradient }) {
       >
         {type === "ajouter_membre" ? "Envoyer l'appli – Nouveau membre" : "Envoyer l'appli – Évangélisé"}
       </button>
-
-      {statusMessage && (
-        <p className={`mt-2 font-semibold ${statusMessage.startsWith("✅") ? "text-green-600" : "text-red-600"}`}>
-          {statusMessage}
-        </p>
-      )}
 
       {showPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
