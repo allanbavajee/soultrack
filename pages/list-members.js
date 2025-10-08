@@ -25,7 +25,7 @@ export default function ListMembers() {
       if (error) throw error;
       setMembers(data || []);
     } catch (err) {
-      console.error("Erreur fetchMembers:", err.message);
+      console.error("Exception fetchMembers:", err.message);
       setMembers([]);
     }
   };
@@ -38,7 +38,7 @@ export default function ListMembers() {
       if (error) throw error;
       setCellules(data || []);
     } catch (err) {
-      console.error("Erreur fetchCellules:", err.message);
+      console.error("Exception fetchCellules:", err.message);
       setCellules([]);
     }
   };
@@ -125,7 +125,7 @@ export default function ListMembers() {
         {filteredMembers.map((member) => (
           <div
             key={member.id}
-            className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4"
+            className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between border-t-4"
             style={{ borderTopColor: getBorderColor(member) }}
           >
             <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
@@ -149,9 +149,10 @@ export default function ListMembers() {
               {member.statut || "—"}
             </p>
 
+            {/* --- Bouton WhatsApp corrigé --- */}
             <SendWhatsappLink
               type="ajouter_membre"
-              label={`Envoyer WhatsApp à ${member.prenom}`}
+              label="Envoyer sur WhatsApp"
               buttonColor="bg-green-500"
             />
 
@@ -177,20 +178,6 @@ export default function ListMembers() {
         ))}
       </div>
 
-      {/* Boutons globaux */}
-      <div className="mt-8 flex flex-col sm:flex-row gap-4 w-full max-w-md">
-        <SendWhatsappLink
-          type="ajouter_membre"
-          label="Envoyer l'appli – Nouveau membre"
-          buttonColor="bg-green-500"
-        />
-        <SendWhatsappLink
-          type="ajouter_evangelise"
-          label="Envoyer l'appli – Évangélisé"
-          buttonColor="bg-blue-500"
-        />
-      </div>
-
       <button
         onClick={scrollToTop}
         className="fixed bottom-5 right-5 text-white text-2xl font-bold"
@@ -204,3 +191,4 @@ export default function ListMembers() {
     </div>
   );
 }
+
