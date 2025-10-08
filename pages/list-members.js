@@ -1,5 +1,4 @@
 // pages/list-members.js
-
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -76,6 +75,7 @@ export default function ListMembers() {
 
   const countFiltered = filteredMembers.length;
 
+  // ---- CHANGEMENT UNIQUE : sendWhatsapp optimiste + update supabase ----
   const sendWhatsapp = async (celluleId, member) => {
     const cellule = cellules.find((c) => String(c.id) === String(celluleId));
     if (!cellule) return alert("Cellule introuvable.");
@@ -83,15 +83,6 @@ export default function ListMembers() {
 
     const phone = cellule.telephone.replace(/\D/g, "");
     if (!phone) return alert("Numéro de la cellule invalide.");
-
-    try {
-      // Création du suivi "envoye"
-      await supabase.from("suivis_membres").insert([
-        { membre_id: member.id, statut: "envoye", created_at: new Date() },
-      ]);
-    } catch (err) {
-      console.error("Erreur création suivi :", err.message);
-    }
 
     const message = `👋 Salut ${cellule.responsable},
 
@@ -107,11 +98,48 @@ Voici ses infos :
 
 Merci pour ton cœur ❤ et son amour ✨`;
 
+    // numéro WhatsApp
     const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    window.open(waUrl, "_blank");
-  };
 
-  // Séparer nouveaux et anciens
+    // Status actuel (pour rollback si besoin)
+    const prevStatus = member.statut;
+
+    // 1) mise à jour optimiste dans le state pour faire disparaître le tag "Nouveau"
+    setMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, statut: "actif" } : m)));
+
+    // 2) ouvrir WhatsApp (ne bloque pas)
+    try {
+      window.open(waUrl, "_blank");
+    } catch (err) {
+      console.error("Erreur ouverture WhatsApp:", err);
+    }
+
+    // 3) mettre à jour en base (vraie sauvegarde)
+    try {
+      const { error } = await supabase
+        .from("membres")
+        .update({ statut: "actif" })
+        .eq("id", member.id);
+
+      if (error) {
+        // rollback du state si erreur
+        setMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, statut: prevStatus } : m)));
+        console.error("Erreur Supabase update statut:", error);
+        alert("Erreur lors de la mise à jour du statut sur le serveur.");
+      } else {
+        // facultatif : on peut nettoyer la sélection de cellule pour ce membre
+        // setSelectedCellules(prev => ({ ...prev, [member.id]: "" }));
+      }
+    } catch (err) {
+      // rollback si exception
+      setMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, statut: prevStatus } : m)));
+      console.error("Exception lors update statut:", err);
+      alert("Erreur lors de la mise à jour du statut.");
+    }
+  };
+  // ---- fin changement unique ----
+
+  // Séparer nouveaux et anciens (utilisé pour affichage card)
   const nouveaux = filteredMembers.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
@@ -174,6 +202,7 @@ Merci pour ton cœur ❤ et son amour ✨`;
           {/* Nouveau membres */}
           {nouveaux.length > 0 && (
             <div className="mb-4">
+              <p className="text-white mb-2">contact venu le {new Date().toLocaleDateString("fr-FR", { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {nouveaux.map((member) => (
                   <div
@@ -181,9 +210,9 @@ Merci pour ton cœur ❤ et son amour ✨`;
                     className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4 relative"
                     style={{ borderTopColor: getBorderColor(member), minHeight: "200px" }}
                   >
-                    {member.statut === "visiteur" || member.statut === "veut rejoindre ICC" ? (
+                    { (member.statut === "visiteur" || member.statut === "veut rejoindre ICC") && (
                       <span className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-xs">Nouveau</span>
-                    ) : null}
+                    )}
                     <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
                       {member.prenom} {member.nom} {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
                       <select
@@ -206,9 +235,7 @@ Merci pour ton cœur ❤ et son amour ✨`;
 
                     <p
                       className="mt-2 text-blue-500 underline cursor-pointer"
-                      onClick={() =>
-                        setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                      }
+                      onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
                     >
                       {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                     </p>
@@ -221,9 +248,7 @@ Merci pour ton cœur ❤ et son amour ✨`;
                         <p className="text-green-600">Cellule :</p>
                         <select
                           value={selectedCellules[member.id] || ""}
-                          onChange={(e) =>
-                            setSelectedCellules((prev) => ({ ...prev, [member.id]: e.target.value }))
-                          }
+                          onChange={(e) => setSelectedCellules((prev) => ({ ...prev, [member.id]: e.target.value }))}
                           className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
                         >
                           <option value="">-- Sélectionner cellule --</option>
@@ -250,7 +275,7 @@ Merci pour ton cœur ❤ et son amour ✨`;
             </div>
           )}
 
-          {/* Ligne séparation */}
+          {/* Ligne de séparation */}
           {nouveaux.length > 0 && <div className="w-full max-w-5xl h-1 mb-4" style={{ background: "linear-gradient(to right, #d1d5db, #93c5fd)" }} />}
 
           {/* Anciens membres */}
@@ -283,9 +308,7 @@ Merci pour ton cœur ❤ et son amour ✨`;
 
                 <p
                   className="mt-2 text-blue-500 underline cursor-pointer"
-                  onClick={() =>
-                    setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                  }
+                  onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
                 >
                   {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                 </p>
@@ -298,9 +321,7 @@ Merci pour ton cœur ❤ et son amour ✨`;
                     <p className="text-green-600">Cellule :</p>
                     <select
                       value={selectedCellules[member.id] || ""}
-                      onChange={(e) =>
-                        setSelectedCellules((prev) => ({ ...prev, [member.id]: e.target.value }))
-                      }
+                      onChange={(e) => setSelectedCellules((prev) => ({ ...prev, [member.id]: e.target.value }))}
                       className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
                     >
                       <option value="">-- Sélectionner cellule --</option>
@@ -351,24 +372,25 @@ Merci pour ton cœur ❤ et son amour ✨`;
                   <td className="py-2 px-4">
                     <p
                       className="text-blue-500 underline cursor-pointer"
-                      onClick={() =>
-                        setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                      }
+                      onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
                     >
                       {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                     </p>
 
                     {detailsOpen[member.id] && (
                       <div className="mt-2 text-sm text-gray-700 space-y-1">
+                        <p><strong>Prénom:</strong> {member.prenom}</p>
+                        <p><strong>Nom:</strong> {member.nom}</p>
+                        <p><strong>Statut:</strong> {member.statut}</p>
+                        <p><strong>Téléphone:</strong> {member.telephone || "—"}</p>
+
                         <p><strong>Besoin:</strong> {member.besoin || "—"}</p>
                         <p><strong>Infos supplémentaires:</strong> {member.infos_supplementaires || "—"}</p>
                         <p><strong>Comment est-il venu ?</strong> {member.comment || "—"}</p>
                         <p><strong>Cellule:</strong></p>
                         <select
                           value={selectedCellules[member.id] || ""}
-                          onChange={(e) =>
-                            setSelectedCellules((prev) => ({ ...prev, [member.id]: e.target.value }))
-                          }
+                          onChange={(e) => setSelectedCellules((prev) => ({ ...prev, [member.id]: e.target.value }))}
                           className="border rounded-lg px-2 py-1 text-sm w-full"
                         >
                           <option value="">-- Sélectionner cellule --</option>
@@ -399,10 +421,14 @@ Merci pour ton cœur ❤ et son amour ✨`;
 
       <button
         onClick={scrollToTop}
-        className="fixed bottom-4 right-4 bg-indigo-500 text-white rounded-full p-3 shadow-lg hover:bg-indigo-600 transition-all"
+        className="fixed bottom-5 right-5 text-white text-2xl font-bold"
       >
         ↑
       </button>
+
+      <p className="mt-6 mb-6 text-center text-white text-lg font-handwriting-light">
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
+      </p>
     </div>
   );
 }
