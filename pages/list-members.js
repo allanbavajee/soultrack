@@ -1,3 +1,4 @@
+//pages/list-members.js
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -9,6 +10,7 @@ export default function ListMembers() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
+  const [viewMode, setViewMode] = useState("card"); // "card" ou "grid"
 
   useEffect(() => {
     fetchMembers();
@@ -65,7 +67,6 @@ export default function ListMembers() {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
-  // Filtrage simple
   const filteredMembers = members.filter((m) => {
     if (!filter) return true;
     if (filter === "star") return m.star === true;
@@ -74,7 +75,6 @@ export default function ListMembers() {
 
   const countFiltered = filteredMembers.length;
 
-  // Séparer nouveaux et anciens
   const nouveaux = filteredMembers.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
@@ -82,14 +82,13 @@ export default function ListMembers() {
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
 
-  // Fonction envoyer WhatsApp
-  const sendWhatsapp = (member) => {
-    const cellule = cellules.find((c) => c.id === selectedCellules[member.id]);
+  const handleSendWhatsapp = (member) => {
+    const celluleId = selectedCellules[member.id];
+    const cellule = cellules.find((c) => c.id === celluleId);
     if (!cellule || !cellule.telephone) {
-      alert("Numéro de la cellule introuvable");
+      alert("Numéro de la cellule introuvable.");
       return;
     }
-
     const message = `👋 Salut ${cellule.responsable},
 
 🙏 Dieu nous a envoyé une nouvelle âme à suivre.
@@ -104,11 +103,15 @@ Voici ses infos :
 
 Merci pour ton cœur ❤ et son amour ✨`;
 
-    const url = `https://wa.me/${cellule.telephone}?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank");
+    const waUrl = `https://wa.me/${cellule.telephone.replace(/\D/g, "")}?text=${encodeURIComponent(
+      message
+    )}`;
+    window.open(waUrl, "_blank");
 
-    // Changer statut en actif
-    handleChangeStatus(member.id, "actif");
+    // Mettre à jour le statut si nouveau
+    if (member.statut === "visiteur" || member.statut === "veut rejoindre ICC") {
+      handleChangeStatus(member.id, "actif");
+    }
   };
 
   return (
@@ -149,25 +152,41 @@ Merci pour ton cœur ❤ et son amour ✨`;
           <option value="a déjà mon église">A déjà mon église</option>
           <option value="star">⭐ Star</option>
         </select>
+
+        <select
+          value={viewMode}
+          onChange={(e) => setViewMode(e.target.value)}
+          className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        >
+          <option value="card">Vue Card</option>
+          <option value="grid">Vue Grille</option>
+        </select>
+
         <span className="text-white italic text-opacity-80">Résultats: {countFiltered}</span>
       </div>
 
-      {/* Nouveau membres */}
+      {/* Nouveaux */}
       {nouveaux.length > 0 && (
-        <div className="w-full max-w-5xl mb-4">
-          <p className="text-white mb-2">
-            contact venu le {new Date().toLocaleDateString()}
+        <>
+          <p className="text-white font-semibold mb-2 w-full max-w-5xl">
+            Contact venu le {nouveaux[0].created_at.slice(0, 10)}
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            className={`grid gap-6 w-full max-w-5xl ${
+              viewMode === "grid" ? "grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
+            }`}
+          >
             {nouveaux.map((member) => (
               <div
                 key={member.id}
-                className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4"
-                style={{ borderTopColor: getBorderColor(member), minHeight: "200px" }}
+                className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between border-t-4 min-h-[220px]"
+                style={{ borderTopColor: getBorderColor(member) }}
               >
                 <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
-                  {member.prenom} {member.nom}{" "}
-                  {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                  {member.prenom} {member.nom}
+                  {member.statut === "visiteur" || member.statut === "veut rejoindre ICC" ? (
+                    <span className="ml-2 text-white bg-blue-500 px-2 rounded-full text-sm">Nouveau</span>
+                  ) : null}
                   <select
                     value={member.statut}
                     onChange={(e) => handleChangeStatus(member.id, e.target.value)}
@@ -193,15 +212,17 @@ Merci pour ton cœur ❤ et son amour ✨`;
                 >
                   {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                 </p>
+
                 {detailsOpen[member.id] && (
                   <div className="mt-2 text-sm text-gray-700 space-y-1">
                     <p>Email : {member.email || "—"}</p>
                     <p>Besoin : {member.besoin || "—"}</p>
                     <p>Ville : {member.ville || "—"}</p>
+                    <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
 
-                    {/* Menu déroulant cellule */}
-                    <div>
-                      <label className="block text-sm font-semibold mb-1">Cellule :</label>
+                    {/* Cellule */}
+                    <div className="mt-2">
+                      <label className="text-indigo-600 font-semibold mr-2">Cellule :</label>
                       <select
                         value={selectedCellules[member.id] || ""}
                         onChange={(e) =>
@@ -210,9 +231,9 @@ Merci pour ton cœur ❤ et son amour ✨`;
                             [member.id]: e.target.value,
                           }))
                         }
-                        className="border rounded-lg px-2 py-1 text-sm w-full focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                        className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
                       >
-                        <option value="">-- Choisir cellule --</option>
+                        <option value="">-- Sélectionner --</option>
                         {cellules.map((c) => (
                           <option key={c.id} value={c.id}>
                             {c.cellule} ({c.responsable})
@@ -224,44 +245,35 @@ Merci pour ton cœur ❤ et son amour ✨`;
                     {/* Bouton WhatsApp */}
                     {selectedCellules[member.id] && (
                       <button
-                        onClick={() => sendWhatsapp(member)}
-                        className="mt-2 bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600"
+                        onClick={() => handleSendWhatsapp(member)}
+                        className="mt-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl w-full"
                       >
-                        Envoyer WhatsApp
+                        Envoyer par WhatsApp
                       </button>
                     )}
-
-                    <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
                   </div>
                 )}
               </div>
             ))}
           </div>
-        </div>
+          <div className="w-full max-w-5xl h-1 my-4" style={{ background: "linear-gradient(to right, #e2e8f0, #cbd5e1)" }} />
+        </>
       )}
 
-      {/* Ligne de séparation avec gradient gris/bleu */}
-      {nouveaux.length > 0 && (
-        <div
-          className="w-full max-w-5xl h-1 mb-4"
-          style={{ background: "linear-gradient(to right, #d1d5db, #93c5fd)" }}
-        />
-      )}
-
-      {/* Anciens membres */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
-        {anciens.length === 0 && (
-          <p className="text-white col-span-full text-center">Aucun contact trouvé</p>
-        )}
+      {/* Anciens */}
+      <div
+        className={`grid gap-6 w-full max-w-5xl ${
+          viewMode === "grid" ? "grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
+        }`}
+      >
         {anciens.map((member) => (
           <div
             key={member.id}
-            className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col justify-between border-t-4"
-            style={{ borderTopColor: getBorderColor(member), minHeight: "200px" }}
+            className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between border-t-4 min-h-[220px]"
+            style={{ borderTopColor: getBorderColor(member) }}
           >
             <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
-              {member.prenom} {member.nom}{" "}
-              {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+              {member.prenom} {member.nom}
               <select
                 value={member.statut}
                 onChange={(e) => handleChangeStatus(member.id, e.target.value)}
@@ -287,15 +299,17 @@ Merci pour ton cœur ❤ et son amour ✨`;
             >
               {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
             </p>
+
             {detailsOpen[member.id] && (
               <div className="mt-2 text-sm text-gray-700 space-y-1">
                 <p>Email : {member.email || "—"}</p>
                 <p>Besoin : {member.besoin || "—"}</p>
                 <p>Ville : {member.ville || "—"}</p>
+                <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
 
-                {/* Menu déroulant cellule */}
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Cellule :</label>
+                {/* Cellule */}
+                <div className="mt-2">
+                  <label className="text-indigo-600 font-semibold mr-2">Cellule :</label>
                   <select
                     value={selectedCellules[member.id] || ""}
                     onChange={(e) =>
@@ -304,9 +318,9 @@ Merci pour ton cœur ❤ et son amour ✨`;
                         [member.id]: e.target.value,
                       }))
                     }
-                    className="border rounded-lg px-2 py-1 text-sm w-full focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                    className="border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
                   >
-                    <option value="">-- Choisir cellule --</option>
+                    <option value="">-- Sélectionner --</option>
                     {cellules.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.cellule} ({c.responsable})
@@ -318,14 +332,12 @@ Merci pour ton cœur ❤ et son amour ✨`;
                 {/* Bouton WhatsApp */}
                 {selectedCellules[member.id] && (
                   <button
-                    onClick={() => sendWhatsapp(member)}
-                    className="mt-2 bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600"
+                    onClick={() => handleSendWhatsapp(member)}
+                    className="mt-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl w-full"
                   >
-                    Envoyer WhatsApp
+                    Envoyer par WhatsApp
                   </button>
                 )}
-
-                <p>Infos supplémentaires : {member.infos_supplementaires || "—"}</p>
               </div>
             )}
           </div>
@@ -340,8 +352,7 @@ Merci pour ton cœur ❤ et son amour ✨`;
       </button>
 
       <p className="mt-6 mb-6 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens
-        12:14 ❤️
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
       </p>
     </div>
   );
