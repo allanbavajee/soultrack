@@ -10,7 +10,7 @@ export default function SuivisMembres() {
   const [selectedStatus, setSelectedStatus] = useState({});
   const [commentaire, setCommentaire] = useState({});
   const [filter, setFilter] = useState("");
-  const [viewList, setViewList] = useState("principale"); // 'principale', 'refus', 'integre'
+  const [viewList, setViewList] = useState("principale");
 
   useEffect(() => {
     fetchSuivis();
@@ -42,21 +42,7 @@ export default function SuivisMembres() {
         .update({ statut: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      // Mettre à jour localement pour retirer Refus/Intégré de la page principale
-      setSuivis((prev) =>
-        prev
-          .map((s) =>
-            s.id === suiviId
-              ? { ...s, statut_suivi: newStatus, commentaire: newComment }
-              : s
-          )
-          .filter(
-            (s) =>
-              viewList !== "principale" ||
-              (s.statut_suivi !== "Refus" && s.statut_suivi !== "Intégré")
-          )
-      );
-
+      fetchSuivis();
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
       setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
@@ -65,13 +51,13 @@ export default function SuivisMembres() {
   };
 
   const filteredSuivis = suivis.filter((s) => {
-    // Filtrer par liste
     if (viewList === "principale") {
+      // Afficher seulement visiteur ou veut rejoindre ICC
       return (
-        (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
-        s.statut_suivi !== "Refus" &&
-        s.statut_suivi !== "Intégré" &&
-        (!filter || s.statut_suivi === filter)
+        (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC")
+        && s.statut_suivi !== "Refus"
+        && s.statut_suivi !== "Intégré"
+        && (!filter || s.statut_suivi === filter)
       );
     }
     if (viewList === "refus") return s.statut_suivi === "Refus";
@@ -79,7 +65,6 @@ export default function SuivisMembres() {
     return true;
   });
 
-  // Textes cliquables conditionnels selon page active
   const otherViews = [];
   if (viewList === "principale") otherViews.push("Refus", "Intégré");
   if (viewList === "refus") otherViews.push("Principale", "Intégré");
@@ -89,22 +74,18 @@ export default function SuivisMembres() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Textes cliquables pour naviguer */}
       <div className="mb-4 flex gap-4">
         {otherViews.map((v) => (
           <p
             key={v}
             className="text-orange-500 cursor-pointer"
-            onClick={() =>
-              setViewList(v.toLowerCase().replace("é", "e"))
-            }
+            onClick={() => setViewList(v.toLowerCase().replace("é", "e"))}
           >
             {v}
           </p>
         ))}
       </div>
 
-      {/* Filtre central pour Principale */}
       {viewList === "principale" && (
         <div className="mb-4 w-full max-w-md flex justify-center">
           <select
@@ -120,7 +101,6 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* Tableau principal */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full bg-white rounded-xl text-center">
           <thead>
