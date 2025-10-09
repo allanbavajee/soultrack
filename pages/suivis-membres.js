@@ -6,7 +6,10 @@ import supabase from "../lib/supabaseClient";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
+  const [detailsOpen, setDetailsOpen] = useState({});
   const [selectedStatus, setSelectedStatus] = useState({});
+  const [commentaire, setCommentaire] = useState({});
+  const [filter, setFilter] = useState("");
   const [viewList, setViewList] = useState("principale"); // 'principale', 'refus', 'integre'
 
   useEffect(() => {
@@ -17,10 +20,7 @@ export default function SuivisMembres() {
     try {
       const { data, error } = await supabase
         .from("suivis_membres")
-        .select(
-          `id, statut AS statut_suivi, commentaire, 
-           membre: membre_id (id, prenom, nom, statut, besoin, infos_supplementaires)`
-        )
+        .select("*") // on récupère toutes les colonnes directement
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -33,31 +33,30 @@ export default function SuivisMembres() {
 
   const handleStatusUpdate = async (suiviId) => {
     const newStatus = selectedStatus[suiviId];
+    const newComment = commentaire[suiviId] || "";
+
     if (!newStatus) return;
 
     try {
       await supabase
         .from("suivis_membres")
-        .update({ statut: newStatus })
+        .update({ statut_suivi: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      // rafraîchir liste
+      // Après mise à jour, on refait le fetch
       fetchSuivis();
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
+      setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
       console.error("Erreur update statut:", err.message);
     }
   };
 
-  // Filtrer selon la vue
   const filteredSuivis = suivis.filter((s) => {
-    if (!s.membre) return false;
-    if (viewList === "principale")
-      return (
-        (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
-        s.statut_suivi !== "Refus" &&
-        s.statut_suivi !== "Intégré"
-      );
+    if (viewList === "principale") {
+      // On n'affiche pas les Refus/Intégré
+      return s.statut_suivi !== "Refus" && s.statut_suivi !== "Intégré";
+    }
     if (viewList === "refus") return s.statut_suivi === "Refus";
     if (viewList === "integre") return s.statut_suivi === "Intégré";
     return true;
@@ -77,12 +76,29 @@ export default function SuivisMembres() {
           <p
             key={v}
             className="text-orange-500 cursor-pointer"
-            onClick={() => setViewList(v.toLowerCase().replace("é", "e"))}
+            onClick={() =>
+              setViewList(v.toLowerCase().replace("é", "e"))
+            }
           >
             {v}
           </p>
         ))}
       </div>
+
+      {viewList === "principale" && (
+        <div className="mb-4 w-full max-w-md flex justify-center">
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          >
+            <option value="">-- Filtrer par statut Suivis --</option>
+            <option value="En cours">En cours</option>
+            <option value="Intégré">Intégré</option>
+            <option value="Refus">Refus</option>
+          </select>
+        </div>
+      )}
 
       <div className="w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full bg-white rounded-xl text-center">
@@ -92,7 +108,7 @@ export default function SuivisMembres() {
               <th className="py-2 px-4">Prénom</th>
               <th className="py-2 px-4">Statut</th>
               <th className="py-2 px-4">Statut Suivis</th>
-              <th className="py-2 px-4">Action</th>
+              <th className="py-2 px-4">Détails</th>
             </tr>
           </thead>
           <tbody>
@@ -105,30 +121,57 @@ export default function SuivisMembres() {
             ) : (
               filteredSuivis.map((s) => (
                 <tr key={s.id} className="border-b">
-                  <td className="py-2 px-4">{s.membre.nom}</td>
-                  <td className="py-2 px-4">{s.membre.prenom}</td>
-                  <td className="py-2 px-4">{s.membre.statut}</td>
-                  <td className="py-2 px-4">{s.statut_suivi || ""}</td>
+                  <td className="py-2 px-4">{s.nom || "—"}</td>
+                  <td className="py-2 px-4">{s.prenom || "—"}</td>
+                  <td className="py-2 px-4">{s.statut || "—"}</td>
+                  <td className="py-2 px-4">{s.statut_suivi || "—"}</td>
                   <td className="py-2 px-4">
-                    <select
-                      value={selectedStatus[s.id] || ""}
-                      onChange={(e) =>
-                        setSelectedStatus((prev) => ({ ...prev, [s.id]: e.target.value }))
+                    <p
+                      className="text-blue-500 underline cursor-pointer"
+                      onClick={() =>
+                        setDetailsOpen((prev) => ({ ...prev, [s.id]: !prev[s.id] }))
                       }
-                      className="border rounded-lg px-2 py-1 text-sm w-full"
                     >
-                      <option value="">-- Statut Suivis --</option>
-                      <option value="En cours">En cours</option>
-                      <option value="Intégré">Intégré</option>
-                      <option value="Refus">Refus</option>
-                    </select>
+                      {detailsOpen[s.id] ? "Fermer détails" : "Détails"}
+                    </p>
 
-                    <button
-                      onClick={() => handleStatusUpdate(s.id)}
-                      className="mt-1 py-2 bg-orange-500 text-white rounded-xl font-semibold w-full"
-                    >
-                      Valider
-                    </button>
+                    {detailsOpen[s.id] && (
+                      <div className="mt-2 text-sm text-gray-700 text-left space-y-1">
+                        <p><strong>Besoin:</strong> {s.besoin || "—"}</p>
+                        <p><strong>Infos supplémentaires:</strong> {s.infos_supplementaires || "—"}</p>
+                        <p><strong>Comment est-il venu ?</strong> {s.how_came || "—"}</p>
+                        <p><strong>Cellule:</strong> {s.cellule_id || "—"}</p>
+
+                        <textarea
+                          placeholder="Ajouter un commentaire"
+                          value={commentaire[s.id] || ""}
+                          onChange={(e) =>
+                            setCommentaire((prev) => ({ ...prev, [s.id]: e.target.value }))
+                          }
+                          className="border rounded-lg px-2 py-1 text-sm w-full"
+                        />
+
+                        <select
+                          value={selectedStatus[s.id] || ""}
+                          onChange={(e) =>
+                            setSelectedStatus((prev) => ({ ...prev, [s.id]: e.target.value }))
+                          }
+                          className="border rounded-lg px-2 py-1 text-sm w-full"
+                        >
+                          <option value="">-- Statut Suivis --</option>
+                          <option value="En cours">En cours</option>
+                          <option value="Intégré">Intégré</option>
+                          <option value="Refus">Refus</option>
+                        </select>
+
+                        <button
+                          onClick={() => handleStatusUpdate(s.id)}
+                          className="mt-1 py-2 bg-orange-500 text-white rounded-xl font-semibold"
+                        >
+                          Valider
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))
