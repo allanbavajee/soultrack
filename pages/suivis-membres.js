@@ -44,13 +44,13 @@ export default function SuivisMembres() {
 
       fetchSuivis();
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
-      setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
       console.error("Erreur update statut:", err.message);
     }
   };
 
   const filteredSuivis = suivis.filter((s) => {
+    // Filtrer par liste
     if (viewList === "principale") {
       return (
         (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
@@ -62,39 +62,38 @@ export default function SuivisMembres() {
     return true;
   });
 
+  const getOtherViews = () => {
+    if (viewList === "principale") return ["Refus", "Intégré"];
+    if (viewList === "refus") return ["Principale", "Intégré"];
+    if (viewList === "integre") return ["Principale", "Refus"];
+    return [];
+  };
+
+  const handleChangeView = (view) => {
+    // Harmoniser les noms
+    if (view === "Principale") setViewList("principale");
+    else if (view === "Refus") setViewList("refus");
+    else if (view === "Intégré") setViewList("integre");
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Menu texte cliquable */}
+      {/* Textes cliquables pour changer de vue */}
       <div className="mb-4 flex gap-4">
-        <p
-          className={`cursor-pointer font-semibold ${
-            viewList === "principale" ? "text-orange-500" : "text-white"
-          }`}
-          onClick={() => setViewList("principale")}
-        >
-          Principale
-        </p>
-        <p
-          className={`cursor-pointer font-semibold ${
-            viewList === "refus" ? "text-orange-500" : "text-white"
-          }`}
-          onClick={() => setViewList("refus")}
-        >
-          Refus
-        </p>
-        <p
-          className={`cursor-pointer font-semibold ${
-            viewList === "integre" ? "text-orange-500" : "text-white"
-          }`}
-          onClick={() => setViewList("integre")}
-        >
-          Intégré
-        </p>
+        {getOtherViews().map((v) => (
+          <p
+            key={v}
+            className="text-orange-500 cursor-pointer"
+            onClick={() => handleChangeView(v)}
+          >
+            {v}
+          </p>
+        ))}
       </div>
 
-      {/* Filtre central */}
+      {/* Filtre central pour Principale */}
       {viewList === "principale" && (
         <div className="mb-4 w-full max-w-md flex justify-center">
           <select
@@ -133,7 +132,7 @@ export default function SuivisMembres() {
                   <td className="py-2 px-4">{s.membre.prenom}</td>
                   <td className="py-2 px-4">{s.membre.nom}</td>
                   <td className="py-2 px-4">{s.membre.statut}</td>
-                  <td className="py-2 px-4 text-left">
+                  <td className="py-2 px-4">
                     <p
                       className="text-blue-500 underline cursor-pointer"
                       onClick={() =>
@@ -144,7 +143,7 @@ export default function SuivisMembres() {
                     </p>
 
                     {detailsOpen[s.id] && (
-                      <div className="mt-2 text-sm text-gray-700 text-left flex flex-col gap-2">
+                      <div className="mt-2 text-sm text-gray-700 text-left">
                         <p>
                           <strong>Besoin:</strong> {s.membre.besoin || "—"}
                         </p>
@@ -160,11 +159,11 @@ export default function SuivisMembres() {
 
                         <textarea
                           placeholder="Ajouter un commentaire"
-                          value={commentaire[s.id] || s.commentaire || ""}
+                          value={commentaire[s.id] || ""}
                           onChange={(e) =>
                             setCommentaire((prev) => ({ ...prev, [s.id]: e.target.value }))
                           }
-                          className="border rounded-lg px-2 py-1 text-sm w-full"
+                          className="border rounded-lg px-2 py-1 text-sm w-full mt-2"
                         />
 
                         <select
@@ -172,7 +171,7 @@ export default function SuivisMembres() {
                           onChange={(e) =>
                             setSelectedStatus((prev) => ({ ...prev, [s.id]: e.target.value }))
                           }
-                          className="border rounded-lg px-2 py-1 text-sm w-full"
+                          className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
                         >
                           <option value="">-- Statut Suivis --</option>
                           <option value="En cours">En cours</option>
@@ -182,7 +181,7 @@ export default function SuivisMembres() {
 
                         <button
                           onClick={() => handleStatusUpdate(s.id)}
-                          className="mt-1 py-1 bg-orange-500 text-white rounded-xl font-semibold"
+                          className="mt-1 py-2 bg-orange-500 text-white rounded-xl font-semibold"
                         >
                           Valider
                         </button>
