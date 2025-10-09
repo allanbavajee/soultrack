@@ -42,8 +42,21 @@ export default function SuivisMembres() {
         .update({ statut: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      // Recharge les suivis depuis la base pour refléter le changement
-      fetchSuivis();
+      // Mettre à jour localement pour retirer Refus/Intégré de la page principale
+      setSuivis((prev) =>
+        prev
+          .map((s) =>
+            s.id === suiviId
+              ? { ...s, statut_suivi: newStatus, commentaire: newComment }
+              : s
+          )
+          .filter(
+            (s) =>
+              viewList !== "principale" ||
+              (s.statut_suivi !== "Refus" && s.statut_suivi !== "Intégré")
+          )
+      );
+
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
       setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
@@ -52,7 +65,7 @@ export default function SuivisMembres() {
   };
 
   const filteredSuivis = suivis.filter((s) => {
-    // Filtrer pour la vue principale
+    // Filtrer par liste
     if (viewList === "principale") {
       return (
         (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
