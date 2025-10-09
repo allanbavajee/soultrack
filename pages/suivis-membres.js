@@ -6,7 +6,6 @@ import supabase from "../lib/supabaseClient";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
-  const [detailsOpen, setDetailsOpen] = useState({});
   const [selectedStatus, setSelectedStatus] = useState({});
   const [commentaire, setCommentaire] = useState({});
   const [viewList, setViewList] = useState("principale"); // 'principale', 'refus', 'integre'
@@ -42,12 +41,14 @@ export default function SuivisMembres() {
         .update({ statut_suivi: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      // mise à jour immédiate côté client
+      // Mise à jour côté client
       setSuivis((prev) =>
         prev.map((s) =>
           s.id === suiviId ? { ...s, statut_suivi: newStatus, commentaire: newComment } : s
         )
       );
+
+      // réinitialiser les champs du menu déroulant et commentaire
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
       setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
@@ -118,47 +119,34 @@ export default function SuivisMembres() {
                   <td className="py-2 px-4">{s.statut}</td>
                   <td className="py-2 px-4">{s.statut_suivi || "—"}</td>
                   <td className="py-2 px-4">
-                    <p
-                      className="text-blue-500 underline cursor-pointer"
-                      onClick={() =>
-                        setDetailsOpen((prev) => ({ ...prev, [s.id]: !prev[s.id] }))
+                    <select
+                      value={selectedStatus[s.id] || ""}
+                      onChange={(e) =>
+                        setSelectedStatus((prev) => ({ ...prev, [s.id]: e.target.value }))
                       }
+                      className="border rounded-lg px-2 py-1 text-sm w-full"
                     >
-                      {detailsOpen[s.id] ? "Fermer détails" : "Détails"}
-                    </p>
+                      <option value="">-- Statut Suivis --</option>
+                      <option value="En cours">En cours</option>
+                      <option value="Intégré">Intégré</option>
+                      <option value="Refus">Refus</option>
+                    </select>
 
-                    {detailsOpen[s.id] && (
-                      <div className="mt-2 text-sm text-gray-700 text-left space-y-1">
-                        <textarea
-                          placeholder="Ajouter un commentaire"
-                          value={commentaire[s.id] || ""}
-                          onChange={(e) =>
-                            setCommentaire((prev) => ({ ...prev, [s.id]: e.target.value }))
-                          }
-                          className="border rounded-lg px-2 py-1 text-sm w-full"
-                        />
+                    <textarea
+                      placeholder="Ajouter un commentaire"
+                      value={commentaire[s.id] || ""}
+                      onChange={(e) =>
+                        setCommentaire((prev) => ({ ...prev, [s.id]: e.target.value }))
+                      }
+                      className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
+                    />
 
-                        <select
-                          value={selectedStatus[s.id] || ""}
-                          onChange={(e) =>
-                            setSelectedStatus((prev) => ({ ...prev, [s.id]: e.target.value }))
-                          }
-                          className="border rounded-lg px-2 py-1 text-sm w-full"
-                        >
-                          <option value="">-- Statut Suivis --</option>
-                          <option value="En cours">En cours</option>
-                          <option value="Intégré">Intégré</option>
-                          <option value="Refus">Refus</option>
-                        </select>
-
-                        <button
-                          onClick={() => handleStatusUpdate(s.id)}
-                          className="mt-1 py-2 bg-orange-500 text-white rounded-xl font-semibold"
-                        >
-                          Valider
-                        </button>
-                      </div>
-                    )}
+                    <button
+                      onClick={() => handleStatusUpdate(s.id)}
+                      className="mt-1 py-2 bg-orange-500 text-white rounded-xl font-semibold w-full"
+                    >
+                      Valider
+                    </button>
                   </td>
                 </tr>
               ))
