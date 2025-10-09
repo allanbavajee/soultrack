@@ -56,9 +56,11 @@ export default function SuivisMembres() {
   }
 
   return (
-    <div className="p-4">
+    <div className="min-h-screen p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
+      <h1 className="text-3xl text-white font-bold mb-4">Suivis Membres 📋</h1>
+
       {/* Navigation */}
-      <div className="mb-4 space-x-4 text-orange-500">
+      <div className="mb-4 flex gap-4 text-orange-400">
         {currentView !== "principale" && (
           <span className="cursor-pointer" onClick={() => setCurrentView("principale")}>
             Principale
@@ -76,49 +78,57 @@ export default function SuivisMembres() {
         )}
       </div>
 
-      <table className="min-w-full border border-gray-300">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="border p-2">ID</th>
-            <th className="border p-2">Statut</th>
-            <th className="border p-2">Commentaire</th>
-            <th className="border p-2">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {suivis.length === 0 ? (
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white rounded-xl text-center">
+          <thead className="bg-gray-200">
             <tr>
-              <td colSpan={4} className="p-4 text-center">Aucun contact trouvé.</td>
+              <th className="py-2 px-4">Nom</th>
+              <th className="py-2 px-4">Prénom</th>
+              <th className="py-2 px-4">Statut</th>
+              <th className="py-2 px-4">Statut Suivis</th>
+              <th className="py-2 px-4">Action</th>
             </tr>
-          ) : (
-            suivis.map((s) => (
-              <tr key={s.id}>
-                <td className="border p-2">{s.id}</td>
-                <td className="border p-2">{s.statut}</td>
-                <td className="border p-2">{s.commentaire || ""}</td>
-                <td className="border p-2">
-                  <select
-                    value={selectedStatus[s.id] || ""}
-                    onChange={(e) =>
-                      setSelectedStatus({ ...selectedStatus, [s.id]: e.target.value })
-                    }
-                  >
-                    <option value="">-- Statut --</option>
-                    <option value="Refus">Refus</option>
-                    <option value="Intégré">Intégré</option>
-                  </select>
-                  <button
-                    className="ml-2 px-2 py-1 bg-green-500 text-white rounded"
-                    onClick={() => handleStatusUpdate(s.id)}
-                  >
-                    Valider
-                  </button>
+          </thead>
+          <tbody>
+            {suivis.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="py-4 text-gray-600">
+                  Aucun contact trouvé.
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              suivis.map((s) => (
+                <tr key={s.id} className="border-b">
+                  <td className="py-2 px-4">{s.nom}</td>
+                  <td className="py-2 px-4">{s.prenom}</td>
+                  <td className="py-2 px-4">{s.statut}</td>
+                  <td className="py-2 px-4">{s.statut_suivi || ""}</td>
+                  <td className="py-2 px-4">
+                    <select
+                      value={selectedStatus[s.id] || ""}
+                      onChange={(e) =>
+                        setSelectedStatus({ ...selectedStatus, [s.id]: e.target.value })
+                      }
+                      className="border rounded px-2 py-1"
+                    >
+                      <option value="">-- Statut Suivis --</option>
+                      <option value="En cours">En cours</option>
+                      <option value="Intégré">Intégré</option>
+                      <option value="Refus">Refus</option>
+                    </select>
+                    <button
+                      className="ml-2 px-2 py-1 bg-green-500 text-white rounded"
+                      onClick={() => handleStatusUpdate(s.id)}
+                    >
+                      Valider
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
