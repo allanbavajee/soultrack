@@ -9,6 +9,7 @@ export default function SuivisMembres() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [selectedStatus, setSelectedStatus] = useState({});
   const [commentaire, setCommentaire] = useState({});
+  const [filter, setFilter] = useState("");
   const [viewList, setViewList] = useState("principale"); // 'principale', 'refus', 'integre'
 
   useEffect(() => {
@@ -19,7 +20,7 @@ export default function SuivisMembres() {
     try {
       const { data, error } = await supabase
         .from("suivis_membres")
-        .select("*") // Toutes les infos sont dans suivis_membres maintenant
+        .select(`id, statut_suivi, commentaire, membre: membre_id (*)`)
         .order("created_at", { ascending: false });
       if (error) throw error;
       setSuivis(data || []);
@@ -33,28 +34,40 @@ export default function SuivisMembres() {
     const newStatus = selectedStatus[suiviId];
     const newComment = commentaire[suiviId] || "";
 
-    if (!newStatus) return;
+    if (!newStatus) {
+      alert("Veuillez sélectionner un statut avant de valider !");
+      return;
+    }
 
     try {
-      await supabase
+      const { data, error } = await supabase
         .from("suivis_membres")
         .update({ statut_suivi: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      // Rafraîchir la liste
-      fetchSuivis();
-
-      // Réinitialiser les champs
-      setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
-      setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
+      if (error) {
+        console.error("Erreur update statut:", error);
+        alert("Erreur lors de la mise à jour : " + error.message);
+      } else {
+        fetchSuivis(); // rafraîchir la liste
+        setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
+        setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
+        alert("Statut mis à jour avec succès !");
+      }
     } catch (err) {
       console.error("Erreur update statut:", err.message);
+      alert("Erreur lors de la mise à jour : " + err.message);
     }
   };
 
+  // Filtrage pour afficher correctement selon viewList
   const filteredSuivis = suivis.filter((s) => {
     if (viewList === "principale") {
-      return s.statut_suivi !== "Refus" && s.statut_suivi !== "Intégré";
+      return (
+        (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
+        s.statut_suivi !== "Refus" &&
+        s.statut_suivi !== "Intégré"
+      );
     }
     if (viewList === "refus") return s.statut_suivi === "Refus";
     if (viewList === "integre") return s.statut_suivi === "Intégré";
@@ -70,7 +83,7 @@ export default function SuivisMembres() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Textes cliquables pour naviguer */}
+      {/* Navigation */}
       <div className="mb-4 flex gap-4">
         {otherViews.map((v) => (
           <p
@@ -85,13 +98,13 @@ export default function SuivisMembres() {
         ))}
       </div>
 
-      {/* Tableau principal */}
+      {/* Tableau */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full bg-white rounded-xl text-center">
           <thead>
             <tr className="bg-gray-200">
-              <th className="py-2 px-4">Nom</th>
               <th className="py-2 px-4">Prénom</th>
+              <th className="py-2 px-4">Nom</th>
               <th className="py-2 px-4">Statut</th>
               <th className="py-2 px-4">Statut Suivis</th>
               <th className="py-2 px-4">Détails</th>
@@ -107,9 +120,9 @@ export default function SuivisMembres() {
             ) : (
               filteredSuivis.map((s) => (
                 <tr key={s.id} className="border-b">
-                  <td className="py-2 px-4">{s.nom || "—"}</td>
-                  <td className="py-2 px-4">{s.prenom || "—"}</td>
-                  <td className="py-2 px-4">{s.statut_membre || "—"}</td>
+                  <td className="py-2 px-4">{s.membre.prenom}</td>
+                  <td className="py-2 px-4">{s.membre.nom}</td>
+                  <td className="py-2 px-4">{s.membre.statut}</td>
                   <td className="py-2 px-4">{s.statut_suivi || "—"}</td>
                   <td className="py-2 px-4">
                     <p
@@ -123,10 +136,10 @@ export default function SuivisMembres() {
 
                     {detailsOpen[s.id] && (
                       <div className="mt-2 text-sm text-gray-700 text-left space-y-1">
-                        <p><strong>Besoin:</strong> {s.besoin || "—"}</p>
-                        <p><strong>Infos supplémentaires:</strong> {s.infos_supplementaires || "—"}</p>
-                        <p><strong>Comment est-il venu ?</strong> {s.how_came || "—"}</p>
-                        <p><strong>Cellule:</strong> {s.cellule_id || "—"}</p>
+                        <p><strong>Besoin:</strong> {s.membre.besoin || "—"}</p>
+                        <p><strong>Infos supplémentaires:</strong> {s.membre.infos_supplementaires || "—"}</p>
+                        <p><strong>Comment est-il venu ?</strong> {s.membre.how_came || "—"}</p>
+                        <p><strong>Cellule:</strong> {s.membre.cellule_id || "—"}</p>
 
                         <textarea
                           placeholder="Ajouter un commentaire"
