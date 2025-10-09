@@ -42,18 +42,22 @@ export default function SuivisMembres() {
         .update({ statut: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      fetchSuivis();
+      // Mettre à jour localement pour retirer les refus/intégré de la vue principale
+      setSuivis((prev) =>
+        prev.map((s) =>
+          s.id === suiviId ? { ...s, statut_suivi: newStatus, commentaire: newComment } : s
+        )
+      );
+
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
-      setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
       console.error("Erreur update statut:", err.message);
     }
   };
 
   const filteredSuivis = suivis.filter((s) => {
-    // Filtrer par liste
+    // Affichage principal : seulement statut "visiteur" ou "veut rejoindre ICC"
     if (viewList === "principale") {
-      // Afficher seulement "visiteur" ou "veut rejoindre ICC" ET statut_suivi != Refus/Intégré
       return (
         (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
         s.statut_suivi !== "Refus" &&
@@ -66,32 +70,20 @@ export default function SuivisMembres() {
     return true;
   });
 
-  // Textes cliquables conditionnels selon page active
-  const otherViews = [];
-  if (viewList === "principale") otherViews.push("Refus", "Intégré");
-  if (viewList === "refus") otherViews.push("Principale", "Intégré");
-  if (viewList === "integre") otherViews.push("Principale", "Refus");
-
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Textes cliquables pour naviguer */}
-      <div className="mb-4 flex gap-4">
-        {otherViews.map((v) => (
-          <p
-            key={v}
-            className="text-orange-500 cursor-pointer"
-            onClick={() =>
-              setViewList(v.toLowerCase().replace("é", "e"))
-            }
-          >
-            {v}
-          </p>
-        ))}
+      {/* Texte cliquables pour changer la vue */}
+      <div className="mb-4 flex gap-4 text-orange-500 cursor-pointer">
+        {viewList !== "principale" && (
+          <span onClick={() => setViewList("principale")}>Principale</span>
+        )}
+        {viewList !== "refus" && <span onClick={() => setViewList("refus")}>Refus</span>}
+        {viewList !== "integre" && <span onClick={() => setViewList("integre")}>Intégré</span>}
       </div>
 
-      {/* Filtre central pour Principale */}
+      {/* Filtre central */}
       {viewList === "principale" && (
         <div className="mb-4 w-full max-w-md flex justify-center">
           <select
@@ -107,7 +99,6 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* Tableau principal */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full bg-white rounded-xl text-center">
           <thead>
@@ -144,7 +135,7 @@ export default function SuivisMembres() {
                     </p>
 
                     {detailsOpen[s.id] && (
-                      <div className="mt-2 text-sm text-gray-700 text-left space-y-1">
+                      <div className="mt-2 text-sm text-gray-700 text-left">
                         <p>
                           <strong>Besoin:</strong> {s.membre.besoin || "—"}
                         </p>
@@ -158,34 +149,36 @@ export default function SuivisMembres() {
                           <strong>Cellule:</strong> {s.membre.cellule_id || "—"}
                         </p>
 
-                        <textarea
-                          placeholder="Ajouter un commentaire"
-                          value={commentaire[s.id] || ""}
-                          onChange={(e) =>
-                            setCommentaire((prev) => ({ ...prev, [s.id]: e.target.value }))
-                          }
-                          className="border rounded-lg px-2 py-1 text-sm w-full"
-                        />
+                        <div className="mt-2 flex flex-col gap-2">
+                          <textarea
+                            placeholder="Ajouter un commentaire"
+                            value={commentaire[s.id] || ""}
+                            onChange={(e) =>
+                              setCommentaire((prev) => ({ ...prev, [s.id]: e.target.value }))
+                            }
+                            className="border rounded-lg px-2 py-1 text-sm w-full"
+                          />
 
-                        <select
-                          value={selectedStatus[s.id] || ""}
-                          onChange={(e) =>
-                            setSelectedStatus((prev) => ({ ...prev, [s.id]: e.target.value }))
-                          }
-                          className="border rounded-lg px-2 py-1 text-sm w-full"
-                        >
-                          <option value="">-- Statut Suivis --</option>
-                          <option value="En cours">En cours</option>
-                          <option value="Intégré">Intégré</option>
-                          <option value="Refus">Refus</option>
-                        </select>
+                          <select
+                            value={selectedStatus[s.id] || ""}
+                            onChange={(e) =>
+                              setSelectedStatus((prev) => ({ ...prev, [s.id]: e.target.value }))
+                            }
+                            className="border rounded-lg px-2 py-1 text-sm w-full"
+                          >
+                            <option value="">-- Statut Suivis --</option>
+                            <option value="En cours">En cours</option>
+                            <option value="Intégré">Intégré</option>
+                            <option value="Refus">Refus</option>
+                          </select>
 
-                        <button
-                          onClick={() => handleStatusUpdate(s.id)}
-                          className="mt-1 py-2 bg-orange-500 text-white rounded-xl font-semibold"
-                        >
-                          Valider
-                        </button>
+                          <button
+                            onClick={() => handleStatusUpdate(s.id)}
+                            className="mt-1 py-2 bg-orange-500 text-white rounded-xl font-semibold"
+                          >
+                            Valider
+                          </button>
+                        </div>
                       </div>
                     )}
                   </td>
