@@ -44,13 +44,13 @@ export default function SuivisMembres() {
 
       fetchSuivis();
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
+      setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
       console.error("Erreur update statut:", err.message);
     }
   };
 
   const filteredSuivis = suivis.filter((s) => {
-    // Filtrer par liste
     if (viewList === "principale") {
       return (
         (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
@@ -66,32 +66,32 @@ export default function SuivisMembres() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Boutons rapides Refus / Intégré */}
+      {/* Menu texte cliquable */}
       <div className="mb-4 flex gap-4">
-        <button
-          className={`px-4 py-2 rounded-xl font-semibold ${
-            viewList === "principale" ? "bg-orange-500 text-white" : "bg-white text-gray-700"
+        <p
+          className={`cursor-pointer font-semibold ${
+            viewList === "principale" ? "text-orange-500" : "text-white"
           }`}
           onClick={() => setViewList("principale")}
         >
           Principale
-        </button>
-        <button
-          className={`px-4 py-2 rounded-xl font-semibold ${
-            viewList === "refus" ? "bg-orange-500 text-white" : "bg-white text-gray-700"
+        </p>
+        <p
+          className={`cursor-pointer font-semibold ${
+            viewList === "refus" ? "text-orange-500" : "text-white"
           }`}
           onClick={() => setViewList("refus")}
         >
           Refus
-        </button>
-        <button
-          className={`px-4 py-2 rounded-xl font-semibold ${
-            viewList === "integre" ? "bg-orange-500 text-white" : "bg-white text-gray-700"
+        </p>
+        <p
+          className={`cursor-pointer font-semibold ${
+            viewList === "integre" ? "text-orange-500" : "text-white"
           }`}
           onClick={() => setViewList("integre")}
         >
           Intégré
-        </button>
+        </p>
       </div>
 
       {/* Filtre central */}
@@ -133,7 +133,7 @@ export default function SuivisMembres() {
                   <td className="py-2 px-4">{s.membre.prenom}</td>
                   <td className="py-2 px-4">{s.membre.nom}</td>
                   <td className="py-2 px-4">{s.membre.statut}</td>
-                  <td className="py-2 px-4">
+                  <td className="py-2 px-4 text-left">
                     <p
                       className="text-blue-500 underline cursor-pointer"
                       onClick={() =>
@@ -144,13 +144,12 @@ export default function SuivisMembres() {
                     </p>
 
                     {detailsOpen[s.id] && (
-                      <div className="mt-2 text-sm text-gray-700 text-left">
+                      <div className="mt-2 text-sm text-gray-700 text-left flex flex-col gap-2">
                         <p>
                           <strong>Besoin:</strong> {s.membre.besoin || "—"}
                         </p>
                         <p>
-                          <strong>Infos supplémentaires:</strong>{" "}
-                          {s.membre.infos_supplementaires || "—"}
+                          <strong>Infos supplémentaires:</strong> {s.membre.infos_supplementaires || "—"}
                         </p>
                         <p>
                           <strong>Comment est-il venu ?</strong> {s.membre.comment || "—"}
@@ -159,42 +158,34 @@ export default function SuivisMembres() {
                           <strong>Cellule:</strong> {s.membre.cellule_id || "—"}
                         </p>
 
-                        <div className="mt-2 flex flex-col gap-2">
-                          <select
-                            value={selectedStatus[s.id] || ""}
-                            onChange={(e) =>
-                              setSelectedStatus((prev) => ({
-                                ...prev,
-                                [s.id]: e.target.value,
-                              }))
-                            }
-                            className="border rounded-lg px-2 py-1 text-sm w-full"
-                          >
-                            <option value="">-- Statut Suivis --</option>
-                            <option value="En cours">En cours</option>
-                            <option value="Intégré">Intégré</option>
-                            <option value="Refus">Refus</option>
-                          </select>
+                        <textarea
+                          placeholder="Ajouter un commentaire"
+                          value={commentaire[s.id] || s.commentaire || ""}
+                          onChange={(e) =>
+                            setCommentaire((prev) => ({ ...prev, [s.id]: e.target.value }))
+                          }
+                          className="border rounded-lg px-2 py-1 text-sm w-full"
+                        />
 
-                          <textarea
-                            placeholder="Ajouter un commentaire"
-                            value={commentaire[s.id] || ""}
-                            onChange={(e) =>
-                              setCommentaire((prev) => ({
-                                ...prev,
-                                [s.id]: e.target.value,
-                              }))
-                            }
-                            className="border rounded-lg px-2 py-1 text-sm w-full"
-                          />
+                        <select
+                          value={selectedStatus[s.id] || ""}
+                          onChange={(e) =>
+                            setSelectedStatus((prev) => ({ ...prev, [s.id]: e.target.value }))
+                          }
+                          className="border rounded-lg px-2 py-1 text-sm w-full"
+                        >
+                          <option value="">-- Statut Suivis --</option>
+                          <option value="En cours">En cours</option>
+                          <option value="Intégré">Intégré</option>
+                          <option value="Refus">Refus</option>
+                        </select>
 
-                          <button
-                            onClick={() => handleStatusUpdate(s.id)}
-                            className="mt-1 py-2 bg-orange-500 text-white rounded-xl font-semibold"
-                          >
-                            Valider
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handleStatusUpdate(s.id)}
+                          className="mt-1 py-1 bg-orange-500 text-white rounded-xl font-semibold"
+                        >
+                          Valider
+                        </button>
                       </div>
                     )}
                   </td>
