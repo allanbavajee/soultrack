@@ -19,10 +19,9 @@ export default function SuivisMembres() {
   const fetchSuivis = async () => {
     try {
       const { data, error } = await supabase
-        .from("suivis_membres_v") // vue corrigée
+        .from("suivis_membres_v")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       setSuivis(data || []);
     } catch (err) {
@@ -54,7 +53,7 @@ export default function SuivisMembres() {
   const filteredSuivis = suivis.filter((s) => {
     if (viewList === "principale") {
       return (
-        (s.membre_statut === "visiteur" || s.membre_statut === "veut rejoindre ICC") &&
+        (s.statut === "visiteur" || s.statut === "veut rejoindre ICC") &&
         s.statut_suivi !== "Refus" &&
         s.statut_suivi !== "Intégré" &&
         (!filter || s.statut_suivi === filter)
@@ -74,7 +73,7 @@ export default function SuivisMembres() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Textes cliquables pour naviguer */}
+      {/* Textes cliquables */}
       <div className="mb-4 flex gap-4">
         {otherViews.map((v) => (
           <p
@@ -87,7 +86,7 @@ export default function SuivisMembres() {
         ))}
       </div>
 
-      {/* Filtre central pour Principale */}
+      {/* Filtre central */}
       {viewList === "principale" && (
         <div className="mb-4 w-full max-w-md flex justify-center">
           <select
@@ -127,7 +126,7 @@ export default function SuivisMembres() {
                 <tr key={s.id} className="border-b">
                   <td className="py-2 px-4">{s.prenom}</td>
                   <td className="py-2 px-4">{s.nom}</td>
-                  <td className="py-2 px-4">{s.membre_statut}</td>
+                  <td className="py-2 px-4">{s.statut}</td>
                   <td className="py-2 px-4">{s.statut_suivi || "—"}</td>
                   <td className="py-2 px-4">
                     <p
@@ -146,12 +145,6 @@ export default function SuivisMembres() {
                         </p>
                         <p>
                           <strong>Infos supplémentaires:</strong> {s.infos_supplementaires || "—"}
-                        </p>
-                        <p>
-                          <strong>Comment est-il venu ?</strong> {s.comment || "—"}
-                        </p>
-                        <p>
-                          <strong>Cellule:</strong> {s.cellule_id || "—"}
                         </p>
 
                         <textarea
