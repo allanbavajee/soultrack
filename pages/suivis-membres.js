@@ -34,34 +34,44 @@ export default function SuivisMembres() {
     const newStatus = selectedStatus[suiviId];
     const newComment = commentaire[suiviId] || "";
 
-    if (!newStatus) return;
+    if (!newStatus) {
+      alert("Veuillez sélectionner un statut avant de valider.");
+      return;
+    }
 
     try {
-      await supabase
+      const { error } = await supabase
         .from("suivis_membres")
         .update({ statut: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      fetchSuivis();
+      if (error) throw error;
+
+      // Mise à jour immédiate dans l'état local
+      setSuivis((prev) =>
+        prev.map((s) =>
+          s.id === suiviId ? { ...s, statut: newStatus, commentaire: newComment } : s
+        )
+      );
+
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
       console.error("Erreur update statut:", err.message);
+      alert("Impossible de mettre à jour le statut. Vérifiez la console.");
     }
   };
 
   const filteredSuivis = suivis.filter((s) => {
     // Filtrer par liste
     if (viewList === "principale") {
-      return (
-        (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
-        (!filter || s.statut === filter)
-      );
+      return s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC";
     }
     if (viewList === "refus") return s.statut === "Refus";
     if (viewList === "integre") return s.statut === "Intégré";
     return true;
   });
 
+  // Générer les vues cliquables selon la page actuelle
   const getOtherViews = () => {
     if (viewList === "principale") return ["Refus", "Intégré"];
     if (viewList === "refus") return ["Principale", "Intégré"];
@@ -69,31 +79,33 @@ export default function SuivisMembres() {
     return [];
   };
 
-  const handleChangeView = (view) => {
-    // Harmoniser les noms
-    if (view === "Principale") setViewList("principale");
-    else if (view === "Refus") setViewList("refus");
-    else if (view === "Intégré") setViewList("integre");
+  const handleViewClick = (view) => {
+    const map = {
+      Principale: "principale",
+      Refus: "refus",
+      Intégré: "integre",
+    };
+    setViewList(map[view]);
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Textes cliquables pour changer de vue */}
+      {/* Vues cliquables */}
       <div className="mb-4 flex gap-4">
         {getOtherViews().map((v) => (
           <p
             key={v}
-            className="text-orange-500 cursor-pointer"
-            onClick={() => handleChangeView(v)}
+            onClick={() => handleViewClick(v)}
+            className="cursor-pointer text-orange-400 hover:underline"
           >
             {v}
           </p>
         ))}
       </div>
 
-      {/* Filtre central pour Principale */}
+      {/* Filtre central */}
       {viewList === "principale" && (
         <div className="mb-4 w-full max-w-md flex justify-center">
           <select
@@ -148,7 +160,8 @@ export default function SuivisMembres() {
                           <strong>Besoin:</strong> {s.membre.besoin || "—"}
                         </p>
                         <p>
-                          <strong>Infos supplémentaires:</strong> {s.membre.infos_supplementaires || "—"}
+                          <strong>Infos supplémentaires:</strong>{" "}
+                          {s.membre.infos_supplementaires || "—"}
                         </p>
                         <p>
                           <strong>Comment est-il venu ?</strong> {s.membre.comment || "—"}
@@ -163,7 +176,7 @@ export default function SuivisMembres() {
                           onChange={(e) =>
                             setCommentaire((prev) => ({ ...prev, [s.id]: e.target.value }))
                           }
-                          className="border rounded-lg px-2 py-1 text-sm w-full mt-2"
+                          className="border rounded-lg px-2 py-1 text-sm w-full my-2"
                         />
 
                         <select
@@ -171,7 +184,7 @@ export default function SuivisMembres() {
                           onChange={(e) =>
                             setSelectedStatus((prev) => ({ ...prev, [s.id]: e.target.value }))
                           }
-                          className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
+                          className="border rounded-lg px-2 py-1 text-sm w-full mb-2"
                         >
                           <option value="">-- Statut Suivis --</option>
                           <option value="En cours">En cours</option>
@@ -181,7 +194,7 @@ export default function SuivisMembres() {
 
                         <button
                           onClick={() => handleStatusUpdate(s.id)}
-                          className="mt-1 py-2 bg-orange-500 text-white rounded-xl font-semibold"
+                          className="py-2 bg-orange-500 text-white rounded-xl font-semibold w-full"
                         >
                           Valider
                         </button>
