@@ -9,7 +9,7 @@ export default function SuivisMembres() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [selectedStatus, setSelectedStatus] = useState({});
   const [commentaire, setCommentaire] = useState({});
-  const [viewList, setViewList] = useState("principale"); // 'principale', 'refus', 'integre'
+  const [viewList, setViewList] = useState("principale");
 
   useEffect(() => {
     fetchSuivis();
@@ -23,10 +23,10 @@ export default function SuivisMembres() {
           id,
           statut_suivi,
           commentaire,
-          membre: membre_id (
+          membre_id (
             id,
-            prenom,
             nom,
+            prenom,
             statut,
             besoin,
             infos_supplementaires,
@@ -47,7 +47,6 @@ export default function SuivisMembres() {
   const handleStatusUpdate = async (suiviId) => {
     const newStatus = selectedStatus[suiviId];
     const newComment = commentaire[suiviId] || "";
-
     if (!newStatus) return;
 
     try {
@@ -56,21 +55,29 @@ export default function SuivisMembres() {
         .update({ statut_suivi: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      // Réactualiser la liste après validation
-      fetchSuivis();
+      // Mise à jour locale immédiate sans recharger
+      setSuivis((prev) =>
+        prev.map((s) =>
+          s.id === suiviId ? { ...s, statut_suivi: newStatus, commentaire: newComment } : s
+        )
+      );
+
+      // Supprime automatiquement de la liste principale si Refus ou Intégré
+      if (newStatus === "Refus" || newStatus === "Intégré") {
+        setSuivis((prev) => prev.filter((s) => s.id !== suiviId));
+      }
+
+      // Reset les inputs
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
       setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
+      setDetailsOpen((prev) => ({ ...prev, [suiviId]: false }));
     } catch (err) {
       console.error("Erreur update statut:", err.message);
     }
   };
 
-  // Filtrage des contacts selon la vue
   const filteredSuivis = suivis.filter((s) => {
-    if (viewList === "principale") {
-      // Affiche tout sauf Refus / Intégré
-      return s.statut_suivi !== "Refus" && s.statut_suivi !== "Intégré";
-    }
+    if (viewList === "principale") return s.statut_suivi !== "Refus" && s.statut_suivi !== "Intégré";
     if (viewList === "refus") return s.statut_suivi === "Refus";
     if (viewList === "integre") return s.statut_suivi === "Intégré";
     return true;
@@ -85,7 +92,6 @@ export default function SuivisMembres() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Navigation entre vues */}
       <div className="mb-4 flex gap-4">
         {otherViews.map((v) => (
           <p
@@ -119,9 +125,9 @@ export default function SuivisMembres() {
             ) : (
               filteredSuivis.map((s) => (
                 <tr key={s.id} className="border-b">
-                  <td className="py-2 px-4">{s.membre.nom || "—"}</td>
-                  <td className="py-2 px-4">{s.membre.prenom || "—"}</td>
-                  <td className="py-2 px-4">{s.membre.statut || "—"}</td>
+                  <td className="py-2 px-4">{s.membre_id.nom || "—"}</td>
+                  <td className="py-2 px-4">{s.membre_id.prenom || "—"}</td>
+                  <td className="py-2 px-4">{s.membre_id.statut || "—"}</td>
                   <td className="py-2 px-4">{s.statut_suivi || "—"}</td>
                   <td className="py-2 px-4">
                     <p
@@ -132,13 +138,12 @@ export default function SuivisMembres() {
                     >
                       {detailsOpen[s.id] ? "Fermer détails" : "Détails"}
                     </p>
-
                     {detailsOpen[s.id] && (
-                      <div className="mt-2 text-sm text-gray-700 text-left space-y-1">
-                        <p><strong>Besoin:</strong> {s.membre.besoin || "—"}</p>
-                        <p><strong>Infos supplémentaires:</strong> {s.membre.infos_supplementaires || "—"}</p>
-                        <p><strong>Comment est-il venu ?</strong> {s.membre.comment || "—"}</p>
-                        <p><strong>Cellule:</strong> {s.membre.cellule_id || "—"}</p>
+                      <div className="mt-2 text-sm text-left text-gray-700 space-y-1">
+                        <p><strong>Besoin:</strong> {s.membre_id.besoin || "—"}</p>
+                        <p><strong>Infos supplémentaires:</strong> {s.membre_id.infos_supplementaires || "—"}</p>
+                        <p><strong>Comment est-il venu ?</strong> {s.membre_id.comment || "—"}</p>
+                        <p><strong>Cellule:</strong> {s.membre_id.cellule_id || "—"}</p>
 
                         <textarea
                           placeholder="Ajouter un commentaire"
