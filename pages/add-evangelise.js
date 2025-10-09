@@ -1,10 +1,13 @@
 // pages/add-evangelise.js
+"use client";
 import { useState } from "react";
-import supabase from "../lib/supabaseClient"; // <- chemin corrigé
+import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/router";
+import { useEvangelisation } from "../contexts/EvangelisationContext";
 
 export default function AddEvangelise() {
   const router = useRouter();
+  const { addEvangelise } = useEvangelisation();
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -30,21 +33,19 @@ export default function AddEvangelise() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabase.from("membres").insert([formData]);
+      const { data, error } = await supabase
+        .from("membres")
+        .insert([formData])
+        .select("*"); // pour récupérer la nouvelle ligne
       if (error) throw error;
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
 
-      setFormData({
-        nom: "",
-        prenom: "",
-        telephone: "",
-        ville: "",
-        statut: "evangelisé",
-        infos_supplementaires: "",
-        is_whatsapp: false,
-        besoin: "",
-      });
+      // 🔁 Ajoute directement dans le contexte
+      addEvangelise(data[0]);
+
+      setSuccess(true);
+      setTimeout(() => {
+        router.push("/evangelisation");
+      }, 1500);
     } catch (err) {
       alert(err.message);
     }
@@ -53,7 +54,6 @@ export default function AddEvangelise() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
-        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
           className="flex items-center text-orange-500 font-semibold mb-4"
@@ -117,7 +117,9 @@ export default function AddEvangelise() {
               onChange={handleChange}
               className="h-5 w-5"
             />
-            <label className="text-gray-700 font-medium">Ce numéro a WhatsApp</label>
+            <label className="text-gray-700 font-medium">
+              Ce numéro a WhatsApp
+            </label>
           </div>
 
           {/* Ville */}
@@ -134,7 +136,9 @@ export default function AddEvangelise() {
 
           {/* Besoin */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Besoin de la personne</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Besoin de la personne
+            </label>
             <textarea
               name="besoin"
               value={formData.besoin}
@@ -146,7 +150,9 @@ export default function AddEvangelise() {
 
           {/* Infos supplémentaires */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Informations supplémentaires
+            </label>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}
@@ -156,7 +162,6 @@ export default function AddEvangelise() {
             />
           </div>
 
-          {/* Boutons */}
           <div className="flex justify-between mt-4 gap-4">
             <button
               type="button"
@@ -165,12 +170,10 @@ export default function AddEvangelise() {
                   nom: "",
                   prenom: "",
                   telephone: "",
-                  email: "",
                   ville: "",
                   statut: "evangelisé",
                   infos_supplementaires: "",
                   is_whatsapp: false,
-                  how_came: "",
                   besoin: "",
                 })
               }
