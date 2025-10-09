@@ -1,4 +1,4 @@
-// pages/suivis-membres.js//
+// pages/suivis-membres.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,7 +9,7 @@ export default function SuivisMembres() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [selectedStatus, setSelectedStatus] = useState({});
   const [commentaire, setCommentaire] = useState({});
-  const [viewList, setViewList] = useState("principale");
+  const [viewList, setViewList] = useState("principale"); // 'principale', 'refus', 'integre'
 
   useEffect(() => {
     fetchSuivis();
@@ -19,22 +19,8 @@ export default function SuivisMembres() {
     try {
       const { data, error } = await supabase
         .from("suivis_membres")
-        .select(`
-          id,
-          statut_suivi,
-          commentaire,
-          cellule_id,
-          how_came,
-          membre: membre_id (
-            nom,
-            prenom,
-            statut,
-            besoin,
-            infos_supplementaires
-          )
-        `)
+        .select("*") // Toutes les infos sont dans suivis_membres maintenant
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       setSuivis(data || []);
     } catch (err) {
@@ -55,29 +41,26 @@ export default function SuivisMembres() {
         .update({ statut_suivi: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      // Reset les champs et recharger la liste
+      // Rafraîchir la liste
+      fetchSuivis();
+
+      // Réinitialiser les champs
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
       setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
-      fetchSuivis();
     } catch (err) {
       console.error("Erreur update statut:", err.message);
     }
   };
 
-  // Filtrer selon la vue
   const filteredSuivis = suivis.filter((s) => {
     if (viewList === "principale") {
-      return (
-        s.statut_suivi !== "Refus" &&
-        s.statut_suivi !== "Intégré"
-      );
+      return s.statut_suivi !== "Refus" && s.statut_suivi !== "Intégré";
     }
     if (viewList === "refus") return s.statut_suivi === "Refus";
     if (viewList === "integre") return s.statut_suivi === "Intégré";
     return true;
   });
 
-  // Textes cliquables pour navigation
   const otherViews = [];
   if (viewList === "principale") otherViews.push("Refus", "Intégré");
   if (viewList === "refus") otherViews.push("Principale", "Intégré");
@@ -87,20 +70,22 @@ export default function SuivisMembres() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Navigation */}
+      {/* Textes cliquables pour naviguer */}
       <div className="mb-4 flex gap-4">
         {otherViews.map((v) => (
           <p
             key={v}
             className="text-orange-500 cursor-pointer"
-            onClick={() => setViewList(v.toLowerCase().replace("é", "e"))}
+            onClick={() =>
+              setViewList(v.toLowerCase().replace("é", "e"))
+            }
           >
             {v}
           </p>
         ))}
       </div>
 
-      {/* Tableau */}
+      {/* Tableau principal */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full bg-white rounded-xl text-center">
           <thead>
@@ -122,9 +107,9 @@ export default function SuivisMembres() {
             ) : (
               filteredSuivis.map((s) => (
                 <tr key={s.id} className="border-b">
-                  <td className="py-2 px-4">{s.membre?.nom || "—"}</td>
-                  <td className="py-2 px-4">{s.membre?.prenom || "—"}</td>
-                  <td className="py-2 px-4">{s.membre?.statut || "—"}</td>
+                  <td className="py-2 px-4">{s.nom || "—"}</td>
+                  <td className="py-2 px-4">{s.prenom || "—"}</td>
+                  <td className="py-2 px-4">{s.statut_membre || "—"}</td>
                   <td className="py-2 px-4">{s.statut_suivi || "—"}</td>
                   <td className="py-2 px-4">
                     <p
@@ -138,8 +123,8 @@ export default function SuivisMembres() {
 
                     {detailsOpen[s.id] && (
                       <div className="mt-2 text-sm text-gray-700 text-left space-y-1">
-                        <p><strong>Besoin:</strong> {s.membre?.besoin || "—"}</p>
-                        <p><strong>Infos supplémentaires:</strong> {s.membre?.infos_supplementaires || "—"}</p>
+                        <p><strong>Besoin:</strong> {s.besoin || "—"}</p>
+                        <p><strong>Infos supplémentaires:</strong> {s.infos_supplementaires || "—"}</p>
                         <p><strong>Comment est-il venu ?</strong> {s.how_came || "—"}</p>
                         <p><strong>Cellule:</strong> {s.cellule_id || "—"}</p>
 
