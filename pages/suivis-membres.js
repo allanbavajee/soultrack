@@ -20,7 +20,7 @@ export default function SuivisMembres() {
     try {
       const { data, error } = await supabase
         .from("suivis_membres")
-        .select(`id, statut, commentaire, membre: membre_id (*)`)
+        .select(`id, statut AS statut_suivi, commentaire, membre: membre_id (*)`)
         .order("created_at", { ascending: false });
       if (error) throw error;
       setSuivis(data || []);
@@ -34,78 +34,76 @@ export default function SuivisMembres() {
     const newStatus = selectedStatus[suiviId];
     const newComment = commentaire[suiviId] || "";
 
-    if (!newStatus) {
-      alert("Veuillez sélectionner un statut avant de valider.");
-      return;
-    }
+    if (!newStatus) return;
 
     try {
-      const { error } = await supabase
+      await supabase
         .from("suivis_membres")
         .update({ statut: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      if (error) throw error;
-
-      // Mise à jour immédiate dans l'état local
+      // Mettre à jour localement pour retirer Refus/Intégré de la page principale
       setSuivis((prev) =>
-        prev.map((s) =>
-          s.id === suiviId ? { ...s, statut: newStatus, commentaire: newComment } : s
-        )
+        prev
+          .map((s) =>
+            s.id === suiviId
+              ? { ...s, statut_suivi: newStatus, commentaire: newComment }
+              : s
+          )
+          .filter(
+            (s) =>
+              viewList !== "principale" ||
+              (s.statut_suivi !== "Refus" && s.statut_suivi !== "Intégré")
+          )
       );
 
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
+      setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
       console.error("Erreur update statut:", err.message);
-      alert("Impossible de mettre à jour le statut. Vérifiez la console.");
     }
   };
 
   const filteredSuivis = suivis.filter((s) => {
-    // Filtrer par liste
     if (viewList === "principale") {
-      return s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC";
+      return (
+        (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
+        s.statut_suivi !== "Refus" &&
+        s.statut_suivi !== "Intégré" &&
+        (!filter || s.statut_suivi === filter)
+      );
     }
-    if (viewList === "refus") return s.statut === "Refus";
-    if (viewList === "integre") return s.statut === "Intégré";
+    if (viewList === "refus") return s.statut_suivi === "Refus";
+    if (viewList === "integre") return s.statut_suivi === "Intégré";
     return true;
   });
 
-  // Générer les vues cliquables selon la page actuelle
-  const getOtherViews = () => {
-    if (viewList === "principale") return ["Refus", "Intégré"];
-    if (viewList === "refus") return ["Principale", "Intégré"];
-    if (viewList === "integre") return ["Principale", "Refus"];
-    return [];
-  };
-
-  const handleViewClick = (view) => {
-    const map = {
-      Principale: "principale",
-      Refus: "refus",
-      Intégré: "integre",
-    };
-    setViewList(map[view]);
-  };
+  // Textes cliquables conditionnels selon page active
+  const otherViews = [];
+  if (viewList === "principale") otherViews.push("Refus", "Intégré");
+  if (viewList === "refus") otherViews.push("Principale", "Intégré");
+  if (viewList === "integre") otherViews.push("Principale", "Refus");
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Vues cliquables */}
+      {/* Textes cliquables pour naviguer */}
       <div className="mb-4 flex gap-4">
-        {getOtherViews().map((v) => (
+        {otherViews.map((v) => (
           <p
             key={v}
-            onClick={() => handleViewClick(v)}
-            className="cursor-pointer text-orange-400 hover:underline"
+            className="text-orange-500 cursor-pointer"
+            onClick={() =>
+              setViewList(v.toLowerCase().replace("é", "e"))
+            }
           >
             {v}
           </p>
         ))}
       </div>
 
-      {/* Filtre central */}
+      {/* Filtre central pour Principale */}
       {viewList === "principale" && (
         <div className="mb-4 w-full max-w-md flex justify-center">
           <select
@@ -121,6 +119,7 @@ export default function SuivisMembres() {
         </div>
       )}
 
+      {/* Tableau principal */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full bg-white rounded-xl text-center">
           <thead>
@@ -128,13 +127,14 @@ export default function SuivisMembres() {
               <th className="py-2 px-4">Prénom</th>
               <th className="py-2 px-4">Nom</th>
               <th className="py-2 px-4">Statut</th>
+              <th className="py-2 px-4">Statut Suivis</th>
               <th className="py-2 px-4">Détails</th>
             </tr>
           </thead>
           <tbody>
             {filteredSuivis.length === 0 ? (
               <tr>
-                <td colSpan={4} className="py-4 text-gray-600">
+                <td colSpan={5} className="py-4 text-gray-600">
                   Aucun contact trouvé.
                 </td>
               </tr>
@@ -144,6 +144,7 @@ export default function SuivisMembres() {
                   <td className="py-2 px-4">{s.membre.prenom}</td>
                   <td className="py-2 px-4">{s.membre.nom}</td>
                   <td className="py-2 px-4">{s.membre.statut}</td>
+                  <td className="py-2 px-4">{s.statut_suivi || "—"}</td>
                   <td className="py-2 px-4">
                     <p
                       className="text-blue-500 underline cursor-pointer"
@@ -155,13 +156,12 @@ export default function SuivisMembres() {
                     </p>
 
                     {detailsOpen[s.id] && (
-                      <div className="mt-2 text-sm text-gray-700 text-left">
+                      <div className="mt-2 text-sm text-gray-700 text-left space-y-1">
                         <p>
                           <strong>Besoin:</strong> {s.membre.besoin || "—"}
                         </p>
                         <p>
-                          <strong>Infos supplémentaires:</strong>{" "}
-                          {s.membre.infos_supplementaires || "—"}
+                          <strong>Infos supplémentaires:</strong> {s.membre.infos_supplementaires || "—"}
                         </p>
                         <p>
                           <strong>Comment est-il venu ?</strong> {s.membre.comment || "—"}
@@ -176,7 +176,7 @@ export default function SuivisMembres() {
                           onChange={(e) =>
                             setCommentaire((prev) => ({ ...prev, [s.id]: e.target.value }))
                           }
-                          className="border rounded-lg px-2 py-1 text-sm w-full my-2"
+                          className="border rounded-lg px-2 py-1 text-sm w-full"
                         />
 
                         <select
@@ -184,7 +184,7 @@ export default function SuivisMembres() {
                           onChange={(e) =>
                             setSelectedStatus((prev) => ({ ...prev, [s.id]: e.target.value }))
                           }
-                          className="border rounded-lg px-2 py-1 text-sm w-full mb-2"
+                          className="border rounded-lg px-2 py-1 text-sm w-full"
                         >
                           <option value="">-- Statut Suivis --</option>
                           <option value="En cours">En cours</option>
@@ -194,7 +194,7 @@ export default function SuivisMembres() {
 
                         <button
                           onClick={() => handleStatusUpdate(s.id)}
-                          className="py-2 bg-orange-500 text-white rounded-xl font-semibold w-full"
+                          className="mt-1 py-2 bg-orange-500 text-white rounded-xl font-semibold"
                         >
                           Valider
                         </button>
