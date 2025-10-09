@@ -8,9 +8,8 @@ export default function SuivisMembres() {
   const [members, setMembers] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [detailsOpen, setDetailsOpen] = useState({});
-  const [selectedCellules, setSelectedCellules] = useState({});
-  const [suiviStatuts, setSuiviStatuts] = useState({}); // pour le menu déroulant "Statut Suivis"
-  const [commentaires, setCommentaires] = useState({}); // pour le champ commentaire
+  const [commentaires, setCommentaires] = useState({});
+  const [suiviStatuts, setSuiviStatuts] = useState({});
 
   useEffect(() => {
     fetchSuivis();
@@ -55,7 +54,6 @@ export default function SuivisMembres() {
   };
 
   const getMemberById = (id) => members.find((m) => m.id === id) || {};
-
   const getCelluleById = (id) => cellules.find((c) => c.id === id) || {};
 
   const handleSuiviChange = async (suiviId, newStatut) => {
@@ -82,15 +80,27 @@ export default function SuivisMembres() {
     }
   };
 
-  return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gray-50">
-      <h1 className="text-4xl font-bold mb-4">Suivis Membres 📋</h1>
+  // Filtrer les suivis pour n'afficher que les statuts suivis pertinents
+  const filteredSuivis = suivis.filter(
+    (s) => ["Intégré", "En cours", "Refus"].includes(s.statut)
+  );
 
-      {suivis.length === 0 ? (
-        <p>Aucun contact trouvé.</p>
+  return (
+    <div
+      className="min-h-screen flex flex-col items-center p-6"
+      style={{
+        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+      }}
+    >
+      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-6">
+        Suivis Membres 📋
+      </h1>
+
+      {filteredSuivis.length === 0 ? (
+        <p className="text-white text-lg">Aucun contact trouvé.</p>
       ) : (
-        <div className="w-full max-w-6xl overflow-x-auto">
-          <table className="min-w-full bg-white rounded-xl shadow-md">
+        <div className="w-full max-w-6xl overflow-x-auto bg-white rounded-xl shadow-md p-4">
+          <table className="min-w-full text-center">
             <thead>
               <tr className="bg-gray-200">
                 <th className="py-2 px-4">Prénom</th>
@@ -101,7 +111,7 @@ export default function SuivisMembres() {
               </tr>
             </thead>
             <tbody>
-              {suivis.map((suivi) => {
+              {filteredSuivis.map((suivi) => {
                 const member = getMemberById(suivi.membre_id);
                 return (
                   <tr key={suivi.id} className="border-b">
@@ -123,7 +133,7 @@ export default function SuivisMembres() {
                     </td>
                     <td className="py-2 px-4">
                       <button
-                        className="text-blue-500 underline mb-1"
+                        className="text-orange-500 underline mb-1"
                         onClick={() =>
                           setDetailsOpen((prev) => ({
                             ...prev,
@@ -135,7 +145,7 @@ export default function SuivisMembres() {
                       </button>
 
                       {detailsOpen[suivi.id] && (
-                        <div className="mt-2 text-sm text-gray-700 space-y-1">
+                        <div className="mt-2 text-gray-700 text-left space-y-1">
                           <p><strong>Téléphone:</strong> {member.telephone || "—"}</p>
                           <p><strong>Besoin:</strong> {member.besoin || "—"}</p>
                           <p><strong>Infos supplémentaires:</strong> {member.infos_supplementaires || "—"}</p>
