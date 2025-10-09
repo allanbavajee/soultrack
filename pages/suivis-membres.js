@@ -41,14 +41,12 @@ export default function SuivisMembres() {
         .update({ statut_suivi: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      // Mise à jour côté client
       setSuivis((prev) =>
         prev.map((s) =>
           s.id === suiviId ? { ...s, statut_suivi: newStatus, commentaire: newComment } : s
         )
       );
 
-      // réinitialiser les champs du menu déroulant et commentaire
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
       setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
@@ -56,7 +54,6 @@ export default function SuivisMembres() {
     }
   };
 
-  // Filtrage selon la vue active
   const filteredSuivis = suivis.filter((s) => {
     if (viewList === "principale") {
       return (
