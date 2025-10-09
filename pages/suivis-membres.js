@@ -1,3 +1,4 @@
+// pages/suivis-membres.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,7 +10,7 @@ export default function SuivisMembres() {
   const [selectedStatus, setSelectedStatus] = useState({});
   const [commentaire, setCommentaire] = useState({});
   const [filter, setFilter] = useState("");
-  const [viewList, setViewList] = useState("principale");
+  const [viewList, setViewList] = useState("principale"); // 'principale', 'refus', 'integre'
 
   useEffect(() => {
     fetchSuivis();
@@ -19,7 +20,12 @@ export default function SuivisMembres() {
     try {
       const { data, error } = await supabase
         .from("suivis_membres")
-        .select(`id, statut AS statut_suivi, commentaire, membre: membre_id (*)`)
+        .select(`
+          id,
+          statut AS statut_suivi,
+          commentaire,
+          membre:membre_id (*)  -- Jointure avec les membres
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -42,8 +48,10 @@ export default function SuivisMembres() {
         .update({ statut: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      // Rafraîchir et vider les champs
+      // Actualiser la liste
       fetchSuivis();
+
+      // Reset champs
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
       setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
@@ -51,9 +59,8 @@ export default function SuivisMembres() {
     }
   };
 
-  // Filtrage selon la vue
   const filteredSuivis = suivis.filter((s) => {
-    if (!s.membre) return false; // éviter les erreurs si membre manquant
+    if (!s.membre) return false; // éviter les suivis sans membre associé
 
     if (viewList === "principale") {
       return (
@@ -68,6 +75,7 @@ export default function SuivisMembres() {
     return true;
   });
 
+  // Textes cliquables conditionnels selon page active
   const otherViews = [];
   if (viewList === "principale") otherViews.push("Refus", "Intégré");
   if (viewList === "refus") otherViews.push("Principale", "Intégré");
@@ -77,6 +85,7 @@ export default function SuivisMembres() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
+      {/* Textes cliquables */}
       <div className="mb-4 flex gap-4">
         {otherViews.map((v) => (
           <p
@@ -89,6 +98,7 @@ export default function SuivisMembres() {
         ))}
       </div>
 
+      {/* Filtre central */}
       {viewList === "principale" && (
         <div className="mb-4 w-full max-w-md flex justify-center">
           <select
@@ -104,6 +114,7 @@ export default function SuivisMembres() {
         </div>
       )}
 
+      {/* Tableau principal */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full bg-white rounded-xl text-center">
           <thead>
@@ -141,10 +152,19 @@ export default function SuivisMembres() {
 
                     {detailsOpen[s.id] && (
                       <div className="mt-2 text-sm text-gray-700 text-left space-y-1">
-                        <p><strong>Besoin:</strong> {s.membre.besoin || "—"}</p>
-                        <p><strong>Infos supplémentaires:</strong> {s.membre.infos_supplementaires || "—"}</p>
-                        <p><strong>Comment est-il venu ?</strong> {s.membre.comment || "—"}</p>
-                        <p><strong>Cellule:</strong> {s.membre.cellule_id || "—"}</p>
+                        <p>
+                          <strong>Besoin:</strong> {s.membre.besoin || "—"}
+                        </p>
+                        <p>
+                          <strong>Infos supplémentaires:</strong>{" "}
+                          {s.membre.infos_supplementaires || "—"}
+                        </p>
+                        <p>
+                          <strong>Comment est-il venu ?</strong> {s.membre.comment || "—"}
+                        </p>
+                        <p>
+                          <strong>Cellule:</strong> {s.membre.cellule_id || "—"}
+                        </p>
 
                         <textarea
                           placeholder="Ajouter un commentaire"
