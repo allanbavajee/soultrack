@@ -1,28 +1,26 @@
 // pages/suivis-membres.js
 "use client";
+
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
-  const [members, setMembers] = useState([]);
-  const [cellules, setCellules] = useState([]);
   const [detailsOpen, setDetailsOpen] = useState({});
-  const [suiviStatuts, setSuiviStatuts] = useState({});
-  const [commentaires, setCommentaires] = useState({});
-  const [filter, setFilter] = useState(""); // Filtre central
+  const [selectedStatus, setSelectedStatus] = useState({});
+  const [commentaire, setCommentaire] = useState({});
+  const [filter, setFilter] = useState("");
+  const [viewList, setViewList] = useState("principale"); // 'principale', 'refus', 'integre'
 
   useEffect(() => {
     fetchSuivis();
-    fetchMembers();
-    fetchCellules();
   }, []);
 
   const fetchSuivis = async () => {
     try {
       const { data, error } = await supabase
         .from("suivis_membres")
-        .select("*")
+        .select(`id, statut, commentaire, membre: membre_id (*)`)
         .order("created_at", { ascending: false });
       if (error) throw error;
       setSuivis(data || []);
@@ -32,169 +30,180 @@ export default function SuivisMembres() {
     }
   };
 
-  const fetchMembers = async () => {
-    try {
-      const { data, error } = await supabase.from("membres").select("*");
-      if (error) throw error;
-      setMembers(data || []);
-    } catch (err) {
-      console.error("Erreur fetchMembers:", err.message);
-      setMembers([]);
-    }
-  };
+  const handleStatusUpdate = async (suiviId) => {
+    const newStatus = selectedStatus[suiviId];
+    const newComment = commentaire[suiviId] || "";
 
-  const fetchCellules = async () => {
-    try {
-      const { data, error } = await supabase.from("cellules").select("*");
-      if (error) throw error;
-      setCellules(data || []);
-    } catch (err) {
-      console.error("Erreur fetchCellules:", err.message);
-      setCellules([]);
-    }
-  };
+    if (!newStatus) return;
 
-  const getMemberById = (id) => members.find((m) => m.id === id) || {};
-
-  const getCelluleById = (id) => cellules.find((c) => c.id === id) || {};
-
-  const handleSuiviChange = async (suiviId, newStatut) => {
     try {
       await supabase
         .from("suivis_membres")
-        .update({ statut: newStatut })
+        .update({ statut: newStatus, commentaire: newComment })
         .eq("id", suiviId);
-      setSuiviStatuts((prev) => ({ ...prev, [suiviId]: newStatut }));
+
+      fetchSuivis();
+      setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
-      console.error("Erreur update statut suivi:", err.message);
+      console.error("Erreur update statut:", err.message);
     }
   };
 
-  const handleCommentChange = async (suiviId, newComment) => {
-    try {
-      await supabase
-        .from("suivis_membres")
-        .update({ commentaire: newComment })
-        .eq("id", suiviId);
-      setCommentaires((prev) => ({ ...prev, [suiviId]: newComment }));
-    } catch (err) {
-      console.error("Erreur update commentaire:", err.message);
-    }
-  };
-
-  // Filtrer uniquement les statuts "visiteur" et "veut rejoindre ICC"
   const filteredSuivis = suivis.filter((s) => {
-    const member = getMemberById(s.membre_id);
-    if (!member) return false;
-    if (filter && member.statut !== filter) return false;
-    return member.statut === "visiteur" || member.statut === "veut rejoindre ICC";
+    // Filtrer par liste
+    if (viewList === "principale") {
+      return (
+        (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
+        (!filter || s.statut === filter)
+      );
+    }
+    if (viewList === "refus") return s.statut === "Refus";
+    if (viewList === "integre") return s.statut === "Intégré";
+    return true;
   });
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-4">
-        Suivis Membres 📋
-      </h1>
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
+      <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Filtre central */}
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-6 w-full max-w-md">
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+      {/* Boutons rapides Refus / Intégré */}
+      <div className="mb-4 flex gap-4">
+        <button
+          className={`px-4 py-2 rounded-xl font-semibold ${
+            viewList === "principale" ? "bg-orange-500 text-white" : "bg-white text-gray-700"
+          }`}
+          onClick={() => setViewList("principale")}
         >
-          <option value="">-- Filtrer par statut --</option>
-          <option value="visiteur">Visiteur</option>
-          <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-        </select>
-        <span className="text-white italic text-opacity-80">
-          Résultats: {filteredSuivis.length}
-        </span>
+          Principale
+        </button>
+        <button
+          className={`px-4 py-2 rounded-xl font-semibold ${
+            viewList === "refus" ? "bg-orange-500 text-white" : "bg-white text-gray-700"
+          }`}
+          onClick={() => setViewList("refus")}
+        >
+          Refus
+        </button>
+        <button
+          className={`px-4 py-2 rounded-xl font-semibold ${
+            viewList === "integre" ? "bg-orange-500 text-white" : "bg-white text-gray-700"
+          }`}
+          onClick={() => setViewList("integre")}
+        >
+          Intégré
+        </button>
       </div>
 
-      {filteredSuivis.length === 0 ? (
-        <p className="text-white text-lg">Aucun contact trouvé.</p>
-      ) : (
-        <div className="w-full max-w-6xl overflow-x-auto bg-white rounded-xl shadow-md">
-          <table className="min-w-full">
-            <thead>
-              <tr className="bg-gray-200 text-center">
-                <th className="py-2 px-4">Prénom</th>
-                <th className="py-2 px-4">Nom</th>
-                <th className="py-2 px-4">Statut</th>
-                <th className="py-2 px-4">Statut Suivis</th>
-                <th className="py-2 px-4">Détails</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSuivis.map((suivi) => {
-                const member = getMemberById(suivi.membre_id);
-                return (
-                  <tr key={suivi.id} className="border-b text-center">
-                    <td className="py-2 px-4">{member.prenom}</td>
-                    <td className="py-2 px-4">{member.nom}</td>
-                    <td className="py-2 px-4">{member.statut}</td>
-                    <td className="py-2 px-4">
-                      <select
-                        value={suiviStatuts[suivi.id] || suivi.statut || ""}
-                        onChange={(e) =>
-                          handleSuiviChange(suivi.id, e.target.value)
-                        }
-                        className="border rounded px-2 py-1 w-full"
-                      >
-                        <option value="Intégré">Intégré</option>
-                        <option value="En cours">En cours</option>
-                        <option value="Refus">Refus</option>
-                      </select>
-                    </td>
-                    <td className="py-2 px-4 text-left">
-                      <button
-                        className="text-blue-500 underline mb-1"
-                        onClick={() =>
-                          setDetailsOpen((prev) => ({
-                            ...prev,
-                            [suivi.id]: !prev[suivi.id],
-                          }))
-                        }
-                      >
-                        {detailsOpen[suivi.id] ? "Fermer détails" : "Détails"}
-                      </button>
-
-                      {detailsOpen[suivi.id] && (
-                        <div className="mt-2 text-sm text-gray-700 space-y-1">
-                          <p><strong>Téléphone:</strong> {member.telephone || "—"}</p>
-                          <p><strong>Besoin:</strong> {member.besoin || "—"}</p>
-                          <p><strong>Infos supplémentaires:</strong> {member.infos_supplementaires || "—"}</p>
-                          <p><strong>Comment est-il venu ?</strong> {member.comment || "—"}</p>
-                          <p><strong>Cellule:</strong> {getCelluleById(suivi.cellule_id)?.cellule || "—"}</p>
-
-                          <textarea
-                            placeholder="Ajouter un commentaire..."
-                            value={commentaires[suivi.id] || ""}
-                            onChange={(e) =>
-                              setCommentaires((prev) => ({
-                                ...prev,
-                                [suivi.id]: e.target.value,
-                              }))
-                            }
-                            onBlur={(e) =>
-                              handleCommentChange(suivi.id, e.target.value)
-                            }
-                            className="border rounded px-2 py-1 w-full mt-1"
-                          />
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {/* Filtre central */}
+      {viewList === "principale" && (
+        <div className="mb-4 w-full max-w-md flex justify-center">
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          >
+            <option value="">-- Filtrer par statut Suivis --</option>
+            <option value="En cours">En cours</option>
+            <option value="Intégré">Intégré</option>
+            <option value="Refus">Refus</option>
+          </select>
         </div>
       )}
+
+      <div className="w-full max-w-5xl overflow-x-auto">
+        <table className="min-w-full bg-white rounded-xl text-center">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="py-2 px-4">Prénom</th>
+              <th className="py-2 px-4">Nom</th>
+              <th className="py-2 px-4">Statut</th>
+              <th className="py-2 px-4">Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredSuivis.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="py-4 text-gray-600">
+                  Aucun contact trouvé.
+                </td>
+              </tr>
+            ) : (
+              filteredSuivis.map((s) => (
+                <tr key={s.id} className="border-b">
+                  <td className="py-2 px-4">{s.membre.prenom}</td>
+                  <td className="py-2 px-4">{s.membre.nom}</td>
+                  <td className="py-2 px-4">{s.membre.statut}</td>
+                  <td className="py-2 px-4">
+                    <p
+                      className="text-blue-500 underline cursor-pointer"
+                      onClick={() =>
+                        setDetailsOpen((prev) => ({ ...prev, [s.id]: !prev[s.id] }))
+                      }
+                    >
+                      {detailsOpen[s.id] ? "Fermer détails" : "Détails"}
+                    </p>
+
+                    {detailsOpen[s.id] && (
+                      <div className="mt-2 text-sm text-gray-700 text-left">
+                        <p>
+                          <strong>Besoin:</strong> {s.membre.besoin || "—"}
+                        </p>
+                        <p>
+                          <strong>Infos supplémentaires:</strong>{" "}
+                          {s.membre.infos_supplementaires || "—"}
+                        </p>
+                        <p>
+                          <strong>Comment est-il venu ?</strong> {s.membre.comment || "—"}
+                        </p>
+                        <p>
+                          <strong>Cellule:</strong> {s.membre.cellule_id || "—"}
+                        </p>
+
+                        <div className="mt-2 flex flex-col gap-2">
+                          <select
+                            value={selectedStatus[s.id] || ""}
+                            onChange={(e) =>
+                              setSelectedStatus((prev) => ({
+                                ...prev,
+                                [s.id]: e.target.value,
+                              }))
+                            }
+                            className="border rounded-lg px-2 py-1 text-sm w-full"
+                          >
+                            <option value="">-- Statut Suivis --</option>
+                            <option value="En cours">En cours</option>
+                            <option value="Intégré">Intégré</option>
+                            <option value="Refus">Refus</option>
+                          </select>
+
+                          <textarea
+                            placeholder="Ajouter un commentaire"
+                            value={commentaire[s.id] || ""}
+                            onChange={(e) =>
+                              setCommentaire((prev) => ({
+                                ...prev,
+                                [s.id]: e.target.value,
+                              }))
+                            }
+                            className="border rounded-lg px-2 py-1 text-sm w-full"
+                          />
+
+                          <button
+                            onClick={() => handleStatusUpdate(s.id)}
+                            className="mt-1 py-2 bg-orange-500 text-white rounded-xl font-semibold"
+                          >
+                            Valider
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
