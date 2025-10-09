@@ -19,13 +19,8 @@ export default function SuivisMembres() {
   const fetchSuivis = async () => {
     try {
       const { data, error } = await supabase
-        .from("suivis_membres")
-        .select(`
-          id,
-          statut AS statut_suivi,
-          commentaire,
-          membre:membre_id (*)  -- Jointure avec les membres
-        `)
+        .from("suivis_membres_v") // vue corrigée
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -48,10 +43,7 @@ export default function SuivisMembres() {
         .update({ statut: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      // Actualiser la liste
       fetchSuivis();
-
-      // Reset champs
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
       setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
@@ -60,11 +52,9 @@ export default function SuivisMembres() {
   };
 
   const filteredSuivis = suivis.filter((s) => {
-    if (!s.membre) return false; // éviter les suivis sans membre associé
-
     if (viewList === "principale") {
       return (
-        (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
+        (s.membre_statut === "visiteur" || s.membre_statut === "veut rejoindre ICC") &&
         s.statut_suivi !== "Refus" &&
         s.statut_suivi !== "Intégré" &&
         (!filter || s.statut_suivi === filter)
@@ -75,7 +65,6 @@ export default function SuivisMembres() {
     return true;
   });
 
-  // Textes cliquables conditionnels selon page active
   const otherViews = [];
   if (viewList === "principale") otherViews.push("Refus", "Intégré");
   if (viewList === "refus") otherViews.push("Principale", "Intégré");
@@ -85,7 +74,7 @@ export default function SuivisMembres() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Textes cliquables */}
+      {/* Textes cliquables pour naviguer */}
       <div className="mb-4 flex gap-4">
         {otherViews.map((v) => (
           <p
@@ -98,7 +87,7 @@ export default function SuivisMembres() {
         ))}
       </div>
 
-      {/* Filtre central */}
+      {/* Filtre central pour Principale */}
       {viewList === "principale" && (
         <div className="mb-4 w-full max-w-md flex justify-center">
           <select
@@ -136,9 +125,9 @@ export default function SuivisMembres() {
             ) : (
               filteredSuivis.map((s) => (
                 <tr key={s.id} className="border-b">
-                  <td className="py-2 px-4">{s.membre.prenom}</td>
-                  <td className="py-2 px-4">{s.membre.nom}</td>
-                  <td className="py-2 px-4">{s.membre.statut}</td>
+                  <td className="py-2 px-4">{s.prenom}</td>
+                  <td className="py-2 px-4">{s.nom}</td>
+                  <td className="py-2 px-4">{s.membre_statut}</td>
                   <td className="py-2 px-4">{s.statut_suivi || "—"}</td>
                   <td className="py-2 px-4">
                     <p
@@ -153,17 +142,16 @@ export default function SuivisMembres() {
                     {detailsOpen[s.id] && (
                       <div className="mt-2 text-sm text-gray-700 text-left space-y-1">
                         <p>
-                          <strong>Besoin:</strong> {s.membre.besoin || "—"}
+                          <strong>Besoin:</strong> {s.besoin || "—"}
                         </p>
                         <p>
-                          <strong>Infos supplémentaires:</strong>{" "}
-                          {s.membre.infos_supplementaires || "—"}
+                          <strong>Infos supplémentaires:</strong> {s.infos_supplementaires || "—"}
                         </p>
                         <p>
-                          <strong>Comment est-il venu ?</strong> {s.membre.comment || "—"}
+                          <strong>Comment est-il venu ?</strong> {s.comment || "—"}
                         </p>
                         <p>
-                          <strong>Cellule:</strong> {s.membre.cellule_id || "—"}
+                          <strong>Cellule:</strong> {s.cellule_id || "—"}
                         </p>
 
                         <textarea
