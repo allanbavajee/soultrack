@@ -41,6 +41,7 @@ export default function SuivisMembres() {
         .update({ statut_suivi: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
+      // Met à jour le tableau localement pour une réponse instantanée
       setSuivis((prev) =>
         prev.map((s) =>
           s.id === suiviId ? { ...s, statut_suivi: newStatus, commentaire: newComment } : s
@@ -56,6 +57,7 @@ export default function SuivisMembres() {
 
   const filteredSuivis = suivis.filter((s) => {
     if (viewList === "principale") {
+      // Cache les contacts Refus ou Intégré
       return (
         (s.statut === "visiteur" || s.statut === "veut rejoindre ICC") &&
         s.statut_suivi !== "Refus" &&
