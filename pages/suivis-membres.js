@@ -9,7 +9,6 @@ export default function SuivisMembres() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [selectedStatus, setSelectedStatus] = useState({});
   const [commentaire, setCommentaire] = useState({});
-  const [filter, setFilter] = useState("");
   const [viewList, setViewList] = useState("principale"); // 'principale', 'refus', 'integre'
 
   useEffect(() => {
@@ -42,14 +41,14 @@ export default function SuivisMembres() {
         .update({ statut: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      // Après validation, retirer le contact si Refus ou Intégré
+      // Mettre à jour localement pour que la colonne Statut Suivis change immédiatement
       setSuivis((prev) =>
         prev.map((s) =>
-          s.id === suiviId
-            ? { ...s, statut_suivi: newStatus, commentaire: newComment }
-            : s
+          s.id === suiviId ? { ...s, statut_suivi: newStatus, commentaire: newComment } : s
         )
       );
+
+      // Réinitialiser champ select et commentaire
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
       setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
@@ -57,14 +56,14 @@ export default function SuivisMembres() {
     }
   };
 
+  // Filtrer selon la page
   const filteredSuivis = suivis.filter((s) => {
     if (viewList === "principale") {
-      // Masquer Refus et Intégré
+      // Afficher uniquement les contacts qui ne sont pas encore Refus ou Intégré
       return (
         (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
         s.statut_suivi !== "Refus" &&
-        s.statut_suivi !== "Intégré" &&
-        (!filter || s.statut_suivi === filter)
+        s.statut_suivi !== "Intégré"
       );
     }
     if (viewList === "refus") return s.statut_suivi === "Refus";
@@ -82,7 +81,6 @@ export default function SuivisMembres() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Textes cliquables */}
       <div className="mb-4 flex gap-4">
         {otherViews.map((v) => (
           <p
@@ -97,23 +95,6 @@ export default function SuivisMembres() {
         ))}
       </div>
 
-      {/* Filtre central pour Principale */}
-      {viewList === "principale" && (
-        <div className="mb-4 w-full max-w-md flex justify-center">
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
-            <option value="">-- Filtrer par statut Suivis --</option>
-            <option value="En cours">En cours</option>
-            <option value="Intégré">Intégré</option>
-            <option value="Refus">Refus</option>
-          </select>
-        </div>
-      )}
-
-      {/* Tableau principal */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full bg-white rounded-xl text-center">
           <thead>
