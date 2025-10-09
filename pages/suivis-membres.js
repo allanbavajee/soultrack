@@ -20,19 +20,8 @@ export default function SuivisMembres() {
     try {
       const { data, error } = await supabase
         .from("suivis_membres")
-        .select(`
-          id,
-          statut AS statut_suivi,
-          commentaire,
-          membre: membre_id (
-            id,
-            nom,
-            prenom,
-            statut
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       setSuivis(data || []);
     } catch (err) {
@@ -50,27 +39,21 @@ export default function SuivisMembres() {
     try {
       await supabase
         .from("suivis_membres")
-        .update({ statut: newStatus, commentaire: newComment })
+        .update({ statut_suivi: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      // Réinitialiser les champs
+      fetchSuivis();
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
       setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
-
-      // Recharger les données pour appliquer la disparition des Refus/Intégré
-      fetchSuivis();
     } catch (err) {
       console.error("Erreur update statut:", err.message);
     }
   };
 
-  // Filtrage principal
   const filteredSuivis = suivis.filter((s) => {
-    if (!s.membre) return false; // sécurité
-
     if (viewList === "principale") {
       return (
-        (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
+        (s.statut === "visiteur" || s.statut === "veut rejoindre ICC") &&
         s.statut_suivi !== "Refus" &&
         s.statut_suivi !== "Intégré" &&
         (!filter || s.statut_suivi === filter)
@@ -81,7 +64,6 @@ export default function SuivisMembres() {
     return true;
   });
 
-  // Textes cliquables pour naviguer
   const otherViews = [];
   if (viewList === "principale") otherViews.push("Refus", "Intégré");
   if (viewList === "refus") otherViews.push("Principale", "Intégré");
@@ -91,13 +73,15 @@ export default function SuivisMembres() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Textes cliquables */}
+      {/* Textes cliquables pour naviguer */}
       <div className="mb-4 flex gap-4">
         {otherViews.map((v) => (
           <p
             key={v}
             className="text-orange-500 cursor-pointer"
-            onClick={() => setViewList(v.toLowerCase().replace("é", "e"))}
+            onClick={() =>
+              setViewList(v.toLowerCase().replace("é", "e"))
+            }
           >
             {v}
           </p>
@@ -120,7 +104,7 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {/* Tableau */}
+      {/* Tableau principal */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full bg-white rounded-xl text-center">
           <thead>
@@ -142,10 +126,10 @@ export default function SuivisMembres() {
             ) : (
               filteredSuivis.map((s) => (
                 <tr key={s.id} className="border-b">
-                  <td className="py-2 px-4">{s.membre.nom}</td>
-                  <td className="py-2 px-4">{s.membre.prenom}</td>
-                  <td className="py-2 px-4">{s.membre.statut}</td>
-                  <td className="py-2 px-4">{s.statut_suivi || ""}</td>
+                  <td className="py-2 px-4">{s.nom}</td>
+                  <td className="py-2 px-4">{s.prenom}</td>
+                  <td className="py-2 px-4">{s.statut}</td>
+                  <td className="py-2 px-4">{s.statut_suivi || "—"}</td>
                   <td className="py-2 px-4">
                     <p
                       className="text-blue-500 underline cursor-pointer"
