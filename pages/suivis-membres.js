@@ -1,189 +1,179 @@
 // pages/suivis-membres.js
 "use client";
-
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
-  const [detailsOpen, setDetailsOpen] = useState({});
+  const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState({});
-  const [commentaire, setCommentaire] = useState({});
-  const [filter, setFilter] = useState("");
-  const [viewList, setViewList] = useState("principale"); // 'principale', 'refus', 'integre'
+  const [currentView, setCurrentView] = useState("principale"); // principale | refus | integre
 
   useEffect(() => {
     fetchSuivis();
-  }, []);
+  }, [currentView]);
 
-  const fetchSuivis = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("suivis_membres_v")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      setSuivis(data || []);
-    } catch (err) {
-      console.error("Erreur fetchSuivis:", err.message);
+  async function fetchSuivis() {
+    setLoading(true);
+
+    // Requête avec jointure
+    const { data, error } = await supabase
+      .from("suivis_membres")
+      .select(
+        `
+        id,
+        statut,
+        commentaire,
+        membres (
+          id,
+          prenom,
+          nom,
+          telephone,
+          besoin,
+          infos_supplementaires
+        )
+      `
+      );
+
+    if (error) {
+      console.error("Erreur fetch:", error);
       setSuivis([]);
+    } else {
+      let filtered = data.map((row) => ({
+        id: row.id,
+        statut: row.statut,
+        commentaire: row.commentaire,
+        ...row.membres,
+      }));
+
+      // Filtrage selon la vue choisie
+      if (currentView === "principale") {
+        filtered = filtered.filter(
+          (s) => s.statut !== "refus" && s.statut !== "integre"
+        );
+      } else if (currentView === "refus") {
+        filtered = filtered.filter((s) => s.statut === "refus");
+      } else if (currentView === "integre") {
+        filtered = filtered.filter((s) => s.statut === "integre");
+      }
+
+      setSuivis(filtered);
     }
-  };
 
-  const handleStatusUpdate = async (suiviId) => {
-    const newStatus = selectedStatus[suiviId];
-    const newComment = commentaire[suiviId] || "";
+    setLoading(false);
+  }
 
+  async function handleStatusUpdate(id, newStatus) {
     if (!newStatus) return;
 
-    try {
-      await supabase
-        .from("suivis_membres")
-        .update({ statut: newStatus, commentaire: newComment })
-        .eq("id", suiviId);
+    const { error } = await supabase
+      .from("suivis_membres")
+      .update({ statut: newStatus })
+      .eq("id", id);
 
-      fetchSuivis();
-      setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
-      setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
-    } catch (err) {
-      console.error("Erreur update statut:", err.message);
+    if (error) {
+      console.error("Erreur update statut:", error);
+    } else {
+      await fetchSuivis(); // recharge la liste après update
     }
-  };
+  }
 
-  const filteredSuivis = suivis.filter((s) => {
-    if (viewList === "principale") {
-      return (
-        (s.statut === "visiteur" || s.statut === "veut rejoindre ICC") &&
-        s.statut_suivi !== "Refus" &&
-        s.statut_suivi !== "Intégré" &&
-        (!filter || s.statut_suivi === filter)
-      );
-    }
-    if (viewList === "refus") return s.statut_suivi === "Refus";
-    if (viewList === "integre") return s.statut_suivi === "Intégré";
-    return true;
-  });
-
-  const otherViews = [];
-  if (viewList === "principale") otherViews.push("Refus", "Intégré");
-  if (viewList === "refus") otherViews.push("Principale", "Intégré");
-  if (viewList === "integre") otherViews.push("Principale", "Refus");
+  if (loading) return <p>Chargement...</p>;
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
-      <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
-
-      {/* Textes cliquables */}
-      <div className="mb-4 flex gap-4">
-        {otherViews.map((v) => (
-          <p
-            key={v}
-            className="text-orange-500 cursor-pointer"
-            onClick={() => setViewList(v.toLowerCase().replace("é", "e"))}
+    <div className="p-6">
+      {/* Liens de navigation */}
+      <div className="mb-4 space-x-4 text-orange-500">
+        {currentView !== "principale" && (
+          <span
+            className="cursor-pointer"
+            onClick={() => setCurrentView("principale")}
           >
-            {v}
-          </p>
-        ))}
+            Principale
+          </span>
+        )}
+        {currentView !== "refus" && (
+          <span
+            className="cursor-pointer"
+            onClick={() => setCurrentView("refus")}
+          >
+            Refus
+          </span>
+        )}
+        {currentView !== "integre" && (
+          <span
+            className="cursor-pointer"
+            onClick={() => setCurrentView("integre")}
+          >
+            Intégré
+          </span>
+        )}
       </div>
 
-      {/* Filtre central */}
-      {viewList === "principale" && (
-        <div className="mb-4 w-full max-w-md flex justify-center">
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
-            <option value="">-- Filtrer par statut Suivis --</option>
-            <option value="En cours">En cours</option>
-            <option value="Intégré">Intégré</option>
-            <option value="Refus">Refus</option>
-          </select>
-        </div>
-      )}
-
-      {/* Tableau principal */}
-      <div className="w-full max-w-5xl overflow-x-auto">
-        <table className="min-w-full bg-white rounded-xl text-center">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="py-2 px-4">Prénom</th>
-              <th className="py-2 px-4">Nom</th>
-              <th className="py-2 px-4">Statut</th>
-              <th className="py-2 px-4">Statut Suivis</th>
-              <th className="py-2 px-4">Détails</th>
+      {/* Tableau */}
+      <table className="min-w-full border border-gray-200">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="border p-2">Prénom</th>
+            <th className="border p-2">Nom</th>
+            <th className="border p-2">Téléphone</th>
+            <th className="border p-2">Besoin</th>
+            <th className="border p-2">Infos Suppl.</th>
+            <th className="border p-2">Statut Suivis</th>
+            <th className="border p-2">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {suivis.length === 0 ? (
+            <tr>
+              <td colSpan="7" className="p-4 text-center">
+                Aucun contact trouvé.
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {filteredSuivis.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-4 text-gray-600">
-                  Aucun contact trouvé.
+          ) : (
+            suivis.map((s) => (
+              <tr key={s.id}>
+                <td className="border p-2">{s.prenom}</td>
+                <td className="border p-2">{s.nom}</td>
+                <td className="border p-2">{s.telephone}</td>
+                <td className="border p-2">{s.besoin}</td>
+                <td className="border p-2">{s.infos_supplementaires}</td>
+
+                {/* Colonne Statut Suivis */}
+                <td className="border p-2">
+                  {s.statut ? s.statut : ""}
+                </td>
+
+                {/* Action */}
+                <td className="border p-2">
+                  <select
+                    value={selectedStatus[s.id] || ""}
+                    onChange={(e) =>
+                      setSelectedStatus({
+                        ...selectedStatus,
+                        [s.id]: e.target.value,
+                      })
+                    }
+                    className="border p-1"
+                  >
+                    <option value="">-- Choisir --</option>
+                    <option value="refus">Refus</option>
+                    <option value="integre">Intégré</option>
+                  </select>
+                  <button
+                    onClick={() =>
+                      handleStatusUpdate(s.id, selectedStatus[s.id])
+                    }
+                    className="ml-2 px-2 py-1 bg-green-500 text-white rounded"
+                  >
+                    Valider
+                  </button>
                 </td>
               </tr>
-            ) : (
-              filteredSuivis.map((s) => (
-                <tr key={s.id} className="border-b">
-                  <td className="py-2 px-4">{s.prenom}</td>
-                  <td className="py-2 px-4">{s.nom}</td>
-                  <td className="py-2 px-4">{s.statut}</td>
-                  <td className="py-2 px-4">{s.statut_suivi || "—"}</td>
-                  <td className="py-2 px-4">
-                    <p
-                      className="text-blue-500 underline cursor-pointer"
-                      onClick={() =>
-                        setDetailsOpen((prev) => ({ ...prev, [s.id]: !prev[s.id] }))
-                      }
-                    >
-                      {detailsOpen[s.id] ? "Fermer détails" : "Détails"}
-                    </p>
-
-                    {detailsOpen[s.id] && (
-                      <div className="mt-2 text-sm text-gray-700 text-left space-y-1">
-                        <p>
-                          <strong>Besoin:</strong> {s.besoin || "—"}
-                        </p>
-                        <p>
-                          <strong>Infos supplémentaires:</strong> {s.infos_supplementaires || "—"}
-                        </p>
-
-                        <textarea
-                          placeholder="Ajouter un commentaire"
-                          value={commentaire[s.id] || ""}
-                          onChange={(e) =>
-                            setCommentaire((prev) => ({ ...prev, [s.id]: e.target.value }))
-                          }
-                          className="border rounded-lg px-2 py-1 text-sm w-full"
-                        />
-
-                        <select
-                          value={selectedStatus[s.id] || ""}
-                          onChange={(e) =>
-                            setSelectedStatus((prev) => ({ ...prev, [s.id]: e.target.value }))
-                          }
-                          className="border rounded-lg px-2 py-1 text-sm w-full"
-                        >
-                          <option value="">-- Statut Suivis --</option>
-                          <option value="En cours">En cours</option>
-                          <option value="Intégré">Intégré</option>
-                          <option value="Refus">Refus</option>
-                        </select>
-
-                        <button
-                          onClick={() => handleStatusUpdate(s.id)}
-                          className="mt-1 py-2 bg-orange-500 text-white rounded-xl font-semibold"
-                        >
-                          Valider
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
