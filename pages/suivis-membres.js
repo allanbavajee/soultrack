@@ -20,10 +20,27 @@ export default function SuivisMembres() {
     try {
       const { data, error } = await supabase
         .from("suivis_membres")
-        .select(`id, statut AS statut_suivi, commentaire, membre: membre_id (*)`)
+        .select(`
+          id,
+          statut AS statut_suivi,
+          commentaire,
+          membre_id,
+          membres: membre_id (
+            id,
+            prenom,
+            nom,
+            statut,
+            besoin,
+            infos_supplementaires
+          )
+        `)
         .order("created_at", { ascending: false });
+
       if (error) throw error;
-      setSuivis(data || []);
+
+      // Ne garder que les suivis dont le membre existe
+      const cleaned = (data || []).filter(s => s.membres);
+      setSuivis(cleaned);
     } catch (err) {
       console.error("Erreur fetchSuivis:", err.message);
       setSuivis([]);
@@ -51,11 +68,10 @@ export default function SuivisMembres() {
   };
 
   const filteredSuivis = suivis.filter((s) => {
-    if (!s.membre) return false; // ignore si jointure échoue
-
+    // Filtrer par vue
     if (viewList === "principale") {
       return (
-        (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
+        (s.membres.statut === "visiteur" || s.membres.statut === "veut rejoindre ICC") &&
         s.statut_suivi !== "Refus" &&
         s.statut_suivi !== "Intégré" &&
         (!filter || s.statut_suivi === filter)
@@ -66,6 +82,7 @@ export default function SuivisMembres() {
     return true;
   });
 
+  // Textes cliquables conditionnels selon page active
   const otherViews = [];
   if (viewList === "principale") otherViews.push("Refus", "Intégré");
   if (viewList === "refus") otherViews.push("Principale", "Intégré");
@@ -128,9 +145,9 @@ export default function SuivisMembres() {
             ) : (
               filteredSuivis.map((s) => (
                 <tr key={s.id} className="border-b">
-                  <td className="py-2 px-4">{s.membre.prenom}</td>
-                  <td className="py-2 px-4">{s.membre.nom}</td>
-                  <td className="py-2 px-4">{s.membre.statut}</td>
+                  <td className="py-2 px-4">{s.membres.prenom}</td>
+                  <td className="py-2 px-4">{s.membres.nom}</td>
+                  <td className="py-2 px-4">{s.membres.statut}</td>
                   <td className="py-2 px-4">{s.statut_suivi || "—"}</td>
                   <td className="py-2 px-4">
                     <p
@@ -145,16 +162,16 @@ export default function SuivisMembres() {
                     {detailsOpen[s.id] && (
                       <div className="mt-2 text-sm text-gray-700 text-left space-y-1">
                         <p>
-                          <strong>Besoin:</strong> {s.membre.besoin || "—"}
+                          <strong>Besoin:</strong> {s.membres.besoin || "—"}
                         </p>
                         <p>
-                          <strong>Infos supplémentaires:</strong> {s.membre.infos_supplementaires || "—"}
+                          <strong>Infos supplémentaires:</strong> {s.membres.infos_supplementaires || "—"}
                         </p>
                         <p>
-                          <strong>Comment est-il venu ?</strong> {s.membre.comment || "—"}
+                          <strong>Comment est-il venu ?</strong> {s.membres.comment || "—"}
                         </p>
                         <p>
-                          <strong>Cellule:</strong> {s.membre.cellule_id || "—"}
+                          <strong>Cellule:</strong> {s.membres.cellule_id || "—"}
                         </p>
 
                         <textarea
