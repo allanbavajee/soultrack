@@ -6,9 +6,7 @@ import supabase from "../lib/supabaseClient";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
-  const [detailsOpen, setDetailsOpen] = useState({});
   const [selectedStatus, setSelectedStatus] = useState({});
-  const [commentaire, setCommentaire] = useState({});
   const [viewList, setViewList] = useState("principale"); // 'principale', 'refus', 'integre'
 
   useEffect(() => {
@@ -17,7 +15,6 @@ export default function SuivisMembres() {
 
   const fetchSuivis = async () => {
     try {
-      // On récupère directement les champs dont on a besoin
       const { data, error } = await supabase
         .from("suivis_membres")
         .select(
@@ -36,42 +33,36 @@ export default function SuivisMembres() {
 
   const handleStatusUpdate = async (suiviId) => {
     const newStatus = selectedStatus[suiviId];
-    const newComment = commentaire[suiviId] || "";
-
     if (!newStatus) return;
 
     try {
       await supabase
         .from("suivis_membres")
-        .update({ statut: newStatus, commentaire: newComment })
+        .update({ statut: newStatus })
         .eq("id", suiviId);
 
-      // On rafraîchit la liste après validation
+      // rafraîchir liste
       fetchSuivis();
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
-      setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
       console.error("Erreur update statut:", err.message);
     }
   };
 
-  // Filtrer la liste selon viewList et Refus/Intégré
+  // Filtrer selon la vue
   const filteredSuivis = suivis.filter((s) => {
     if (!s.membre) return false;
-
-    if (viewList === "principale") {
+    if (viewList === "principale")
       return (
         (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
         s.statut_suivi !== "Refus" &&
         s.statut_suivi !== "Intégré"
       );
-    }
     if (viewList === "refus") return s.statut_suivi === "Refus";
     if (viewList === "integre") return s.statut_suivi === "Intégré";
     return true;
   });
 
-  // Textes cliquables conditionnels selon page active
   const otherViews = [];
   if (viewList === "principale") otherViews.push("Refus", "Intégré");
   if (viewList === "refus") otherViews.push("Principale", "Intégré");
@@ -81,7 +72,6 @@ export default function SuivisMembres() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
-      {/* Textes cliquables */}
       <div className="mb-4 flex gap-4">
         {otherViews.map((v) => (
           <p
@@ -94,7 +84,6 @@ export default function SuivisMembres() {
         ))}
       </div>
 
-      {/* Tableau */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full bg-white rounded-xl text-center">
           <thead>
@@ -150,4 +139,3 @@ export default function SuivisMembres() {
     </div>
   );
 }
-
