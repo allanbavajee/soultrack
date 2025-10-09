@@ -6,6 +6,7 @@ import supabase from "../lib/supabaseClient";
 
 export default function SuivisMembres() {
   const [suivis, setSuivis] = useState([]);
+  const [detailsOpen, setDetailsOpen] = useState({});
   const [selectedStatus, setSelectedStatus] = useState({});
   const [commentaire, setCommentaire] = useState({});
   const [viewList, setViewList] = useState("principale"); // 'principale', 'refus', 'integre'
@@ -16,9 +17,13 @@ export default function SuivisMembres() {
 
   const fetchSuivis = async () => {
     try {
+      // On récupère directement les champs dont on a besoin
       const { data, error } = await supabase
         .from("suivis_membres")
-        .select("*")
+        .select(
+          `id, statut AS statut_suivi, commentaire, 
+           membre: membre_id (id, prenom, nom, statut, besoin, infos_supplementaires)`
+        )
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -38,16 +43,11 @@ export default function SuivisMembres() {
     try {
       await supabase
         .from("suivis_membres")
-        .update({ statut_suivi: newStatus, commentaire: newComment })
+        .update({ statut: newStatus, commentaire: newComment })
         .eq("id", suiviId);
 
-      // Met à jour le tableau localement pour une réponse instantanée
-      setSuivis((prev) =>
-        prev.map((s) =>
-          s.id === suiviId ? { ...s, statut_suivi: newStatus, commentaire: newComment } : s
-        )
-      );
-
+      // On rafraîchit la liste après validation
+      fetchSuivis();
       setSelectedStatus((prev) => ({ ...prev, [suiviId]: "" }));
       setCommentaire((prev) => ({ ...prev, [suiviId]: "" }));
     } catch (err) {
@@ -55,11 +55,13 @@ export default function SuivisMembres() {
     }
   };
 
+  // Filtrer la liste selon viewList et Refus/Intégré
   const filteredSuivis = suivis.filter((s) => {
+    if (!s.membre) return false;
+
     if (viewList === "principale") {
-      // Cache les contacts Refus ou Intégré
       return (
-        (s.statut === "visiteur" || s.statut === "veut rejoindre ICC") &&
+        (s.membre.statut === "visiteur" || s.membre.statut === "veut rejoindre ICC") &&
         s.statut_suivi !== "Refus" &&
         s.statut_suivi !== "Intégré"
       );
@@ -69,6 +71,7 @@ export default function SuivisMembres() {
     return true;
   });
 
+  // Textes cliquables conditionnels selon page active
   const otherViews = [];
   if (viewList === "principale") otherViews.push("Refus", "Intégré");
   if (viewList === "refus") otherViews.push("Principale", "Intégré");
@@ -78,20 +81,20 @@ export default function SuivisMembres() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-indigo-600 to-blue-400">
       <h1 className="text-4xl text-white font-handwriting mb-4">Suivis Membres 📋</h1>
 
+      {/* Textes cliquables */}
       <div className="mb-4 flex gap-4">
         {otherViews.map((v) => (
           <p
             key={v}
             className="text-orange-500 cursor-pointer"
-            onClick={() =>
-              setViewList(v.toLowerCase().replace("é", "e"))
-            }
+            onClick={() => setViewList(v.toLowerCase().replace("é", "e"))}
           >
             {v}
           </p>
         ))}
       </div>
 
+      {/* Tableau */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <table className="min-w-full bg-white rounded-xl text-center">
           <thead>
@@ -113,10 +116,10 @@ export default function SuivisMembres() {
             ) : (
               filteredSuivis.map((s) => (
                 <tr key={s.id} className="border-b">
-                  <td className="py-2 px-4">{s.nom}</td>
-                  <td className="py-2 px-4">{s.prenom}</td>
-                  <td className="py-2 px-4">{s.statut}</td>
-                  <td className="py-2 px-4">{s.statut_suivi || "—"}</td>
+                  <td className="py-2 px-4">{s.membre.nom}</td>
+                  <td className="py-2 px-4">{s.membre.prenom}</td>
+                  <td className="py-2 px-4">{s.membre.statut}</td>
+                  <td className="py-2 px-4">{s.statut_suivi || ""}</td>
                   <td className="py-2 px-4">
                     <select
                       value={selectedStatus[s.id] || ""}
@@ -130,15 +133,6 @@ export default function SuivisMembres() {
                       <option value="Intégré">Intégré</option>
                       <option value="Refus">Refus</option>
                     </select>
-
-                    <textarea
-                      placeholder="Ajouter un commentaire"
-                      value={commentaire[s.id] || ""}
-                      onChange={(e) =>
-                        setCommentaire((prev) => ({ ...prev, [s.id]: e.target.value }))
-                      }
-                      className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
-                    />
 
                     <button
                       onClick={() => handleStatusUpdate(s.id)}
@@ -156,3 +150,4 @@ export default function SuivisMembres() {
     </div>
   );
 }
+
