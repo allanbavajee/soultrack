@@ -26,20 +26,26 @@ export default function CreateUser() {
     e.preventDefault();
     setMessage("");
 
-    const { error } = await supabase.from("profiles").insert([
-      {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
-      },
-    ]);
+    // 🔒 Appel de la fonction Supabase qui gère le hash du mot de passe
+    const { data, error } = await supabase.rpc("create_user", {
+      p_email: formData.email,
+      p_password: formData.password,
+      p_prenom: formData.username, // ou prénom si tu veux séparer
+      p_nom: "", // tu peux ajouter un champ nom dans ton form si besoin
+      p_role: formData.role,
+    });
 
     if (error) {
+      console.error("Erreur création utilisateur:", error);
       setMessage("❌ Erreur lors de la création de l'utilisateur.");
     } else {
       setMessage("✅ Utilisateur créé avec succès !");
-      setFormData({ username: "", email: "", password: "", role: "ResponsableIntegration" });
+      setFormData({
+        username: "",
+        email: "",
+        password: "",
+        role: "ResponsableIntegration",
+      });
     }
   };
 
