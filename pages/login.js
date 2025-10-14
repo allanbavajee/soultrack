@@ -11,9 +11,7 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Si l'utilisateur est déjà connecté, redirection directe vers /
   useEffect(() => {
-    if (typeof window === "undefined") return;
     const storedRole = localStorage.getItem("userRole");
     if (storedRole) router.replace("/");
   }, [router]);
@@ -24,7 +22,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // 1️⃣ Recherche du profil par email
+      // 1️⃣ Recherche du profil dans la table "profiles"
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -37,7 +35,7 @@ export default function LoginPage() {
         return;
       }
 
-      // 2️⃣ Vérification du mot de passe via la fonction SQL
+      // 2️⃣ Vérification du mot de passe
       const { data: checkPassword, error: rpcError } = await supabase.rpc(
         "verify_password",
         {
@@ -46,44 +44,38 @@ export default function LoginPage() {
         }
       );
 
-      if (rpcError) {
-        console.error("Erreur RPC verify_password:", rpcError);
-        setError("Erreur lors de la vérification du mot de passe");
-        setLoading(false);
-        return;
-      }
-
-      const verified =
-        Array.isArray(checkPassword) &&
-        checkPassword[0] &&
-        checkPassword[0].verify === true;
-
-      if (!verified) {
+      if (rpcError || !checkPassword?.[0]?.verify) {
         setError("Mot de passe incorrect");
         setLoading(false);
         return;
       }
 
-      // 3️⃣ Normalisation du rôle pour correspondre à accessControl.js
+      // 3️⃣ Crée une session factice (non persistante) pour marquer la connexion
+      // 👉 Astuce : on utilise signInWithPassword pour activer la session Supabase
+      await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      // 4️⃣ Normalisation du rôle
       const role = (profile.role || "Membre").trim().toLowerCase();
       const formattedRole =
         role === "admin"
           ? "Admin"
           : role === "responsableintegration"
           ? "ResponsableIntegration"
-          : role === "responsable évangélisation" ||
-            role === "responsableevangelisation"
+          : role.includes("évang")
           ? "ResponsableEvangelisation"
           : "Membre";
 
-      // 4️⃣ Sauvegarde dans localStorage (persistance)
+      // 5️⃣ Sauvegarde locale
       localStorage.setItem("userId", profile.id);
       localStorage.setItem("userRole", formattedRole);
 
-      // ✅ Ajout : on vérifie que tout est bien stocké avant de rediriger
+      // 6️⃣ Redirection
       setTimeout(() => {
         router.replace("/");
-      }, 300);
+      }, 500);
     } catch (err) {
       console.error("Erreur inattendue:", err);
       setError("Erreur inattendue");
@@ -95,24 +87,17 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
-        {/* Titre avec logo */}
         <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <img
-            src="/logo.png"
-            alt="Logo SoulTrack"
-            className="w-12 h-12 object-contain"
-          />
+          <img src="/logo.png" alt="Logo SoulTrack" className="w-12 h-12 object-contain" />
           SoulTrack
         </h1>
 
-        {/* Message de bienvenue */}
         <p className="text-center text-gray-700 mb-6">
           Bienvenue sur SoulTrack !<br />
           Une plateforme pour garder le contact, organiser les visites,
           et soutenir chaque membre dans sa vie spirituelle.
         </p>
 
-        {/* Formulaire login */}
         <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
           <input
             type="email"
@@ -121,7 +106,6 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
             required
-            autoComplete="email"
           />
 
           <input
@@ -131,7 +115,6 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
             required
-            autoComplete="current-password"
           />
 
           {error && <p className="text-red-500 text-center">{error}</p>}
@@ -145,7 +128,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Texte biblique */}
         <p className="text-center italic font-semibold mt-4 text-green-600">
           "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
         </p>
