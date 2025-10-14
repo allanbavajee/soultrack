@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 
@@ -7,28 +7,18 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // ✅ Si l'utilisateur est déjà connecté, on redirige vers /
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const storedRole = localStorage.getItem("userRole");
-    if (storedRole) {
-      console.log("🔁 Utilisateur déjà connecté, redirection vers /");
-      router.replace("/");
-    }
-  }, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
     setLoading(true);
-    setError(null);
-
-    console.log("🚀 Tentative de connexion pour :", email);
 
     try {
-      // 1️⃣ Vérifie si le profil existe
+      console.log("🚀 Connexion pour :", email);
+
+      // 1️⃣ Récupère le profil par email
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -36,16 +26,13 @@ export default function LoginPage() {
         .single();
 
       if (profileError || !profile) {
-        console.error("❌ Utilisateur introuvable :", profileError);
         setError("Utilisateur introuvable");
         setLoading(false);
         return;
       }
 
-      console.log("✅ Profil trouvé :", profile);
-
-      // 2️⃣ Vérifie le mot de passe avec la fonction SQL
-      const { data: checkPassword, error: rpcError } = await supabase.rpc(
+      // 2️⃣ Vérifie le mot de passe avec la fonction RPC
+      const { data: result, error: rpcError } = await supabase.rpc(
         "verify_password",
         {
           p_password: password,
@@ -54,54 +41,41 @@ export default function LoginPage() {
       );
 
       if (rpcError) {
-        console.error("⚠️ Erreur RPC verify_password :", rpcError);
-        setError("Erreur lors de la vérification du mot de passe");
+        console.error("Erreur RPC:", rpcError);
+        setError("Erreur de vérification du mot de passe");
         setLoading(false);
         return;
       }
 
       const verified =
-        Array.isArray(checkPassword) &&
-        checkPassword[0] &&
-        checkPassword[0].verify === true;
+        Array.isArray(result) &&
+        result[0] &&
+        result[0].verify === true;
 
       if (!verified) {
-        console.warn("❌ Mot de passe incorrect");
         setError("Mot de passe incorrect");
         setLoading(false);
         return;
       }
 
-      console.log("✅ Mot de passe vérifié avec succès");
-
-      // 3️⃣ Normalise le rôle
-      const role = (profile.role || "Membre").trim().toLowerCase();
+      // 3️⃣ Enregistre les infos dans localStorage
       const formattedRole =
-        role === "admin"
+        profile.role?.toLowerCase() === "admin"
           ? "Admin"
-          : role === "responsableintegration"
+          : profile.role?.toLowerCase() === "responsableintegration"
           ? "ResponsableIntegration"
-          : role === "responsable évangélisation" ||
-            role === "responsableevangelisation"
+          : profile.role?.toLowerCase().includes("evangelisation")
           ? "ResponsableEvangelisation"
           : "Membre";
 
-      // 4️⃣ Sauvegarde dans localStorage
       localStorage.setItem("userId", profile.id);
       localStorage.setItem("userRole", formattedRole);
 
-      console.log("💾 Données enregistrées dans localStorage :", {
-        id: profile.id,
-        role: formattedRole,
-      });
-
-      // ✅ Redirection avec délai pour éviter les boucles
-      setTimeout(() => {
-        console.log("✅ Connexion réussie, redirection vers /");
-        router.replace("/");
-      }, 400);
+      // 4️⃣ Message + redirection
+      alert("✅ FORMULAIRE SOUMIS !");
+      router.push("/");
     } catch (err) {
-      console.error("💥 Erreur inattendue :", err);
+      console.error("Erreur inattendue :", err);
       setError("Erreur inattendue, réessaye plus tard");
     } finally {
       setLoading(false);
@@ -111,62 +85,39 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
-        {/* Logo et titre */}
-        <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <img
-            src="/logo.png"
-            alt="Logo SoulTrack"
-            className="w-12 h-12 object-contain"
-          />
+        <h1 className="text-4xl font-handwriting text-gray-800 mb-3 flex items-center gap-2">
+          <img src="/logo.png" alt="Logo" className="w-10 h-10" />
           SoulTrack
         </h1>
 
-        {/* Message d’accueil */}
-        <p className="text-center text-gray-700 mb-6">
-          Bienvenue sur SoulTrack !<br />
-          Une plateforme pour garder le contact, organiser les visites, et
-          soutenir chaque membre dans sa vie spirituelle.
-        </p>
-
-        {/* Formulaire */}
         <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
           <input
             type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
+            className="border border-gray-300 p-3 rounded-lg text-center"
             required
-            autoComplete="email"
           />
-
           <input
             type="password"
             placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
+            className="border border-gray-300 p-3 rounded-lg text-center"
             required
-            autoComplete="current-password"
           />
 
-          {error && (
-            <p className="text-red-500 text-center font-semibold">{error}</p>
-          )}
+          {error && <p className="text-red-500 text-center">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
+            className="bg-gradient-to-r from-green-400 to-blue-400 text-white font-bold py-3 rounded-lg shadow-md hover:opacity-90 transition"
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
-
-        {/* Citation biblique */}
-        <p className="text-center italic font-semibold mt-4 text-green-600">
-          "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
-        </p>
       </div>
     </div>
   );
