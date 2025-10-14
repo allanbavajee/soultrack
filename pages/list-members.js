@@ -137,7 +137,7 @@ export default function ListMembers() {
                 {nouveaux.map((member) => (
                   <div
                     key={member.id}
-                    className="bg-white p-3 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between border-t-4"
+                    className="bg-white p-2 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between border-t-4 leading-tight space-y-0.5"
                     style={{
                       borderTopColor: getBorderColor(member),
                       minHeight: "180px",
