@@ -1,7 +1,9 @@
 // pages/access.js
+"use client";
+
 import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient"; // ✅ Corrigé ici
 import { useRouter } from "next/router";
+import supabase from "../lib/supabaseClient"; // ✅ attention : import par défaut, pas destructuré
 
 export default function Access() {
   const router = useRouter();
@@ -21,23 +23,31 @@ export default function Access() {
   });
   const [submitMessage, setSubmitMessage] = useState("");
 
+  // ✅ Protection : exécuter seulement côté client et seulement si token existe
   useEffect(() => {
+    if (typeof window === "undefined") return; // empêche l'exécution pendant le build
     if (!token) return;
 
     const validateToken = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("access_tokens")
-        .select("access_type")
-        .eq("token", token)
-        .single();
 
-      if (error || !data) {
-        setError("Token invalide ou expiré.");
-      } else {
-        setAccessType(data.access_type);
+      try {
+        const { data, error } = await supabase
+          .from("access_tokens")
+          .select("access_type")
+          .eq("token", token)
+          .single();
+
+        if (error || !data) {
+          setError("Token invalide ou expiré.");
+        } else {
+          setAccessType(data.access_type);
+        }
+      } catch (err) {
+        setError("Erreur de chargement du token.");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     validateToken();
@@ -57,13 +67,12 @@ export default function Access() {
 
     try {
       const table = accessType === "add_member" ? "membres" : "evangelises";
-
       const { error } = await supabase.from(table).insert([formData]);
 
       if (error) {
         setSubmitMessage(`Erreur : ${error.message}`);
       } else {
-        setSubmitMessage("Enregistrement effectué avec succès !");
+        setSubmitMessage("✅ Enregistrement effectué avec succès !");
         setFormData({
           prenom: "",
           nom: "",
@@ -96,7 +105,7 @@ export default function Access() {
           <h2 className="text-xl font-semibold mb-4">Ajouter un évangélisé</h2>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block font-semibold">Prénom</label>
             <input
@@ -190,3 +199,4 @@ export default function Access() {
     </div>
   );
 }
+
