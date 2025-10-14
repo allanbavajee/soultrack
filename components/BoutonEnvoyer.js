@@ -1,3 +1,4 @@
+//components/BoutonEnvoyer.js
 "use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -7,23 +8,6 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusChange }) {
   const [sent, setSent] = useState(false);
 
   const handleSend = async () => {
-    // Vérifier la session utilisateur
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error("Erreur de session:", sessionError.message);
-      alert("Erreur de session Supabase");
-      return;
-    }
-
-    if (!session) {
-      alert("❌ Erreur : utilisateur non connecté");
-      return;
-    }
-
     if (!cellule) {
       alert("⚠️ Sélectionne une cellule avant d’envoyer !");
       return;
@@ -32,7 +16,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusChange }) {
     setLoading(true);
 
     try {
-      // Insertion dans la table suivis_membres
+      // ✅ Insertion dans la table suivis_membres
       const { error } = await supabase.from("suivis_membres").insert([
         {
           membre_id: membre.id,
