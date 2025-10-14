@@ -1,15 +1,29 @@
 //components/BoutonEnvoyer.js
-
 "use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, cellule }) {
+export default function BoutonEnvoyer({ membre, cellule, onEnvoyer }) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
   const handleSend = async () => {
-    // ⚙️ Vérifie d'abord qu'une cellule est choisie
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      console.error("Erreur de session:", sessionError.message);
+      alert("Erreur de session Supabase");
+      return;
+    }
+
+    if (!session) {
+      alert("❌ Erreur : utilisateur non connecté");
+      return;
+    }
+
     if (!cellule) {
       alert("⚠️ Sélectionne une cellule avant d’envoyer !");
       return;
@@ -18,8 +32,8 @@ export default function BoutonEnvoyer({ membre, cellule }) {
     setLoading(true);
 
     try {
-      // ✅ Insertion dans suivis_membres
-      const { error: insertError } = await supabase.from("suivis_membres").insert([
+      // Insertion dans suivis_membres
+      const { error } = await supabase.from("suivis_membres").insert([
         {
           membre_id: membre.id,
           cellule_id: cellule.id,
@@ -36,24 +50,18 @@ export default function BoutonEnvoyer({ membre, cellule }) {
         },
       ]);
 
-      if (insertError) {
-        console.error("❌ Détails de l'erreur :", insertError);
-        alert(`❌ Erreur lors de l’envoi : ${insertError.message}`);
-        return;
+      if (error) {
+        console.error("Erreur insertion :", error);
+        alert(`❌ Erreur lors de l’envoi : ${error.message}`);
+      } else {
+        alert(`✅ ${membre.prenom} ${membre.nom} a été envoyé vers ${cellule.cellule}`);
+        setSent(true);
+
+        // ✅ Mise à jour automatique du statut localement
+        if (onEnvoyer) {
+          onEnvoyer(membre.id);
+        }
       }
-
-      // ✅ Mise à jour du statut membre → actif
-      const { error: updateError } = await supabase
-        .from("membres")
-        .update({ statut: "actif" })
-        .eq("id", membre.id);
-
-      if (updateError) {
-        console.error("Erreur lors de la mise à jour du statut :", updateError.message);
-      }
-
-      alert(`✅ ${membre.prenom} ${membre.nom} a été envoyé vers ${cellule.cellule} et est maintenant actif`);
-      setSent(true);
     } catch (err) {
       console.error("Exception lors de l’envoi :", err.message);
       alert("Erreur inattendue lors de l’envoi");
@@ -66,7 +74,7 @@ export default function BoutonEnvoyer({ membre, cellule }) {
     <button
       onClick={handleSend}
       disabled={loading || sent}
-      className={`mt-3 w-full py-2 rounded-lg text-white font-semibold transition duration-300 ${
+      className={`mt-2 w-full py-2 rounded-lg text-white font-semibold transition duration-300 ${
         sent
           ? "bg-green-500 cursor-not-allowed"
           : loading
@@ -78,5 +86,4 @@ export default function BoutonEnvoyer({ membre, cellule }) {
     </button>
   );
 }
-
 
