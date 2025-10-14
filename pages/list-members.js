@@ -55,6 +55,10 @@ export default function ListMembers() {
     }
   };
 
+  const handleEnvoyer = (id) => {
+    handleChangeStatus(id, "actif"); // ✅ mise à jour automatique après envoi
+  };
+
   const getBorderColor = (member) => {
     if (member.star) return "#FBC02D";
     if (member.statut === "actif") return "#4285F4";
@@ -73,14 +77,14 @@ export default function ListMembers() {
     return m.statut === filter;
   });
 
-  const countFiltered = filteredMembers.length;
-
   const nouveaux = filteredMembers.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
   const anciens = filteredMembers.filter(
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
+
+  const countFiltered = filteredMembers.length;
 
   return (
     <div
@@ -89,30 +93,30 @@ export default function ListMembers() {
     >
       <button
         onClick={() => window.history.back()}
-        className="self-start mb-4 flex items-center text-white font-semibold hover:text-gray-200"
+        className="self-start mb-3 flex items-center text-white font-semibold hover:text-gray-200"
       >
         ← Retour
       </button>
 
-      <div className="mt-2 mb-2">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+      <div className="mt-1 mb-2">
+        <Image src="/logo.png" alt="SoulTrack Logo" width={70} height={70} />
       </div>
 
-      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
+      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-2">
         SoulTrack
       </h1>
       <p className="text-center text-white text-lg mb-2 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et partageons l’amour de Christ ❤️
+        Chaque personne a une valeur infinie. Ensemble, avançons dans l’amour de Christ ❤️
       </p>
 
       <p
-        className="self-end text-orange-500 cursor-pointer mb-4"
+        className="self-end text-orange-300 cursor-pointer mb-3"
         onClick={() => setView(view === "card" ? "table" : "card")}
       >
-        Visuel
+        🔄 Changer de vue ({view === "card" ? "Table" : "Cartes"})
       </p>
 
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-4 w-full max-w-md">
+      <div className="flex flex-col md:flex-row items-center gap-3 mb-3 w-full max-w-md">
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
@@ -131,51 +135,33 @@ export default function ListMembers() {
         </span>
       </div>
 
+      {/* ✅ Vue Cartes */}
       {view === "card" ? (
-        <div className="w-full max-w-5xl space-y-10">
-          {/* ✅ NOUVEAUX */}
+        <div className="w-full max-w-5xl space-y-6">
+          {/* NOUVEAUX */}
           {nouveaux.length > 0 && (
             <div>
-              <p className="text-white mb-2 text-xl">🆕 Nouveaux contacts</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <p className="text-white mb-1 text-xl">🆕 Nouveaux contacts</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {nouveaux.map((member) => (
                   <div
                     key={member.id}
-                    className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between border-t-4 relative"
-                    style={{
-                      borderTopColor: getBorderColor(member),
-                      minHeight: "200px",
-                    }}
+                    className="bg-white p-2 rounded-2xl shadow-md hover:shadow-lg transition duration-200 flex flex-col justify-between border-t-4"
+                    style={{ borderTopColor: getBorderColor(member), minHeight: "170px" }}
                   >
-                    <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
-                      <span>
-                        {member.prenom} {member.nom}
-                        {member.star && (
-                          <span className="ml-1 text-yellow-400">⭐</span>
-                        )}
-                      </span>
-
-                      {/* ✅ Tag bleu "Nouveau" */}
-                      {(member.statut === "visiteur" ||
-                        member.statut === "veut rejoindre ICC") && (
-                        <span className="bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-lg">
-                          Nouveau
-                        </span>
-                      )}
+                    <h2 className="text-lg font-bold text-gray-800 flex justify-between items-center mb-1">
+                      {member.prenom} {member.nom}
+                      {member.star && <span className="text-yellow-400">⭐</span>}
                     </h2>
-
-                    <p className="text-sm text-gray-600 mb-1">
+                    <p className="text-sm text-gray-600 mb-0.5">
                       📱 {member.telephone || "—"}
                     </p>
-                    <p
-                      className="text-sm font-semibold"
-                      style={{ color: getBorderColor(member) }}
-                    >
+                    <p className="text-sm font-semibold mb-0.5" style={{ color: getBorderColor(member) }}>
                       {member.statut || "—"}
                     </p>
 
                     <p
-                      className="mt-2 text-blue-500 underline cursor-pointer"
+                      className="text-blue-500 underline cursor-pointer text-sm mb-1"
                       onClick={() =>
                         setDetailsOpen((prev) => ({
                           ...prev,
@@ -183,13 +169,11 @@ export default function ListMembers() {
                         }))
                       }
                     >
-                      {detailsOpen[member.id]
-                        ? "Fermer détails"
-                        : "Détails"}
+                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                     </p>
 
                     {detailsOpen[member.id] && (
-                      <div className="mt-2 text-sm text-gray-700 space-y-1">
+                      <div className="text-sm text-gray-700 space-y-0.5">
                         <p>Besoin : {member.besoin || "—"}</p>
                         <p>Infos : {member.infos_supplementaires || "—"}</p>
                         <p>Comment venu : {member.comment || "—"}</p>
@@ -204,9 +188,7 @@ export default function ListMembers() {
                           }
                           className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
                         >
-                          <option value="">
-                            -- Sélectionner cellule --
-                          </option>
+                          <option value="">-- Sélectionner cellule --</option>
                           {cellules.map((c) => (
                             <option key={c.id} value={c.id}>
                               {c.cellule} ({c.responsable})
@@ -218,11 +200,9 @@ export default function ListMembers() {
                           <BoutonEnvoyer
                             membre={member}
                             cellule={cellules.find(
-                              (c) =>
-                                String(c.id) ===
-                                String(selectedCellules[member.id])
+                              (c) => String(c.id) === String(selectedCellules[member.id])
                             )}
-                            onStatusChange={handleChangeStatus}
+                            onEnvoyer={handleEnvoyer}
                           />
                         )}
                       </div>
@@ -233,32 +213,24 @@ export default function ListMembers() {
             </div>
           )}
 
-          {/* ✅ ANCIENS */}
+          {/* ANCIENS */}
           {anciens.length > 0 && (
             <div>
-              <p className="text-white mb-2 text-xl">
-                👥 Membres existants
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <p className="text-white mb-1 text-xl">👥 Membres existants</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {anciens.map((member) => (
                   <div
                     key={member.id}
-                    className="bg-white p-4 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between border-t-4 relative"
-                    style={{
-                      borderTopColor: getBorderColor(member),
-                      minHeight: "200px",
-                    }}
+                    className="bg-white p-2 rounded-2xl shadow-md hover:shadow-lg transition duration-200 flex flex-col justify-between border-t-4"
+                    style={{ borderTopColor: getBorderColor(member), minHeight: "150px" }}
                   >
                     <h2 className="text-lg font-bold text-gray-800 mb-1">
                       {member.prenom} {member.nom}
                     </h2>
-                    <p className="text-sm text-gray-600 mb-1">
+                    <p className="text-sm text-gray-600 mb-0.5">
                       📱 {member.telephone || "—"}
                     </p>
-                    <p
-                      className="text-sm font-semibold"
-                      style={{ color: getBorderColor(member) }}
-                    >
+                    <p className="text-sm font-semibold" style={{ color: getBorderColor(member) }}>
                       {member.statut || "—"}
                     </p>
                   </div>
@@ -268,7 +240,59 @@ export default function ListMembers() {
           )}
         </div>
       ) : (
-        <p className="text-white">Vue table non modifiée</p>
+        // ✅ Vue Table
+        <div className="w-full max-w-6xl bg-white rounded-2xl shadow-md overflow-x-auto p-3">
+          <table className="min-w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-indigo-100 text-gray-700">
+                <th className="px-3 py-2 text-left">Nom</th>
+                <th className="px-3 py-2 text-left">Téléphone</th>
+                <th className="px-3 py-2 text-left">Statut</th>
+                <th className="px-3 py-2 text-left">Cellule</th>
+                <th className="px-3 py-2 text-left">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {nouveaux.concat(anciens).map((m) => (
+                <tr key={m.id} className="border-b hover:bg-gray-50">
+                  <td className="px-3 py-2">{m.prenom} {m.nom}</td>
+                  <td className="px-3 py-2">{m.telephone || "—"}</td>
+                  <td className="px-3 py-2" style={{ color: getBorderColor(m) }}>{m.statut}</td>
+                  <td className="px-3 py-2">
+                    <select
+                      value={selectedCellules[m.id] || ""}
+                      onChange={(e) =>
+                        setSelectedCellules((prev) => ({
+                          ...prev,
+                          [m.id]: e.target.value,
+                        }))
+                      }
+                      className="border rounded px-2 py-1 text-sm"
+                    >
+                      <option value="">-- Sélectionner cellule --</option>
+                      {cellules.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.cellule} ({c.responsable})
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-3 py-2">
+                    {selectedCellules[m.id] && (
+                      <BoutonEnvoyer
+                        membre={m}
+                        cellule={cellules.find(
+                          (c) => String(c.id) === String(selectedCellules[m.id])
+                        )}
+                        onEnvoyer={handleEnvoyer}
+                      />
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       <button
