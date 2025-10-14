@@ -37,6 +37,7 @@ function AddMemberPage() {
       if (error) throw error;
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
+
       setFormData({
         nom: "",
         prenom: "",
@@ -227,4 +228,5 @@ function AddMemberPage() {
   );
 }
 
+// ✅ Empêche le rendu côté serveur (solution de build finale)
 export default dynamic(() => Promise.resolve(AddMemberPage), { ssr: false });
