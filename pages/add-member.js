@@ -1,6 +1,8 @@
 // pages/add-member.js
+"use client";
+
 import { useState } from "react";
-import supabase from "../lib/supabaseClient"; // <- chemin corrigé
+import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/router";
 
 export default function AddMember() {
