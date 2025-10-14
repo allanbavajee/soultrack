@@ -1,15 +1,9 @@
 "use client";
-
 import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 import { useRouter } from "next/router";
-import supabase from "../lib/supabaseClient";
 
-// 🧠 Empêche Next.js de pré-rendre cette page au build
-export async function getStaticProps() {
-  return { props: {} };
-}
-
-export default function Access() {
+export default function AccessPage() {
   const router = useRouter();
   const { token } = router.query;
 
@@ -27,9 +21,7 @@ export default function Access() {
   });
   const [submitMessage, setSubmitMessage] = useState("");
 
-  // ✅ exécution uniquement côté client
   useEffect(() => {
-    if (typeof window === "undefined") return;
     if (!token) return;
 
     const validateToken = async () => {
@@ -41,10 +33,14 @@ export default function Access() {
           .eq("token", token)
           .single();
 
-        if (error || !data) setError("Token invalide ou expiré.");
-        else setAccessType(data.access_type);
+        if (error || !data) {
+          setError("Token invalide ou expiré.");
+        } else {
+          setAccessType(data.access_type);
+        }
       } catch (err) {
-        setError("Erreur de chargement du token.");
+        console.error("Erreur de validation token :", err);
+        setError("Erreur interne lors de la validation du lien.");
       } finally {
         setLoading(false);
       }
@@ -67,10 +63,12 @@ export default function Access() {
 
     try {
       const table = accessType === "add_member" ? "membres" : "evangelises";
+
       const { error } = await supabase.from(table).insert([formData]);
 
-      if (error) setSubmitMessage(`Erreur : ${error.message}`);
-      else {
+      if (error) {
+        setSubmitMessage(`Erreur : ${error.message}`);
+      } else {
         setSubmitMessage("✅ Enregistrement effectué avec succès !");
         setFormData({
           prenom: "",
