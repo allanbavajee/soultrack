@@ -55,9 +55,11 @@ export default function BoutonEnvoyer({ membre, cellule }) {
       ]);
 
       if (error) {
-        console.error("Erreur insertion :", error);
-        alert("❌ Erreur lors de l’envoi vers le suivi");
-      } else {
+  console.error("❌ Détails de l'erreur :", error);
+  alert(`❌ Erreur lors de l’envoi : ${error.message}`);
+  return;
+} 
+      else {
         // ✅ Mise à jour du statut du membre en "actif" si c'était un visiteur ou "veut rejoindre ICC"
         if (
           membre.statut === "visiteur" ||
