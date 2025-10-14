@@ -9,22 +9,7 @@ export default function BoutonEnvoyer({ membre, cellule }) {
   const [sent, setSent] = useState(false);
 
   const handleSend = async () => {
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error("Erreur de session:", sessionError.message);
-      alert("Erreur de session Supabase");
-      return;
-    }
-
-    if (!session) {
-      alert("❌ Erreur : utilisateur non connecté");
-      return;
-    }
-
+    // ⚙️ Vérifie d'abord qu'une cellule est choisie
     if (!cellule) {
       alert("⚠️ Sélectionne une cellule avant d’envoyer !");
       return;
@@ -33,7 +18,7 @@ export default function BoutonEnvoyer({ membre, cellule }) {
     setLoading(true);
 
     try {
-      // ✅ 1. Insertion dans suivis_membres
+      // ✅ Insertion dans suivis_membres
       const { error: insertError } = await supabase.from("suivis_membres").insert([
         {
           membre_id: membre.id,
@@ -57,7 +42,7 @@ export default function BoutonEnvoyer({ membre, cellule }) {
         return;
       }
 
-      // ✅ 2. Mise à jour du statut membre → actif
+      // ✅ Mise à jour du statut membre → actif
       const { error: updateError } = await supabase
         .from("membres")
         .update({ statut: "actif" })
@@ -93,4 +78,5 @@ export default function BoutonEnvoyer({ membre, cellule }) {
     </button>
   );
 }
+
 
