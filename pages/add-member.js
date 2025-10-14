@@ -1,15 +1,21 @@
+// ✅ pages/add-member.js
+
 "use client";
 
-import noSSR from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 
-// ✅ Empêche le rendu serveur pour cette page
-export const dynamic = "force-dynamic";
-
-function AddMemberPage() {
+export default function AddMember() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  // ✅ Évite tout rendu côté serveur
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null; // 👈 empêche le rendu SSR
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -41,7 +47,7 @@ function AddMemberPage() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
-      // Reset du formulaire
+      // reset
       setFormData({
         nom: "",
         prenom: "",
@@ -76,7 +82,6 @@ function AddMemberPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Prénom */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Prénom</label>
             <input
@@ -84,12 +89,11 @@ function AddMemberPage() {
               name="prenom"
               value={formData.prenom}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
-          {/* Nom */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Nom</label>
             <input
@@ -97,12 +101,11 @@ function AddMemberPage() {
               name="nom"
               value={formData.nom}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
-          {/* Téléphone */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
             <input
@@ -110,8 +113,8 @@ function AddMemberPage() {
               name="telephone"
               value={formData.telephone}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
             <div className="mt-2 flex items-center">
               <input
@@ -125,7 +128,6 @@ function AddMemberPage() {
             </div>
           </div>
 
-          {/* Ville */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Ville</label>
             <input
@@ -133,18 +135,17 @@ function AddMemberPage() {
               name="ville"
               value={formData.ville}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
-          {/* Statut */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Statut</label>
             <select
               name="statut"
               value={formData.statut}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
               <option value="">-- Sélectionner --</option>
               <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
@@ -153,31 +154,29 @@ function AddMemberPage() {
             </select>
           </div>
 
-          {/* Comment est venu */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
             <select
               name="how_came"
               value={formData.how_came}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
               <option value="">-- Sélectionner --</option>
               <option value="invité">Invité</option>
               <option value="réseaux">Réseaux</option>
-              <option value="evangélisation">Evangélisation</option>
+              <option value="evangélisation">Évangélisation</option>
               <option value="autre">Autre</option>
             </select>
           </div>
 
-          {/* Besoin */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Besoin de la personne ?</label>
             <select
               name="besoin"
               value={formData.besoin}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
               <option value="">-- Sélectionner --</option>
               <option value="Finances">Finances</option>
@@ -188,22 +187,18 @@ function AddMemberPage() {
             </select>
           </div>
 
-          {/* Infos supplémentaires */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">
-              Informations supplémentaires
-            </label>
+            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}
               onChange={handleChange}
               rows={3}
               placeholder="Ajoute ici d'autres détails utiles sur la personne..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
-          {/* Boutons */}
           <div className="flex justify-between mt-4 gap-4">
             <button
               type="button"
@@ -220,13 +215,13 @@ function AddMemberPage() {
                   infos_supplementaires: "",
                 })
               }
-              className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md"
             >
               Ajouter
             </button>
@@ -242,6 +237,3 @@ function AddMemberPage() {
     </div>
   );
 }
-
-// ✅ On désactive le SSR proprement
-export default noSSR(() => Promise.resolve(AddMemberPage), { ssr: false });
