@@ -1,4 +1,4 @@
-// ✅ /pages/index.js — Page d’accueil (Home)
+// ✅ /pages/index.js — Page d’accueil (Home) //
 
 "use client";
 import { useEffect, useState } from "react";
