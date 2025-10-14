@@ -1,7 +1,13 @@
 // pages/add-evangelise.js
 import { useState } from "react";
-import supabase from "../lib/supabaseClient"; // <- chemin corrigé
+import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/router";
+
+// --- Supabase Client ---
+const supabase = createClient(
+  "https://qdxbcbpbjozvxgpusadi.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeGJjYnBiam96dnhncHVzYWRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNjQ0NTQsImV4cCI6MjA3Mzg0MDQ1NH0.pWlel0AkViXCmKRHP0cvk84RCBH_VEWsZEZEKJscDZ8"
+);
 
 export default function AddEvangelise() {
   const router = useRouter();
@@ -30,8 +36,13 @@ export default function AddEvangelise() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabase.from("membres").insert([formData]);
+      // <- IMPORTANT : insertion dans la table "evangelises"
+      const { data, error } = await supabase
+        .from("evangelises")
+        .insert([formData]);
+
       if (error) throw error;
+
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
@@ -69,7 +80,6 @@ export default function AddEvangelise() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Prénom */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Prénom</label>
             <input
@@ -82,7 +92,6 @@ export default function AddEvangelise() {
             />
           </div>
 
-          {/* Nom */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Nom</label>
             <input
@@ -95,7 +104,6 @@ export default function AddEvangelise() {
             />
           </div>
 
-          {/* Téléphone */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
             <input
@@ -108,7 +116,6 @@ export default function AddEvangelise() {
             />
           </div>
 
-          {/* WhatsApp */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -120,7 +127,6 @@ export default function AddEvangelise() {
             <label className="text-gray-700 font-medium">Ce numéro a WhatsApp</label>
           </div>
 
-          {/* Ville */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Ville</label>
             <input
@@ -132,7 +138,6 @@ export default function AddEvangelise() {
             />
           </div>
 
-          {/* Besoin */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Besoin de la personne</label>
             <textarea
@@ -144,7 +149,6 @@ export default function AddEvangelise() {
             />
           </div>
 
-          {/* Infos supplémentaires */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
             <textarea
@@ -156,7 +160,6 @@ export default function AddEvangelise() {
             />
           </div>
 
-          {/* Boutons */}
           <div className="flex justify-between mt-4 gap-4">
             <button
               type="button"
@@ -165,12 +168,10 @@ export default function AddEvangelise() {
                   nom: "",
                   prenom: "",
                   telephone: "",
-                  email: "",
                   ville: "",
                   statut: "evangelisé",
                   infos_supplementaires: "",
                   is_whatsapp: false,
-                  how_came: "",
                   besoin: "",
                 })
               }
