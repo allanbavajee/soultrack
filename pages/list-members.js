@@ -1,4 +1,3 @@
-// pages/list-members.js
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -149,9 +148,22 @@ export default function ListMembers() {
                     }}
                   >
                     <h2 className="text-lg font-bold text-gray-800 mb-1 flex justify-between items-center">
-                      {member.prenom} {member.nom}
-                      {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
+                      <span>
+                        {member.prenom} {member.nom}
+                        {member.star && (
+                          <span className="ml-1 text-yellow-400">⭐</span>
+                        )}
+                      </span>
+
+                      {/* ✅ Tag bleu "Nouveau" */}
+                      {(member.statut === "visiteur" ||
+                        member.statut === "veut rejoindre ICC") && (
+                        <span className="bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-lg">
+                          Nouveau
+                        </span>
+                      )}
                     </h2>
+
                     <p className="text-sm text-gray-600 mb-1">
                       📱 {member.telephone || "—"}
                     </p>
@@ -171,7 +183,9 @@ export default function ListMembers() {
                         }))
                       }
                     >
-                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                      {detailsOpen[member.id]
+                        ? "Fermer détails"
+                        : "Détails"}
                     </p>
 
                     {detailsOpen[member.id] && (
@@ -190,7 +204,9 @@ export default function ListMembers() {
                           }
                           className="border rounded-lg px-2 py-1 text-sm w-full mt-1"
                         >
-                          <option value="">-- Sélectionner cellule --</option>
+                          <option value="">
+                            -- Sélectionner cellule --
+                          </option>
                           {cellules.map((c) => (
                             <option key={c.id} value={c.id}>
                               {c.cellule} ({c.responsable})
@@ -203,8 +219,10 @@ export default function ListMembers() {
                             membre={member}
                             cellule={cellules.find(
                               (c) =>
-                                String(c.id) === String(selectedCellules[member.id])
+                                String(c.id) ===
+                                String(selectedCellules[member.id])
                             )}
+                            onStatusChange={handleChangeStatus}
                           />
                         )}
                       </div>
@@ -218,7 +236,9 @@ export default function ListMembers() {
           {/* ✅ ANCIENS */}
           {anciens.length > 0 && (
             <div>
-              <p className="text-white mb-2 text-xl">👥 Membres existants</p>
+              <p className="text-white mb-2 text-xl">
+                👥 Membres existants
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {anciens.map((member) => (
                   <div
