@@ -1,9 +1,8 @@
-///components/BoutonEnvoyer.js
 "use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, cellule }) {
+export default function BoutonEnvoyer({ membre, cellule, onStatusChange }) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -55,7 +54,36 @@ export default function BoutonEnvoyer({ membre, cellule }) {
         console.error("Erreur insertion :", error);
         alert("❌ Erreur lors de l’envoi vers le suivi");
       } else {
-        alert(`✅ ${membre.prenom} ${membre.nom} a été envoyé vers ${cellule.cellule}`);
+        // ✅ Met à jour le statut du membre en "actif" si c'était un visiteur ou "veut rejoindre ICC"
+        if (
+          membre.statut === "visiteur" ||
+          membre.statut === "veut rejoindre ICC"
+        ) {
+          const { error: updateError } = await supabase
+            .from("membres")
+            .update({ statut: "actif" })
+            .eq("id", membre.id);
+
+          if (updateError) {
+            console.error(
+              "Erreur mise à jour statut membre :",
+              updateError.message
+            );
+          } else {
+            console.log(
+              `✅ Statut de ${membre.prenom} ${membre.nom} passé en "actif"`
+            );
+
+            // ✅ Met à jour l'état local dans ListMembers
+            if (onStatusChange) {
+              onStatusChange(membre.id, "actif");
+            }
+          }
+        }
+
+        alert(
+          `✅ ${membre.prenom} ${membre.nom} a été envoyé vers ${cellule.cellule}`
+        );
         setSent(true);
       }
     } catch (err) {
