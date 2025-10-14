@@ -1,9 +1,13 @@
-// pages/access.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import supabase from "../lib/supabaseClient"; // ✅ attention : import par défaut, pas destructuré
+import supabase from "../lib/supabaseClient";
+
+// 🧠 Empêche Next.js de pré-rendre cette page au build
+export async function getStaticProps() {
+  return { props: {} };
+}
 
 export default function Access() {
   const router = useRouter();
@@ -23,14 +27,13 @@ export default function Access() {
   });
   const [submitMessage, setSubmitMessage] = useState("");
 
-  // ✅ Protection : exécuter seulement côté client et seulement si token existe
+  // ✅ exécution uniquement côté client
   useEffect(() => {
-    if (typeof window === "undefined") return; // empêche l'exécution pendant le build
+    if (typeof window === "undefined") return;
     if (!token) return;
 
     const validateToken = async () => {
       setLoading(true);
-
       try {
         const { data, error } = await supabase
           .from("access_tokens")
@@ -38,11 +41,8 @@ export default function Access() {
           .eq("token", token)
           .single();
 
-        if (error || !data) {
-          setError("Token invalide ou expiré.");
-        } else {
-          setAccessType(data.access_type);
-        }
+        if (error || !data) setError("Token invalide ou expiré.");
+        else setAccessType(data.access_type);
       } catch (err) {
         setError("Erreur de chargement du token.");
       } finally {
@@ -69,9 +69,8 @@ export default function Access() {
       const table = accessType === "add_member" ? "membres" : "evangelises";
       const { error } = await supabase.from(table).insert([formData]);
 
-      if (error) {
-        setSubmitMessage(`Erreur : ${error.message}`);
-      } else {
+      if (error) setSubmitMessage(`Erreur : ${error.message}`);
+      else {
         setSubmitMessage("✅ Enregistrement effectué avec succès !");
         setFormData({
           prenom: "",
@@ -199,4 +198,3 @@ export default function Access() {
     </div>
   );
 }
-
