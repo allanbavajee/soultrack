@@ -1,10 +1,14 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
-import supabase from "../lib/supabaseClient";
 import { useRouter } from "next/router";
+import supabase from "../lib/supabaseClient";
 
-export default function AddMember() {
+// ✅ Empêche Next.js de tenter de pré-rendre la page côté serveur
+export const dynamic = "force-dynamic";
+
+function AddMemberPage() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -70,7 +74,150 @@ export default function AddMember() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* ton formulaire inchangé */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Prénom</label>
+            <input
+              type="text"
+              name="prenom"
+              value={formData.prenom}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Nom</label>
+            <input
+              type="text"
+              name="nom"
+              value={formData.nom}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
+            <input
+              type="text"
+              name="telephone"
+              value={formData.telephone}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              required
+            />
+            <div className="mt-2 flex items-center">
+              <input
+                type="checkbox"
+                name="is_whatsapp"
+                checked={formData.is_whatsapp}
+                onChange={handleChange}
+                className="mr-2"
+              />
+              <label className="text-gray-700">Ce numéro est WhatsApp</label>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Ville</label>
+            <input
+              type="text"
+              name="ville"
+              value={formData.ville}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Statut</label>
+            <select
+              name="statut"
+              value={formData.statut}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            >
+              <option value="">-- Sélectionner --</option>
+              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+              <option value="a déjà mon église">A déjà son église</option>
+              <option value="visiteur">Visiteur</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
+            <select
+              name="how_came"
+              value={formData.how_came}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            >
+              <option value="">-- Sélectionner --</option>
+              <option value="invité">Invité</option>
+              <option value="réseaux">Réseaux</option>
+              <option value="evangélisation">Evangélisation</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Besoin de la personne ?</label>
+            <select
+              name="besoin"
+              value={formData.besoin}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            >
+              <option value="">-- Sélectionner --</option>
+              <option value="Finances">Finances</option>
+              <option value="Santé">Santé</option>
+              <option value="Travail">Travail</option>
+              <option value="Les Enfants">Les Enfants</option>
+              <option value="La Famille">La Famille</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
+            <textarea
+              name="infos_supplementaires"
+              value={formData.infos_supplementaires}
+              onChange={handleChange}
+              rows={3}
+              placeholder="Ajoute ici d'autres détails utiles sur la personne..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+          </div>
+
+          <div className="flex justify-between mt-4 gap-4">
+            <button
+              type="button"
+              onClick={() =>
+                setFormData({
+                  nom: "",
+                  prenom: "",
+                  telephone: "",
+                  ville: "",
+                  statut: "nouveau",
+                  how_came: "",
+                  besoin: "",
+                  is_whatsapp: false,
+                  infos_supplementaires: "",
+                })
+              }
+              className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+            >
+              Ajouter
+            </button>
+          </div>
         </form>
 
         {success && (
@@ -82,3 +229,5 @@ export default function AddMember() {
     </div>
   );
 }
+
+export default dynamic(() => Promise.resolve(AddMemberPage), { ssr: false });
