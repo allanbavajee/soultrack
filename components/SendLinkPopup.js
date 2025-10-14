@@ -1,162 +1,81 @@
-//components/SendLinkPopup.js/
+// components/SendLinkPopup.js
 "use client";
 
-import { useState, useEffect } from "react";
-import supabase from "../lib/supabaseClient";
+import { useState } from "react";
 
-export default function SendLinkPopup({ label, type, buttonColor }) {
+export default function SendLinkPopup({ label, type, buttonColor, token }) {
   const [showPopup, setShowPopup] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [token, setToken] = useState(null);
-  const [sending, setSending] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
 
-  useEffect(() => {
-    if (type === "voir_copier") return;
-
-    const fetchToken = async () => {
-      const { data, error } = await supabase
-        .from("access_tokens")
-        .select("*")
-        .eq("access_type", type)
-        .limit(1)
-        .single();
-
-      if (!error && data) setToken(data.token);
-    };
-
-    fetchToken();
-  }, [type]);
-
-  const handleSend = async () => {
-    if (!phone) return alert("Veuillez entrer un numéro WhatsApp.");
-
-    setSending(true);
-
-    try {
-      // 1️⃣ Vérifier si le membre existe déjà
-      const { data: existingMember } = await supabase
-        .from("membres")
-        .select("*")
-        .eq("telephone", phone.trim())
-        .single();
-
-      let memberId;
-      if (!existingMember) {
-        // Créer le membre si inexistant
-        const { data: newMember, error: insertError } = await supabase
-          .from("membres")
-          .insert([{ telephone: phone.trim(), statut: "actif", created_at: new Date() }])
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-
-        memberId = newMember.id;
-      } else {
-        memberId = existingMember.id;
-        // Mettre à jour le statut existant
-        await supabase
-          .from("membres")
-          .update({ statut: "actif" })
-          .eq("id", memberId);
-      }
-
-      // 2️⃣ Créer un suivi si inexistant
-      const { data: existingSuivi, error: errCheck } = await supabase
-        .from("suivis_membres")
-        .select("*")
-        .eq("membre_id", memberId)
-        .single();
-
-      if (errCheck && errCheck.code !== "PGRST116") throw errCheck;
-
-      if (!existingSuivi) {
-        const { error: insertSuiviError } = await supabase.from("suivis_membres").insert([
-          {
-            membre_id: memberId,
-            statut: "envoye",
-            created_at: new Date(),
-          },
-        ]);
-
-        if (insertSuiviError) throw insertSuiviError;
-      }
-
-      // 3️⃣ Préparer le lien WhatsApp
-      const message =
-        type === "ajouter_membre"
-          ? `Voici le lien pour ajouter un nouveau membre : 👉 ${window.location.origin}/access/${token}`
-          : `Voici le lien pour ajouter un nouveau évangélisé : 👉 ${window.location.origin}/access/${token}`;
-
-      const waUrl = `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-        message
-      )}`;
-      window.open(waUrl, "_blank");
-
-      setPhone("");
-      setShowPopup(false);
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de l'envoi du lien et création du suivi.");
-    } finally {
-      setSending(false);
-    }
+  // Détermine le lien selon le type
+  const getLink = () => {
+    const base = window.location.origin;
+    if (type === "ajouter_membre") return `${base}/add-member?token=${token}`;
+    if (type === "ajouter_evangelise") return `${base}/add-evangelise?token=${token}`;
+    return base;
   };
 
-  if ((type === "ajouter_membre" || type === "ajouter_evangelise") && !token) {
-    return (
-      <button
-        className={`w-full py-3 rounded-2xl text-white font-bold ${buttonColor} cursor-not-allowed`}
-        disabled
-      >
-        {label} - Token introuvable
-      </button>
-    );
-  }
+  const handleSend = () => {
+    const link = getLink();
+
+    if (!phoneNumber) {
+      // Si aucun numéro saisi, ouvrir WhatsApp pour choisir un contact
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`, "_blank");
+    } else {
+      // Si numéro saisi manuellement, envoyer directement au numéro
+      window.open(
+        `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(link)}`,
+        "_blank"
+      );
+    }
+
+    setShowPopup(false);
+    setPhoneNumber("");
+  };
 
   return (
-    <div className="relative w-full">
+    <>
       <button
         onClick={() => setShowPopup(true)}
-        className={`w-full py-3 rounded-2xl text-white font-bold bg-gradient-to-r ${buttonColor} transition-all duration-200`}
+        className={`w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r ${buttonColor} hover:opacity-90 transition`}
       >
         {label}
       </button>
 
       {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-lg flex flex-col gap-4">
-            <h3 className="text-lg font-bold">{label}</h3>
-            {type !== "voir_copier" && (
-              <p className="text-sm text-gray-700">
-                Laissez vide pour sélectionner un contact existant sur WhatsApp
-              </p>
-            )}
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl relative">
+            <h2 className="text-xl font-bold mb-3">{label}</h2>
+            <p className="text-gray-700 mb-4">
+              Cliquez sur <span className="font-semibold">Envoyer</span> si le contact figure déjà dans votre liste WhatsApp,
+              ou saisissez un numéro manuellement.
+            </p>
+
             <input
               type="text"
-              placeholder="Numéro WhatsApp avec indicatif"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="border rounded-xl px-3 py-2 w-full"
+              placeholder="Saisir le numéro manuellement (ex: +2305xxxxxx)"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
-            <div className="flex justify-end gap-2 mt-2">
+
+            <div className="flex gap-3 justify-end">
               <button
-                onClick={() => setShowPopup(false)}
-                className="px-4 py-2 rounded-xl bg-gray-300 text-gray-800 font-bold"
+                onClick={() => { setShowPopup(false); setPhoneNumber(""); }}
+                className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 rounded-2xl font-semibold transition"
               >
                 Annuler
               </button>
               <button
                 onClick={handleSend}
-                disabled={sending}
-                className="px-4 py-2 rounded-xl text-white font-bold bg-gradient-to-r from-green-400 via-green-500 to-green-600"
+                className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-semibold transition"
               >
-                {sending ? "Envoi..." : "Envoyer"}
+                Envoyer
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
