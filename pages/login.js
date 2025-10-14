@@ -22,7 +22,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // 1️⃣ Recherche du profil dans la table "profiles"
+      // 1️⃣ Vérifie l'utilisateur dans la table profiles
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -35,7 +35,7 @@ export default function LoginPage() {
         return;
       }
 
-      // 2️⃣ Vérification du mot de passe
+      // 2️⃣ Vérifie le mot de passe avec la fonction SQL
       const { data: checkPassword, error: rpcError } = await supabase.rpc(
         "verify_password",
         {
@@ -50,14 +50,7 @@ export default function LoginPage() {
         return;
       }
 
-      // 3️⃣ Crée une session factice (non persistante) pour marquer la connexion
-      // 👉 Astuce : on utilise signInWithPassword pour activer la session Supabase
-      await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      });
-
-      // 4️⃣ Normalisation du rôle
+      // 3️⃣ Détermine le rôle
       const role = (profile.role || "Membre").trim().toLowerCase();
       const formattedRole =
         role === "admin"
@@ -68,14 +61,12 @@ export default function LoginPage() {
           ? "ResponsableEvangelisation"
           : "Membre";
 
-      // 5️⃣ Sauvegarde locale
+      // 4️⃣ Sauvegarde dans localStorage
       localStorage.setItem("userId", profile.id);
       localStorage.setItem("userRole", formattedRole);
 
-      // 6️⃣ Redirection
-      setTimeout(() => {
-        router.replace("/");
-      }, 500);
+      // ✅ Connexion réussie → redirection
+      router.replace("/");
     } catch (err) {
       console.error("Erreur inattendue:", err);
       setError("Erreur inattendue");
