@@ -1,8 +1,24 @@
 //pages/login.js
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // 🔹 Redirige automatiquement vers /index si déjà connecté
+  useEffect(() => {
+    const role = localStorage.getItem("userRole");
+    if (role) {
+      router.push("/index");
+    }
+  }, [router]);
+
 
 export default function LoginPage() {
   const router = useRouter();
