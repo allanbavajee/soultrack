@@ -1,10 +1,12 @@
 "use client";
-export const dynamic = "force-dynamic";
 
-import dynamic from "next/dynamic";
+import noSSR from "next/dynamic";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
+
+// ✅ Empêche le rendu serveur pour cette page
+export const dynamic = "force-dynamic";
 
 function AddMemberPage() {
   const router = useRouter();
@@ -59,7 +61,6 @@ function AddMemberPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
-        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
           className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
@@ -242,4 +243,5 @@ function AddMemberPage() {
   );
 }
 
-export default dynamic(() => Promise.resolve(AddMemberPage), { ssr: false });
+// ✅ On désactive le SSR proprement
+export default noSSR(() => Promise.resolve(AddMemberPage), { ssr: false });
