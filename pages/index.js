@@ -1,11 +1,9 @@
-//pages/index.js - Home page//
-// pages/index.js
+// ✅ /pages/index.js — Page d’accueil (Home)
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import supabase from "../lib/supabaseClient";
 import SendLinkPopup from "../components/SendLinkPopup";
 import LogoutLink from "../components/LogoutLink";
 import { canAccessPage } from "../lib/accessControl";
@@ -16,54 +14,29 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const verifyUser = async () => {
-      try {
-        // 🧠 Vérifie s’il y a une session Supabase active
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+    // ✅ On s’assure d’être côté client avant d’utiliser localStorage
+    if (typeof window === "undefined") return;
 
-        if (!session) {
-          const storedRole = localStorage.getItem("userRole");
-          if (!storedRole) {
-            console.warn("❌ Aucun utilisateur connecté, redirection vers /login");
-            router.push("/login");
-            return;
-          }
+    const storedRole = localStorage.getItem("userRole");
 
-          const canAccess = canAccessPage(storedRole, "/index");
-          if (!canAccess) {
-            alert("⛔ Accès non autorisé !");
-            router.push("/login");
-            return;
-          }
+    if (!storedRole) {
+      router.replace("/login");
+      return;
+    }
 
-          setRole(storedRole);
-          setLoading(false);
-          return;
-        }
+    const canAccess = canAccessPage(storedRole, "/index");
+    if (!canAccess) {
+      alert("⛔ Accès non autorisé !");
+      router.replace("/login");
+      return;
+    }
 
-        // ✅ Si session valide → on récupère le rôle sauvegardé
-        const storedRole = localStorage.getItem("userRole");
-        if (storedRole) {
-          setRole(storedRole);
-        } else {
-          console.warn("⚠️ Session Supabase mais rôle manquant — redirection login");
-          router.push("/login");
-          return;
-        }
-
-        setLoading(false);
-      } catch (error) {
-        console.error("Erreur lors de la vérification de session :", error);
-        router.push("/login");
-      }
-    };
-
-    verifyUser();
+    setRole(storedRole);
+    setLoading(false);
   }, [router]);
 
-  if (loading) return <div className="text-center mt-20">Chargement...</div>;
+  if (loading)
+    return <div className="text-center mt-20">Chargement...</div>;
 
   const handleRedirect = (path) => {
     router.push(path);
@@ -76,7 +49,7 @@ export default function HomePage() {
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      {/* 🔵 Déconnexion */}
+      {/* 🔵 Déconnexion en haut à droite */}
       <LogoutLink />
 
       {/* Logo */}
@@ -183,4 +156,3 @@ export default function HomePage() {
     </div>
   );
 }
-
