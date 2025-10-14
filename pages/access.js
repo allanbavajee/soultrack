@@ -1,15 +1,14 @@
 import dynamic from "next/dynamic";
 
-// ✅ Cette ligne désactive totalement le rendu serveur
+// ✅ Import uniquement côté client, jamais côté serveur
 const AccessPage = dynamic(() => import("../components/AccessPage"), {
   ssr: false,
 });
 
+// ✅ Export par défaut
 export default AccessPage;
 
-// ✅ Empêche Next.js de tenter de générer la page au build
-export const getStaticProps = async () => {
-  return {
-    props: {}, // aucune donnée à pré-rendre
-  };
-};
+// ✅ Empêche Next.js de pré-rendre la page pendant le build
+export const getStaticProps = async () => ({
+  props: {}, // aucune donnée à précharger
+});
