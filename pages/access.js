@@ -1,6 +1,6 @@
 // pages/access.js
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import supabase from "../lib/supabaseClient"; // ✅ Corrigé ici
 import { useRouter } from "next/router";
 
 export default function Access() {
@@ -84,13 +84,19 @@ export default function Access() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-3xl font-bold text-center mb-6">Bienvenue sur SoulTrack</h1>
+      <h1 className="text-3xl font-bold text-center mb-6">
+        Bienvenue sur SoulTrack
+      </h1>
 
       <div className="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md">
-        {accessType === "add_member" && <h2 className="text-xl font-semibold mb-4">Ajouter un membre</h2>}
-        {accessType === "add_evangelise" && <h2 className="text-xl font-semibold mb-4">Ajouter un évangélisé</h2>}
+        {accessType === "add_member" && (
+          <h2 className="text-xl font-semibold mb-4">Ajouter un membre</h2>
+        )}
+        {accessType === "add_evangelise" && (
+          <h2 className="text-xl font-semibold mb-4">Ajouter un évangélisé</h2>
+        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block font-semibold">Prénom</label>
             <input
@@ -176,7 +182,9 @@ export default function Access() {
             Enregistrer
           </button>
 
-          {submitMessage && <p className="mt-2 text-center">{submitMessage}</p>}
+          {submitMessage && (
+            <p className="mt-2 text-center text-gray-700">{submitMessage}</p>
+          )}
         </form>
       </div>
     </div>
