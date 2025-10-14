@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import dynamic from "next/dynamic";
 import { useState } from "react";
@@ -38,6 +39,7 @@ function AddMemberPage() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
+      // Reset du formulaire
       setFormData({
         nom: "",
         prenom: "",
@@ -57,6 +59,7 @@ function AddMemberPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
           className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
@@ -72,6 +75,7 @@ function AddMemberPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Prénom */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Prénom</label>
             <input
@@ -84,6 +88,7 @@ function AddMemberPage() {
             />
           </div>
 
+          {/* Nom */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Nom</label>
             <input
@@ -96,6 +101,7 @@ function AddMemberPage() {
             />
           </div>
 
+          {/* Téléphone */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
             <input
@@ -118,6 +124,7 @@ function AddMemberPage() {
             </div>
           </div>
 
+          {/* Ville */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Ville</label>
             <input
@@ -129,6 +136,7 @@ function AddMemberPage() {
             />
           </div>
 
+          {/* Statut */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Statut</label>
             <select
@@ -144,6 +152,7 @@ function AddMemberPage() {
             </select>
           </div>
 
+          {/* Comment est venu */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
             <select
@@ -160,6 +169,7 @@ function AddMemberPage() {
             </select>
           </div>
 
+          {/* Besoin */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Besoin de la personne ?</label>
             <select
@@ -177,8 +187,11 @@ function AddMemberPage() {
             </select>
           </div>
 
+          {/* Infos supplémentaires */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
+            <label className="block text-gray-700 font-medium mb-1">
+              Informations supplémentaires
+            </label>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}
@@ -189,6 +202,7 @@ function AddMemberPage() {
             />
           </div>
 
+          {/* Boutons */}
           <div className="flex justify-between mt-4 gap-4">
             <button
               type="button"
@@ -228,5 +242,4 @@ function AddMemberPage() {
   );
 }
 
-// ✅ Empêche le rendu côté serveur (solution de build finale)
 export default dynamic(() => Promise.resolve(AddMemberPage), { ssr: false });
