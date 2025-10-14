@@ -1,6 +1,6 @@
-// pages/login.js
+// ✅ /pages/login.js
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 
@@ -11,13 +11,20 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // ✅ Si l'utilisateur est déjà connecté, redirection directe vers /
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storedRole = localStorage.getItem("userRole");
+    if (storedRole) router.replace("/");
+  }, [router]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      // 1️⃣ Recherche du profil
+      // 1️⃣ Recherche du profil par email
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -30,10 +37,13 @@ export default function LoginPage() {
         return;
       }
 
-      // 2️⃣ Vérification du mot de passe
+      // 2️⃣ Vérification du mot de passe via la fonction SQL
       const { data: checkPassword, error: rpcError } = await supabase.rpc(
         "verify_password",
-        { p_password: password, p_hash: profile.password_hash }
+        {
+          p_password: password,
+          p_hash: profile.password_hash,
+        }
       );
 
       if (rpcError) {
@@ -54,16 +64,7 @@ export default function LoginPage() {
         return;
       }
 
-      // 3️⃣ Crée une session Supabase fictive (pour RLS et autres vérifications)
-      await supabase.auth.signOut(); // Nettoie d'abord toute session
-      const fakeToken = {
-        access_token: `FAKE-${Date.now()}`,
-        refresh_token: `FAKE-${Date.now()}-REFRESH`,
-        user: { email: profile.email, id: profile.id },
-      };
-      await supabase.auth.setSession(fakeToken); // ✅ “connecte” manuellement l'utilisateur
-
-      // 4️⃣ Normalisation du rôle
+      // 3️⃣ Normalisation du rôle pour correspondre à accessControl.js
       const role = (profile.role || "Membre").trim().toLowerCase();
       const formattedRole =
         role === "admin"
@@ -75,12 +76,14 @@ export default function LoginPage() {
           ? "ResponsableEvangelisation"
           : "Membre";
 
-      // 5️⃣ Sauvegarde locale
+      // 4️⃣ Sauvegarde dans localStorage (persistance)
       localStorage.setItem("userId", profile.id);
       localStorage.setItem("userRole", formattedRole);
 
-      // 6️⃣ Redirection vers l’accueil
-      router.push("/index");
+      // ✅ Ajout : on vérifie que tout est bien stocké avant de rediriger
+      setTimeout(() => {
+        router.replace("/");
+      }, 300);
     } catch (err) {
       console.error("Erreur inattendue:", err);
       setError("Erreur inattendue");
@@ -92,43 +95,57 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
+        {/* Titre avec logo */}
         <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <img src="/logo.png" alt="Logo SoulTrack" className="w-12 h-12" />
+          <img
+            src="/logo.png"
+            alt="Logo SoulTrack"
+            className="w-12 h-12 object-contain"
+          />
           SoulTrack
         </h1>
+
+        {/* Message de bienvenue */}
         <p className="text-center text-gray-700 mb-6">
           Bienvenue sur SoulTrack !<br />
           Une plateforme pour garder le contact, organiser les visites,
           et soutenir chaque membre dans sa vie spirituelle.
         </p>
 
+        {/* Formulaire login */}
         <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
           <input
             type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg text-center"
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
             required
+            autoComplete="email"
           />
+
           <input
             type="password"
             placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg text-center"
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
             required
+            autoComplete="current-password"
           />
+
           {error && <p className="text-red-500 text-center">{error}</p>}
+
           <button
             type="submit"
             disabled={loading}
-            className="bg-gradient-to-r from-green-400 to-blue-400 text-white font-bold py-3 rounded-2xl"
+            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
 
+        {/* Texte biblique */}
         <p className="text-center italic font-semibold mt-4 text-green-600">
           "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
         </p>
