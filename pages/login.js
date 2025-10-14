@@ -1,35 +1,34 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
   const router = useRouter();
-  const redirecting = useRef(false);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Redirection si déjà connecté (protégée)
+  // ✅ Si l'utilisateur est déjà connecté, on redirige vers /
   useEffect(() => {
     if (typeof window === "undefined") return;
     const storedRole = localStorage.getItem("userRole");
-    if (storedRole && !redirecting.current) {
-      redirecting.current = true;
+    if (storedRole) {
+      console.log("🔁 Utilisateur déjà connecté, redirection vers /");
       router.replace("/");
     }
   }, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (redirecting.current) return; // Évite double clic ou double redirection
     setLoading(true);
     setError(null);
 
+    console.log("🚀 Tentative de connexion pour :", email);
+
     try {
-      // 🔹 Étape 1 — Recherche du profil dans Supabase
+      // 1️⃣ Vérifie si le profil existe
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -37,12 +36,15 @@ export default function LoginPage() {
         .single();
 
       if (profileError || !profile) {
+        console.error("❌ Utilisateur introuvable :", profileError);
         setError("Utilisateur introuvable");
         setLoading(false);
         return;
       }
 
-      // 🔹 Étape 2 — Vérifie le mot de passe via la fonction SQL `verify_password`
+      console.log("✅ Profil trouvé :", profile);
+
+      // 2️⃣ Vérifie le mot de passe avec la fonction SQL
       const { data: checkPassword, error: rpcError } = await supabase.rpc(
         "verify_password",
         {
@@ -52,8 +54,8 @@ export default function LoginPage() {
       );
 
       if (rpcError) {
-        console.error("Erreur RPC verify_password:", rpcError);
-        setError("Erreur de vérification du mot de passe");
+        console.error("⚠️ Erreur RPC verify_password :", rpcError);
+        setError("Erreur lors de la vérification du mot de passe");
         setLoading(false);
         return;
       }
@@ -64,12 +66,15 @@ export default function LoginPage() {
         checkPassword[0].verify === true;
 
       if (!verified) {
+        console.warn("❌ Mot de passe incorrect");
         setError("Mot de passe incorrect");
         setLoading(false);
         return;
       }
 
-      // 🔹 Étape 3 — Formate le rôle
+      console.log("✅ Mot de passe vérifié avec succès");
+
+      // 3️⃣ Normalise le rôle
       const role = (profile.role || "Membre").trim().toLowerCase();
       const formattedRole =
         role === "admin"
@@ -81,18 +86,23 @@ export default function LoginPage() {
           ? "ResponsableEvangelisation"
           : "Membre";
 
-      // 🔹 Étape 4 — Stocke dans localStorage
+      // 4️⃣ Sauvegarde dans localStorage
       localStorage.setItem("userId", profile.id);
       localStorage.setItem("userRole", formattedRole);
 
-      // ✅ Redirection unique
-      if (!redirecting.current) {
-        redirecting.current = true;
+      console.log("💾 Données enregistrées dans localStorage :", {
+        id: profile.id,
+        role: formattedRole,
+      });
+
+      // ✅ Redirection avec délai pour éviter les boucles
+      setTimeout(() => {
+        console.log("✅ Connexion réussie, redirection vers /");
         router.replace("/");
-      }
+      }, 400);
     } catch (err) {
-      console.error("Erreur inattendue:", err);
-      setError("Erreur inattendue");
+      console.error("💥 Erreur inattendue :", err);
+      setError("Erreur inattendue, réessaye plus tard");
     } finally {
       setLoading(false);
     }
@@ -101,7 +111,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
-        {/* Logo + titre */}
+        {/* Logo et titre */}
         <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
           <img
             src="/logo.png"
@@ -111,13 +121,14 @@ export default function LoginPage() {
           SoulTrack
         </h1>
 
-        {/* Message de bienvenue */}
+        {/* Message d’accueil */}
         <p className="text-center text-gray-700 mb-6">
           Bienvenue sur SoulTrack !<br />
-          Connecte-toi pour continuer.
+          Une plateforme pour garder le contact, organiser les visites, et
+          soutenir chaque membre dans sa vie spirituelle.
         </p>
 
-        {/* Formulaire login */}
+        {/* Formulaire */}
         <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
           <input
             type="email"
@@ -139,7 +150,9 @@ export default function LoginPage() {
             autoComplete="current-password"
           />
 
-          {error && <p className="text-red-500 text-center">{error}</p>}
+          {error && (
+            <p className="text-red-500 text-center font-semibold">{error}</p>
+          )}
 
           <button
             type="submit"
@@ -150,6 +163,7 @@ export default function LoginPage() {
           </button>
         </form>
 
+        {/* Citation biblique */}
         <p className="text-center italic font-semibold mt-4 text-green-600">
           "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
         </p>
