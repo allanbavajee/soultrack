@@ -1,4 +1,4 @@
-//pages/login.js
+// ✅ pages/login.js
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
@@ -18,14 +18,6 @@ export default function LoginPage() {
       router.push("/index");
     }
   }, [router]);
-
-
-export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -73,10 +65,9 @@ export default function LoginPage() {
         return;
       }
 
-      // 3️⃣ Normalisation du rôle pour éviter les erreurs
+      // 3️⃣ Normalisation du rôle
       const role = (profile.role || "Membre").trim().toLowerCase();
 
-      // Mapping pour correspondre à /lib/accessControl.js
       const formattedRole =
         role === "admin"
           ? "Admin"
@@ -87,7 +78,7 @@ export default function LoginPage() {
           ? "ResponsableEvangelisation"
           : "Membre";
 
-      // 4️⃣ Sauvegarde locale pour usage global
+      // 4️⃣ Sauvegarde locale
       localStorage.setItem("userId", profile.id);
       localStorage.setItem("userRole", formattedRole);
 
