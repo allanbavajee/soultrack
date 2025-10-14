@@ -5,9 +5,6 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 
-// ✅ Empêche Next.js de tenter de pré-rendre la page côté serveur
-export const dynamic = "force-dynamic";
-
 function AddMemberPage() {
   const router = useRouter();
 
