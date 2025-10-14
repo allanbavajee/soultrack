@@ -1,4 +1,5 @@
 //components/BoutonEnvoyer.js
+
 "use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -8,24 +9,20 @@ export default function BoutonEnvoyer({ membre, cellule }) {
   const [sent, setSent] = useState(false);
 
   const handleSend = async () => {
-    // Vérifier la session utilisateur (on récupère la session si possible,
-    // mais on NE BLOQUE PAS si elle est absente pour éviter l'erreur "utilisateur non connecté")
-    try {
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
 
-      if (sessionError) {
-        // on log l'erreur de session, mais on continue (ne pas interrompre l'envoi)
-        console.error("Erreur de session:", sessionError.message);
-      } else if (!session) {
-        // pas de session active : on log pour info mais on continue l'opération
-        console.warn("Aucune session active (envoi autorisé en mode public).");
-      }
-    } catch (e) {
-      // Si l'appel getSession lui-même plante, on ignore et on continue
-      console.warn("Impossible de vérifier la session (continuation de l'envoi).", e);
+    if (sessionError) {
+      console.error("Erreur de session:", sessionError.message);
+      alert("Erreur de session Supabase");
+      return;
+    }
+
+    if (!session) {
+      alert("❌ Erreur : utilisateur non connecté");
+      return;
     }
 
     if (!cellule) {
@@ -36,8 +33,8 @@ export default function BoutonEnvoyer({ membre, cellule }) {
     setLoading(true);
 
     try {
-      // Insertion dans la table suivis_membres
-      const { error } = await supabase.from("suivis_membres").insert([
+      // ✅ 1. Insertion dans suivis_membres
+      const { error: insertError } = await supabase.from("suivis_membres").insert([
         {
           membre_id: membre.id,
           cellule_id: cellule.id,
@@ -54,46 +51,26 @@ export default function BoutonEnvoyer({ membre, cellule }) {
         },
       ]);
 
-      if (error) {
-  console.error("❌ Détails de l'erreur :", error);
-  alert(`❌ Erreur lors de l’envoi : ${error.message}`);
-  return;
-} 
-      else {
-        // ✅ Mise à jour du statut du membre en "actif" si c'était un visiteur ou "veut rejoindre ICC"
-        if (
-          membre.statut === "visiteur" ||
-          membre.statut === "veut rejoindre ICC"
-        ) {
-          try {
-            const { error: updateError } = await supabase
-              .from("membres")
-              .update({ statut: "actif" })
-              .eq("id", membre.id);
-
-            if (updateError) {
-              console.error(
-                "Erreur mise à jour statut membre :",
-                updateError.message
-              );
-              // on ne bloque pas l'affichage : on affiche quand même la confirmation d'envoi
-            } else {
-              console.log(
-                `✅ Statut de ${membre.prenom} ${membre.nom} passé en "actif"`
-              );
-            }
-          } catch (e) {
-            console.error("Exception lors de la mise à jour statut :", e);
-          }
-        }
-
-        alert(
-          `✅ ${membre.prenom} ${membre.nom} a été envoyé vers ${cellule.cellule}`
-        );
-        setSent(true);
+      if (insertError) {
+        console.error("❌ Détails de l'erreur :", insertError);
+        alert(`❌ Erreur lors de l’envoi : ${insertError.message}`);
+        return;
       }
+
+      // ✅ 2. Mise à jour du statut membre → actif
+      const { error: updateError } = await supabase
+        .from("membres")
+        .update({ statut: "actif" })
+        .eq("id", membre.id);
+
+      if (updateError) {
+        console.error("Erreur lors de la mise à jour du statut :", updateError.message);
+      }
+
+      alert(`✅ ${membre.prenom} ${membre.nom} a été envoyé vers ${cellule.cellule} et est maintenant actif`);
+      setSent(true);
     } catch (err) {
-      console.error("Exception lors de l’envoi :", err?.message ?? err);
+      console.error("Exception lors de l’envoi :", err.message);
       alert("Erreur inattendue lors de l’envoi");
     }
 
@@ -116,3 +93,4 @@ export default function BoutonEnvoyer({ membre, cellule }) {
     </button>
   );
 }
+
