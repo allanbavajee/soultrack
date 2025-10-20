@@ -1,59 +1,89 @@
-// ✅ /pages/index.js — Page d’accueil (Home)
+// pages/home.js
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
 import Image from "next/image";
-import SendLinkPopup from "../components/SendLinkPopup";
-import LogoutLink from "../components/LogoutLink";
-import { canAccessPage } from "../lib/accessControl";
+import { useRouter } from "next/router";
+import supabase from "../lib/supabaseClient";
 
-export default function HomePage() {
+export default function Home() {
   const router = useRouter();
-  const [role, setRole] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // États pour afficher les popups
+  const [showPopup, setShowPopup] = useState(null); // "nouveau" | "evangelise" | null
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   useEffect(() => {
-    try {
-      const storedRole = localStorage.getItem("userRole");
+    const loadProfile = async () => {
+      const userId = localStorage.getItem("userId");
 
-      // 🔒 Si aucun rôle → utilisateur non connecté
-      if (!storedRole) {
-        console.warn("⚠️ Aucun rôle trouvé, redirection vers /login");
+      if (!userId) {
         router.push("/login");
         return;
       }
 
-      // ✅ Vérifie les droits d'accès
-      const canAccess = canAccessPage(storedRole, "/index");
-      if (!canAccess) {
-        alert("⛔ Accès non autorisé !");
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (error || !data) {
+        localStorage.clear();
         router.push("/login");
         return;
       }
 
-      setRole(storedRole);
-    } catch (error) {
-      console.error("Erreur lors de la récupération du rôle :", error);
-      router.push("/login");
-    } finally {
-      setLoading(false);
-    }
+      setProfile(data);
+      setLoadingProfile(false);
+    };
+
+    loadProfile();
   }, [router]);
 
-  if (loading) return <div className="text-center mt-20">Chargement...</div>;
+  const handleLogout = () => {
+    localStorage.clear();
+    router.push("/login");
+  };
 
-  const handleRedirect = (path) => router.push(path);
+  const handleSendApp = (type) => {
+    setShowPopup(type); // ouvre le popup
+    setPhoneNumber(""); // reset du champ
+  };
+
+  const sendWhatsApp = (type) => {
+    const token = type === "nouveau"
+      ? "58eff16c-f480-4c73-a6e0-aa4423d2069d"
+      : "33dd234f-8146-4818-976c-af7bfdcefe95";
+
+    const link = `${window.location.origin}/${type === "nouveau" ? "add-member" : "add-evangelise"}?token=${token}`;
+
+    const url = phoneNumber
+      ? `https://api.whatsapp.com/send?phone=${encodeURIComponent(phoneNumber)}&text=${encodeURIComponent(link)}`
+      : `https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`;
+
+    window.open(url, "_blank");
+    setShowPopup(null);
+  };
+
+  if (loadingProfile) {
+    return <p className="text-center mt-10 text-gray-600">Chargement du profil...</p>;
+  }
 
   return (
     <div
-      className="min-h-screen relative flex flex-col items-center justify-between p-6 gap-2"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
+      className="min-h-screen flex flex-col items-center justify-between p-6 gap-2 relative"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* 🔵 Bouton déconnexion */}
-      <LogoutLink />
+      {/* Déconnexion */}
+      <button
+        onClick={handleLogout}
+        className="absolute top-4 right-4 bg-white/20 text-white px-4 py-2 rounded-xl font-semibold shadow-sm hover:bg-white/30 transition"
+      >
+        Déconnexion
+      </button>
 
       {/* Logo */}
       <div className="mt-1">
@@ -61,101 +91,84 @@ export default function HomePage() {
       </div>
 
       {/* Titre */}
-      <div className="flex flex-col items-center mt-2">
-        <h1 className="text-5xl sm:text-5xl font-handwriting text-white text-center">
-          SoulTrack
-        </h1>
-      </div>
+      <h1 className="text-5xl sm:text-5xl font-handwriting text-white text-center mt-1">
+        SoulTrack
+      </h1>
 
-      {/* Message d’intro */}
+      {/* Sous-titre */}
       <div className="mt-1 mb-2 text-center text-white text-lg font-handwriting-light">
         Chaque personne a une valeur infinie. Ensemble, nous avançons, nous
         grandissons, et nous partageons l’amour de Christ dans chaque action ❤️
       </div>
 
-      {/* 📦 Cartes principales */}
+      {/* Boutons principaux */}
       <div className="flex flex-col md:flex-row flex-wrap gap-3 justify-center w-full max-w-5xl mt-2">
-        {(role === "ResponsableIntegration" || role === "Admin") && (
-          <div
-            onClick={() => handleRedirect("/membres-hub")}
-            className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+        {(profile.role === "ResponsableIntegration" || profile.role === "Admin") && (
+          <button
+            onClick={() => handleSendApp("nouveau")}
+            className="flex-1 min-w-[250px] h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200"
           >
             <div className="text-4xl mb-1">👤</div>
             <div className="text-lg font-bold text-gray-800 text-center">
-              Suivis des membres
+              Envoyer l'appli – Nouveau membre
             </div>
-          </div>
+          </button>
         )}
 
-        {(role === "ResponsableEvangelisation" || role === "Admin") && (
-          <div
-            onClick={() => handleRedirect("/evangelisation-hub")}
-            className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+        {(profile.role === "ResponsableEvangelisation" || profile.role === "Admin") && (
+          <button
+            onClick={() => handleSendApp("evangelise")}
+            className="flex-1 min-w-[250px] h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200"
           >
             <div className="text-4xl mb-1">🙌</div>
             <div className="text-lg font-bold text-gray-800 text-center">
-              Évangélisation
+              Envoyer l'appli – Évangélisé
+            </div>
+          </button>
+        )}
+      </div>
+
+      {/* Popup d'envoi */}
+      {showPopup && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-lg flex flex-col gap-4">
+            <h2 className="text-xl font-bold text-gray-800 text-center">
+              {showPopup === "nouveau" ? "Envoyer l'appli – Nouveau membre" : "Envoyer l'appli – Évangélisé"}
+            </h2>
+            <p className="text-center text-gray-600 text-sm">
+              Cliquez sur "Envoyer" si le contact figure déjà dans votre liste WhatsApp,
+              ou saisissez un numéro manuellement.
+            </p>
+
+            <input
+              type="text"
+              placeholder="Saisir le numéro manuellement (ex: +2305xxxxxx)"
+              className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+            />
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => sendWhatsApp(showPopup)}
+                className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              >
+                Envoyer
+              </button>
+              <button
+                onClick={() => setShowPopup(null)}
+                className="flex-1 py-3 bg-gray-400 hover:bg-gray-500 text-white font-bold rounded-2xl shadow-md transition-all duration-200"
+              >
+                Annuler
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {role === "Admin" && (
-          <>
-            <div
-              onClick={() => handleRedirect("/rapport")}
-              className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-            >
-              <div className="text-4xl mb-1">📊</div>
-              <div className="text-lg font-bold text-gray-800 text-center">
-                Rapport
-              </div>
-            </div>
-
-            <div
-              onClick={() => handleRedirect("/admin/create-internal-user")}
-              className="flex-1 min-w-[250px] w-full h-28 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-            >
-              <div className="text-4xl mb-1">🧑‍💻</div>
-              <div className="text-lg font-bold text-gray-800 text-center">
-                Créer un utilisateur
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* 🔗 Boutons popup */}
-      <div className="flex flex-col gap-3 mt-4 w-full max-w-md">
-        {(role === "ResponsableIntegration" || role === "Admin") && (
-          <SendLinkPopup
-            label="Envoyer l'appli – Nouveau membre"
-            type="ajouter_membre"
-            buttonColor="from-[#09203F] to-[#537895]"
-          />
-        )}
-
-        {(role === "ResponsableEvangelisation" || role === "Admin") && (
-          <SendLinkPopup
-            label="Envoyer l'appli – Évangélisé"
-            type="ajouter_evangelise"
-            buttonColor="from-[#09203F] to-[#537895]"
-          />
-        )}
-
-        {role === "Admin" && (
-          <SendLinkPopup
-            label="Voir / Copier liens…"
-            type="voir_copier"
-            buttonColor="from-[#005AA7] to-[#FFFDE4]"
-          />
-        )}
-      </div>
-
-      {/* 📖 Verset */}
+      {/* Verset biblique */}
       <div className="mt-4 mb-2 text-center text-white text-lg font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs.  
-        <br />
-        <span className="italic">1 Corinthiens 12:14 ❤️</span>
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. 1 Corinthiens 12:14 ❤️
       </div>
     </div>
   );
