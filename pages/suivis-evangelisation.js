@@ -17,14 +17,19 @@ export default function SuivisEvangelisation() {
     fetchSuivis();
   }, []);
 
+  // ✅ Nouvelle version avec filtrage correct des statuts
   const fetchSuivis = async () => {
     setLoading(true);
+
     const { data, error } = await supabase
       .from("suivis_des_evangelises")
       .select(`
         *,
         cellules:cellule_id (cellule)
       `)
+      .or(
+        'status_suivis_evangelises.is.null,status_suivis_evangelises.eq.,and(status_suivis_evangelises.neq.Integrer,status_suivis_evangelises.neq."Venu à l’église")'
+      )
       .order("date_suivi", { ascending: false });
 
     if (error) {
@@ -47,6 +52,7 @@ export default function SuivisEvangelisation() {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
   };
 
+  // ✅ Transfert vers table membres si statut = "Integrer" ou "Venu à l’église"
   const updateStatus = async (id) => {
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
@@ -55,33 +61,63 @@ export default function SuivisEvangelisation() {
 
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
-    const { error } = await supabase
+    // Récupérer les infos actuelles
+    const { data: currentData, error: fetchError } = await supabase
+      .from("suivis_des_evangelises")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      console.error("Erreur récupération :", fetchError.message);
+      setUpdating((prev) => ({ ...prev, [id]: false }));
+      return;
+    }
+
+    // Mettre à jour le statut
+    const { error: updateError } = await supabase
       .from("suivis_des_evangelises")
       .update({
-        status_suivis_evangelises: newStatus, // ✅ correction ici
+        status_suivis_evangelises: newStatus,
         commentaire_evangelises: newComment,
       })
       .eq("id", id);
 
-    if (error) {
-      console.error("Erreur de mise à jour :", error.message);
-    } else {
-      setSuivis((prev) =>
-        prev.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                status_suivis_evangelises:
-                  newStatus ?? item.status_suivis_evangelises, // ✅ correction ici
-                commentaire_evangelises:
-                  newComment ?? item.commentaire_evangelises,
-              }
-            : item
-        )
-      );
+    if (updateError) {
+      console.error("Erreur mise à jour :", updateError.message);
+      setUpdating((prev) => ({ ...prev, [id]: false }));
+      return;
+    }
+
+    // ✅ Si statut = "Integrer" ou "Venu à l’église" → transfert vers membres
+    if (["Integrer", "Venu à l’église"].includes(newStatus)) {
+      const { error: insertError } = await supabase.from("membres").insert([
+        {
+          nom: currentData.nom,
+          prenom: currentData.prenom,
+          telephone: currentData.telephone,
+          email: currentData.email,
+          statut: newStatus,
+          venu: newStatus === "Venu à l’église" ? "Oui" : null,
+          besoin: currentData.besoin,
+          ville: currentData.ville,
+          formation: currentData.formation,
+          evangeliste_nom: currentData.evangeliste_nom,
+          comment: newComment || currentData.commentaire_evangelises,
+          responsable_suivi: currentData.responsable_cellule,
+        },
+      ]);
+
+      if (insertError) {
+        console.error("Erreur insertion membre :", insertError.message);
+      } else {
+        // Supprime le contact transféré
+        await supabase.from("suivis_des_evangelises").delete().eq("id", id);
+      }
     }
 
     setUpdating((prev) => ({ ...prev, [id]: false }));
+    fetchSuivis(); // Rafraîchit la liste après MAJ
   };
 
   return (
@@ -151,7 +187,7 @@ export default function SuivisEvangelisation() {
                     <p>🙏 Besoin : {item.besoin || "—"}</p>
                     <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
 
-                    {/* Champ commentaire */}
+                    {/* Commentaire */}
                     <div className="mt-2">
                       <label className="text-gray-700 text-sm">💬 Commentaire :</label>
                       <textarea
@@ -169,7 +205,7 @@ export default function SuivisEvangelisation() {
                       ></textarea>
                     </div>
 
-                    {/* Menu déroulant statut */}
+                    {/* Statut */}
                     <div className="mt-2">
                       <label className="text-gray-700 text-sm">
                         📋 Statut du suivi :
@@ -177,7 +213,7 @@ export default function SuivisEvangelisation() {
                       <select
                         value={
                           statusChanges[item.id] ??
-                          item.status_suivis_evangelises ?? // ✅ correction ici
+                          item.status_suivis_evangelises ??
                           ""
                         }
                         onChange={(e) =>
@@ -187,8 +223,8 @@ export default function SuivisEvangelisation() {
                       >
                         <option value="">-- Choisir un statut --</option>
                         <option value="En cours">🕊 En cours</option>
-                        <option value="Actif">🔥 Actif</option>
-                        <option value="Veut venir à l’église">⛪ Veut venir à l’église</option>
+                        <option value="Integrer">🔥 Intégrer</option>
+                        <option value="Venu à l’église">⛪ Venu à l’église</option>
                         <option value="Veut venir à la famille d’impact">
                           👨‍👩‍👧‍👦 Veut venir à la famille d’impact
                         </option>
@@ -199,7 +235,7 @@ export default function SuivisEvangelisation() {
                       </select>
                     </div>
 
-                    {/* Date du suivi */}
+                    {/* Date */}
                     <p className="mt-2">
                       📅 Date du suivi :{" "}
                       {new Date(item.date_suivi).toLocaleDateString("fr-FR", {
