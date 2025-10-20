@@ -1,7 +1,6 @@
-//pages/login.js
-// ✅ /pages/login.js
+// pages/login.js
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 
@@ -12,23 +11,13 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const storedRole = localStorage.getItem("userRole");
-    if (storedRole) {
-      console.log("🔁 Utilisateur déjà connecté → redirection vers /");
-      router.replace("/");
-    }
-  }, [router]);
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    console.log("🚀 Connexion tentée pour :", email);
-
     try {
+      // 1️⃣ Recherche du profil par email
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -36,14 +25,12 @@ export default function LoginPage() {
         .single();
 
       if (profileError || !profile) {
-        console.error("❌ Utilisateur introuvable :", profileError);
         setError("Utilisateur introuvable");
         setLoading(false);
         return;
       }
 
-      console.log("✅ Profil trouvé :", profile);
-
+      // 2️⃣ Vérification du mot de passe via la fonction SQL
       const { data: checkPassword, error: rpcError } = await supabase.rpc(
         "verify_password",
         {
@@ -53,8 +40,8 @@ export default function LoginPage() {
       );
 
       if (rpcError) {
-        console.error("⚠️ Erreur RPC :", rpcError);
-        setError("Erreur de vérification du mot de passe");
+        console.error("Erreur RPC verify_password:", rpcError);
+        setError("Erreur lors de la vérification du mot de passe");
         setLoading(false);
         return;
       }
@@ -65,40 +52,45 @@ export default function LoginPage() {
         checkPassword[0].verify === true;
 
       if (!verified) {
-        console.warn("❌ Mot de passe incorrect");
         setError("Mot de passe incorrect");
         setLoading(false);
         return;
       }
 
-      console.log("✅ Mot de passe vérifié avec succès");
+      // 3️⃣ Normalisation du rôle pour éviter les erreurs
+const role = (profile.role || "Membre").trim().toLowerCase();
 
-      const role = (profile.role || "Membre").trim().toLowerCase();
-      const formattedRole =
-        role === "admin"
-          ? "Admin"
-          : role === "responsableintegration"
-          ? "ResponsableIntegration"
-          : role === "responsable évangélisation" ||
-            role === "responsableevangelisation"
-          ? "ResponsableEvangelisation"
-          : "Membre";
+// Mapping pour correspondre à /lib/accessControl.js
+const formattedRole =
+  role === "admin"
+    ? "Admin"
+    : role === "responsableintegration"
+    ? "ResponsableIntegration"
+    : role === "responsable évangélisation" || role === "responsableevangelisation"
+    ? "ResponsableEvangelisation"
+    : role === "responsablecellule" || role === "responsable cellule"
+    ? "ResponsableCellule"
+    : "Membre";
 
-      localStorage.setItem("userId", profile.id);
-      localStorage.setItem("userRole", formattedRole);
+// 4️⃣ Sauvegarde locale pour usage global
+localStorage.setItem("userId", profile.id);
+localStorage.setItem("userRole", formattedRole);
 
-      console.log("💾 Données enregistrées :", {
-        id: profile.id,
-        role: formattedRole,
-      });
+// 5️⃣ Redirection selon le rôle
+if (formattedRole === "Admin") {
+  router.push("/index");
+} else if (formattedRole === "ResponsableIntegration") {
+  router.push("/membres-hub");
+} else if (formattedRole === "ResponsableEvangelisation") {
+  router.push("/evangelisation-hub");
+} else if (formattedRole === "ResponsableCellule") {
+  router.push("/cellules-hub");  // ✅ attention au "s" minuscule ici
+} else {
+  router.push("/index");
+}
 
-      // ✅ Forçage de la redirection sûre
-      setTimeout(() => {
-        console.log("➡️ Redirection vers / (index.js)");
-        window.location.href = "/";
-      }, 500);
     } catch (err) {
-      console.error("💥 Erreur inattendue :", err);
+      console.error("Erreur inattendue:", err);
       setError("Erreur inattendue");
     } finally {
       setLoading(false);
@@ -108,10 +100,21 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
+        {/* Titre avec logo */}
         <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <img src="/logo.png" alt="Logo SoulTrack" className="w-12 h-12" />
+          <img
+            src="/logo.png"
+            alt="Logo SoulTrack"
+            className="w-12 h-12 object-contain"
+          />
           SoulTrack
         </h1>
+
+        <p className="text-center text-gray-700 mb-6">
+          Bienvenue sur SoulTrack !<br />
+          Une plateforme pour garder le contact, organiser les visites,
+          et soutenir chaque membre dans sa vie spirituelle.
+        </p>
 
         <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
           <input
@@ -119,8 +122,9 @@ export default function LoginPage() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg text-center"
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
             required
+            autoComplete="email"
           />
 
           <input
@@ -128,18 +132,17 @@ export default function LoginPage() {
             placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg text-center"
+            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
             required
+            autoComplete="current-password"
           />
 
-          {error && (
-            <p className="text-red-500 text-center font-semibold">{error}</p>
-          )}
+          {error && <p className="text-red-500 text-center">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="bg-gradient-to-r from-green-400 to-blue-400 text-white font-bold py-3 rounded-2xl shadow-md"
+            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>
