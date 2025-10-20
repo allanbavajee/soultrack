@@ -1,13 +1,16 @@
-//pages/list-members.js
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";
+import LogoutLink from "../components/LogoutLink";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
   const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
   const [selectedCellules, setSelectedCellules] = useState({});
@@ -20,76 +23,107 @@ export default function ListMembers() {
   }, []);
 
   const fetchMembers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("membres")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      setMembers(data || []);
-    } catch (err) {
-      console.error("Erreur fetchMembers:", err.message);
-      setMembers([]);
-    }
+    const { data, error } = await supabase
+      .from("membres")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error && data) setMembers(data);
   };
 
   const fetchCellules = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("cellules")
-        .select("id, cellule, responsable, telephone");
-      if (error) throw error;
-      setCellules(data || []);
-    } catch (err) {
-      console.error("Erreur fetchCellules:", err.message);
-      setCellules([]);
-    }
+    const { data, error } = await supabase
+      .from("cellules")
+      .select("id, cellule, responsable, telephone");
+    if (!error && data) setCellules(data);
   };
 
-  const handleChangeStatus = (id, newStatus) => {
+  const handleChangeStatus = async (id, newStatus) => {
+    await supabase.from("membres").update({ statut: newStatus }).eq("id", id);
     setMembers((prev) =>
       prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
     );
   };
 
-  const getBorderColor = (member) => {
-    if (member.star) return "#FBC02D";
-    if (member.statut === "actif") return "#4285F4";
-    if (member.statut === "a déjà mon église") return "#EA4335";
-    if (member.statut === "ancien") return "#999999";
-    if (member.statut === "veut rejoindre ICC" || member.statut === "visiteur")
+  const handleStatusUpdateFromEnvoyer = (id, newStatus) => {
+    setMembers((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, statut: newStatus } : m))
+    );
+  };
+
+  const getBorderColor = (m) => {
+    if (m.star) return "#FBC02D";
+    if (m.statut === "actif") return "#4285F4";
+    if (m.statut === "a déjà mon église") return "#EA4335";
+    if (m.statut === "Integrer") return "#FFA500";
+    if (m.statut === "ancien") return "#999999";
+    if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur")
       return "#34A853";
     return "#ccc";
   };
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const formatDate = (dateStr) => {
+    try {
+      const date = new Date(dateStr);
+      return format(date, "EEEE d MMMM yyyy", { locale: fr });
+    } catch {
+      return "";
+    }
+  };
 
-  const filteredMembers = members.filter((m) => {
-    if (!filter) return true;
-    if (filter === "star") return m.star === true;
-    return m.statut === filter;
-  });
-
-  const countFiltered = filteredMembers.length;
-  const nouveaux = filteredMembers.filter(
+  const nouveaux = members.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
-  const anciens = filteredMembers.filter(
+  const anciens = members.filter(
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
 
+  const filterBySearch = (list) =>
+    list.filter((m) =>
+      `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase())
+    );
+
+  const nouveauxFiltres = filterBySearch(
+    filter ? nouveaux.filter((m) => m.statut === filter) : nouveaux
+  );
+  const anciensFiltres = filterBySearch(
+    filter ? anciens.filter((m) => m.statut === filter) : anciens
+  );
+
+  const allMembersOrdered = [...nouveaux, ...anciens];
+  const filteredMembers = filterBySearch(
+    filter
+      ? allMembersOrdered.filter((m) => m.statut === filter)
+      : allMembersOrdered
+  );
+
+  const statusOptions = [
+    "actif",
+    "Integrer",
+    "ancien",
+    "veut rejoindre ICC",
+    "visiteur",
+    "a déjà mon église",
+  ];
+
+  const totalCount = filteredMembers.length;
+
   return (
     <div
-      className="min-h-screen flex flex-col items-center p-6"
+      className="min-h-screen flex flex-col items-center p-6 transition-all duration-200"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      <button
-        onClick={() => window.history.back()}
-        className="self-start mb-4 flex items-center text-white font-semibold hover:text-gray-200"
-      >
-        ← Retour
-      </button>
+      {/* Header */}
+      <div className="flex justify-between w-full max-w-5xl items-center mb-4">
+        <button
+          onClick={() => window.history.back()}
+          className="flex items-center text-white font-semibold hover:text-gray-200"
+        >
+          ← Retour
+        </button>
+        <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+      </div>
 
+      {/* Logo */}
       <div className="mt-2 mb-2">
         <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
       </div>
@@ -98,177 +132,274 @@ export default function ListMembers() {
         SoulTrack
       </h1>
       <p className="text-center text-white text-lg mb-2 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons, grandissons et partageons l’amour de Christ ❤️
+        Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
       </p>
 
-      <p
-        className="self-end text-orange-500 cursor-pointer mb-4"
-        onClick={() => setView(view === "card" ? "table" : "card")}
-      >
-        {view === "card" ? "Vue Table" : "Vue Cartes"}
-      </p>
+      {/* Filtre + recherche + compteur + toggle */}
+      <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
+        <div className="flex items-center space-x-2 mb-2 sm:mb-0">
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="px-3 py-2 rounded-lg border text-sm"
+          >
+            <option value="">Tous les statuts</option>
+            {statusOptions.map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
 
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-4 w-full max-w-md">
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="border rounded-lg px-4 py-2 text-gray-700 shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher par nom..."
+            className="px-3 py-2 rounded-lg border text-sm w-48"
+          />
+
+          <span className="text-white text-sm">({totalCount})</span>
+        </div>
+
+        <button
+          onClick={() => setView(view === "card" ? "table" : "card")}
+          className="text-white text-sm underline hover:text-gray-200"
         >
-          <option value="">-- Filtrer par statut --</option>
-          <option value="actif">Actif</option>
-          <option value="ancien">Ancien</option>
-          <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-          <option value="visiteur">Visiteur</option>
-          <option value="a déjà mon église">A déjà mon église</option>
-          <option value="star">⭐ Star</option>
-        </select>
-        <span className="text-white italic text-opacity-80">
-          Résultats: {countFiltered}
-        </span>
+          {view === "card" ? "Vue Table" : "Vue Carte"}
+        </button>
       </div>
 
-      {/* ======== VUE CARTES ======== */}
+      {/* === VUE CARTE === */}
       {view === "card" ? (
-        <div className="w-full max-w-5xl space-y-10">
-          {nouveaux.length > 0 && (
-            <div>
-              <p className="text-white mb-2 text-xl">🆕 Nouveaux contacts</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {nouveaux.map((member) => (
-                  <div
-                    key={member.id}
-                    className="bg-white p-2 rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between border-t-4 leading-tight space-y-0.5"
-                    style={{
-                      borderTopColor: getBorderColor(member),
-                      minHeight: "180px",
-                    }}
-                  >
-                    <h2 className="text-lg font-bold text-gray-800 flex justify-between items-center mb-1">
-                      {member.prenom} {member.nom}
-                      {member.star && <span className="ml-1 text-yellow-400">⭐</span>}
-                    </h2>
-                    <p className="text-sm text-gray-600 mb-1">
-                      📱 {member.telephone || "—"}
-                    </p>
-                    <p
-                      className="text-sm font-semibold mb-1"
-                      style={{ color: getBorderColor(member) }}
+        <>
+          <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
+            {nouveauxFiltres.length > 0 && (
+              <div>
+                <p className="text-white text-lg mb-2 ml-1">
+                  💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {nouveauxFiltres.map((m) => (
+                    <div
+                      key={m.id}
+                      className="bg-white p-3 rounded-xl shadow-md hover:shadow-xl transition duration-200 border-l-4"
+                      style={{ borderLeftColor: getBorderColor(m) }}
                     >
-                      {member.statut || "—"}
-                    </p>
-
-                    <p
-                      className="text-blue-500 underline cursor-pointer text-sm mt-1"
-                      onClick={() =>
-                        setDetailsOpen((prev) => ({
-                          ...prev,
-                          [member.id]: !prev[member.id],
-                        }))
-                      }
-                    >
-                      {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
-                    </p>
-
-                    {detailsOpen[member.id] && (
-                      <div className="mt-1 text-sm text-gray-700 space-y-1">
-                        <p>Besoin : {member.besoin || "—"}</p>
-                        <p>Infos : {member.infos_supplementaires || "—"}</p>
-                        <p>Comment venu : {member.comment || "—"}</p>
-                        <p className="text-green-600 mt-1">Cellule :</p>
-                        <select
-                          value={selectedCellules[member.id] || ""}
-                          onChange={(e) =>
-                            setSelectedCellules((prev) => ({
-                              ...prev,
-                              [member.id]: e.target.value,
-                            }))
-                          }
-                          className="border rounded-lg px-2 py-1 text-sm w-full"
+                      <div className="flex justify-between items-center mb-1">
+                        <span
+                          className="text-sm font-semibold"
+                          style={{ color: getBorderColor(m) }}
                         >
-                          <option value="">-- Sélectionner cellule --</option>
-                          {cellules.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.cellule} ({c.responsable})
-                            </option>
-                          ))}
-                        </select>
-
-                        {selectedCellules[member.id] && (
-                          <BoutonEnvoyer
-                            membre={member}
-                            cellule={cellules.find(
-                              (c) => String(c.id) === String(selectedCellules[member.id])
-                            )}
-                            onStatusChange={handleChangeStatus}
-                          />
-                        )}
+                          {m.star ? "⭐ S.T.A.R" : m.statut}
+                        </span>
+                        <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full ml-2">
+                          Nouveau
+                        </span>
                       </div>
-                    )}
-                  </div>
-                ))}
+
+                      <div className="text-lg font-bold text-gray-800">
+                        {m.prenom} {m.nom}
+                      </div>
+
+                      <p className="text-sm text-gray-600 mb-2">
+                        📱 {m.telephone || "—"}
+                      </p>
+
+                      <select
+                        value={m.statut}
+                        onChange={(e) =>
+                          handleChangeStatus(m.id, e.target.value)
+                        }
+                        className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
+                      >
+                        {statusOptions.map((s) => (
+                          <option key={s}>{s}</option>
+                        ))}
+                      </select>
+
+                      <p
+                        className="text-blue-500 underline cursor-pointer text-sm"
+                        onClick={() => setPopupMember(m)}
+                      >
+                        Détails
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-          {anciens.length > 0 && (
-            <div>
-              <p className="text-white mb-2 text-xl">👥 Membres existants</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {anciens.map((member) => (
-                  <div
-                    key={member.id}
-                    className="bg-white p-3 rounded-2xl shadow-md border-t-4"
+            )}
+            {anciensFiltres.length > 0 && (
+              <div className="mt-8">
+                <h3 className="text-white text-lg mb-3 font-semibold">
+                  <span
                     style={{
-                      borderTopColor: getBorderColor(member),
-                      minHeight: "150px",
+                      background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                      WebkitBackgroundClip: "text",
+                      color: "transparent",
                     }}
                   >
-                    <h2 className="text-lg font-bold text-gray-800 mb-1">
-                      {member.prenom} {member.nom}
-                    </h2>
-                    <p className="text-sm text-gray-600 mb-1">
-                      📱 {member.telephone || "—"}
-                    </p>
-                    <p
-                      className="text-sm font-semibold"
-                      style={{ color: getBorderColor(member) }}
+                    Membres existants
+                  </span>
+                  <span className="ml-2 w-3/4 inline-block h-px bg-gradient-to-r from-blue-500 to-gray-400"></span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {anciensFiltres.map((m) => (
+                    <div
+                      key={m.id}
+                      className="bg-white p-3 rounded-xl shadow-md border-l-4 transition duration-200"
+                      style={{ borderLeftColor: getBorderColor(m) }}
                     >
-                      {member.statut || "—"}
-                    </p>
-                  </div>
-                ))}
+                      <div className="flex justify-between items-center mb-1">
+                        <span
+                          className="text-sm font-semibold"
+                          style={{ color: getBorderColor(m) }}
+                        >
+                          {m.star ? "⭐ S.T.A.R" : m.statut}
+                        </span>
+                      </div>
+
+                      <div className="text-lg font-bold text-gray-800">
+                        {m.prenom} {m.nom}
+                      </div>
+
+                      <p className="text-sm text-gray-600 mb-2">
+                        📱 {m.telephone || "—"}
+                      </p>
+
+                      <select
+                        value={m.statut}
+                        onChange={(e) =>
+                          handleChangeStatus(m.id, e.target.value)
+                        }
+                        className="border rounded-md px-2 py-1 text-xs text-gray-700 mb-2 w-full"
+                      >
+                        {statusOptions.map((s) => (
+                          <option key={s}>{s}</option>
+                        ))}
+                      </select>
+
+                      <p
+                        className="text-blue-500 underline cursor-pointer text-sm"
+                        onClick={() => setPopupMember(m)}
+                      >
+                        Détails
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </>
       ) : (
-        /* ======== VUE TABLE ======== */
-        <div className="bg-white rounded-2xl shadow-lg w-full max-w-5xl overflow-x-auto p-4">
-          <table className="min-w-full border-collapse">
-            <thead>
-              <tr className="bg-indigo-100 text-indigo-900 text-left text-sm">
-                <th className="p-2">Nom</th>
-                <th className="p-2">Téléphone</th>
-                <th className="p-2">Statut</th>
-                <th className="p-2 text-center">Action</th>
+        // === VUE TABLE ===
+        <div className="w-full max-w-5xl overflow-x-auto transition duration-200">
+          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
+            <thead className="bg-gray-200 text-gray-800 text-sm uppercase rounded-t-lg">
+              <tr>
+                <th className="px-4 py-2 rounded-l-lg">Nom complet</th>
+                <th className="px-4 py-2">Téléphone</th>
+                <th className="px-4 py-2">Statut</th>
+                <th className="px-4 py-2 rounded-r-lg">Détails</th>
               </tr>
             </thead>
             <tbody>
-              {filteredMembers.map((m) => (
-                <tr key={m.id} className="border-b hover:bg-indigo-50 text-sm">
-                  <td className="p-2 font-semibold">
-                    {m.prenom} {m.nom}
+              {/* Ligne texte “💖 Bien aimé venu le …” en blanc */}
+              {nouveauxFiltres.length > 0 && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-2 text-white font-semibold">
+                    💖 Bien aimé venu le {formatDate(nouveauxFiltres[0].created_at)}
                   </td>
-                  <td className="p-2">{m.telephone || "—"}</td>
+                </tr>
+              )}
+
+              {/* Lignes nouveaux membres avec séparation horizontale */}
+              {nouveauxFiltres.map((m, index) => (
+                <tr
+                  key={m.id}
+                  className={`${
+                    index < nouveauxFiltres.length - 1 ? "border-b border-gray-400" : ""
+                  } hover:bg-white/10 transition duration-150`}
+                >
                   <td
-                    className="p-2 font-semibold"
-                    style={{ color: getBorderColor(m) }}
+                    className="px-4 py-2 border-l-4"
+                    style={{ borderLeftColor: getBorderColor(m) }}
                   >
-                    {m.statut}
+                    {m.prenom} {m.nom}{" "}
+                    <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">
+                      Nouveau
+                    </span>
                   </td>
-                  <td className="p-2 text-center">
+                  <td className="px-4 py-2">{m.telephone}</td>
+                  <td className="px-4 py-2">
+                    <select
+                      value={m.statut}
+                      onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                      className="border rounded-md px-2 py-1 text-sm w-full text-gray-800"
+                    >
+                      {statusOptions.map((s) => (
+                        <option key={s}>{s}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-4 py-2">
                     <button
                       onClick={() => setPopupMember(m)}
-                      className="text-blue-600 underline"
+                      className="text-orange-400 underline text-sm"
+                    >
+                      Détails
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {/* Ligne séparatrice “Membres existants------” style carte */}
+              {anciensFiltres.length > 0 && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-2 font-semibold">
+                    <span
+                      style={{
+                        background: "linear-gradient(to right, #3B82F6, #D1D5DB)",
+                        WebkitBackgroundClip: "text",
+                        color: "transparent",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Membres existants ______________________________________________________
+                    </span>
+                  </td>
+                </tr>
+              )}
+
+              {/* Lignes anciens membres avec séparation horizontale */}
+              {anciensFiltres.map((m, index) => (
+                <tr
+                  key={m.id}
+                  className={`${
+                    index < anciensFiltres.length - 1 ? "border-b border-gray-400" : ""
+                  } hover:bg-white/10 transition duration-150`}
+                >
+                  <td
+                    className="px-4 py-2 border-l-4"
+                    style={{ borderLeftColor: getBorderColor(m) }}
+                  >
+                    {m.prenom} {m.nom}
+                  </td>
+                  <td className="px-4 py-2">{m.telephone}</td>
+                  <td className="px-4 py-2">
+                    <select
+                      value={m.statut}
+                      onChange={(e) => handleChangeStatus(m.id, e.target.value)}
+                      className="border rounded-md px-2 py-1 text-sm w-full text-gray-800"
+                    >
+                      {statusOptions.map((s) => (
+                        <option key={s}>{s}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="text-orange-400 underline text-sm"
                     >
                       Détails
                     </button>
@@ -280,37 +411,47 @@ export default function ListMembers() {
         </div>
       )}
 
-      {/* ======== POPUP DÉTAILS ======== */}
+      {/* ✅ Popup Détails */}
       {popupMember && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-2xl max-w-md w-full relative">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
             <button
               onClick={() => setPopupMember(null)}
-              className="absolute top-3 right-4 text-gray-500 text-xl"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
             >
               ✖
             </button>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">
+            <h2 className="text-xl font-bold mb-2 text-indigo-700">
               {popupMember.prenom} {popupMember.nom}
             </h2>
-            <p className="text-sm mb-1">📱 {popupMember.telephone || "—"}</p>
-            <p className="text-sm mb-1">
-              Statut:{" "}
-              <span style={{ color: getBorderColor(popupMember) }}>
-                {popupMember.statut}
-              </span>
+            <p className="text-gray-700 text-sm mb-1">
+              📱 {popupMember.telephone || "—"}
             </p>
-            <p className="text-sm mb-1">
-              Besoin: {popupMember.besoin || "—"}
+            <p className="text-sm text-gray-700 mb-2">
+              Statut :
+              <select
+                value={popupMember.statut}
+                onChange={(e) =>
+                  handleChangeStatus(popupMember.id, e.target.value)
+                }
+                className="ml-2 border rounded-md px-2 py-1 text-sm"
+              >
+                {statusOptions.map((s) => (
+                  <option key={s}>{s}</option>
+                ))}
+              </select>
             </p>
-            <p className="text-sm mb-1">
-              Infos: {popupMember.infos_supplementaires || "—"}
+            <p className="text-sm text-gray-700 mb-1">
+              Besoin : {popupMember.besoin || "—"}
             </p>
-            <p className="text-sm mb-3">
-              Comment venu: {popupMember.comment || "—"}
+            <p className="text-sm text-gray-700 mb-1">
+              Infos : {popupMember.infos_supplementaires || "—"}
+            </p>
+            <p className="text-sm text-gray-700 mb-3">
+              Comment venu : {popupMember.comment || "—"}
             </p>
 
-            <p className="text-green-600 mb-1 font-semibold">Cellule :</p>
+            <p className="text-green-600 font-semibold mt-2">Cellule :</p>
             <select
               value={selectedCellules[popupMember.id] || ""}
               onChange={(e) =>
@@ -319,7 +460,7 @@ export default function ListMembers() {
                   [popupMember.id]: e.target.value,
                 }))
               }
-              className="border rounded-lg px-2 py-1 text-sm w-full mb-2"
+              className="border rounded-lg px-2 py-1 text-sm w-full"
             >
               <option value="">-- Sélectionner cellule --</option>
               {cellules.map((c) => (
@@ -330,26 +471,19 @@ export default function ListMembers() {
             </select>
 
             {selectedCellules[popupMember.id] && (
-              <BoutonEnvoyer
-                membre={popupMember}
-                cellule={cellules.find(
-                  (c) =>
-                    String(c.id) === String(selectedCellules[popupMember.id])
-                )}
-                onStatusChange={handleChangeStatus}
-              />
+              <div className="mt-3">
+                <BoutonEnvoyer
+                  membre={popupMember}
+                  cellule={cellules.find(
+                    (c) => String(c.id) === String(selectedCellules[popupMember.id])
+                  )}
+                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
+                />
+              </div>
             )}
           </div>
         </div>
       )}
-
-      <button
-        onClick={scrollToTop}
-        className="fixed bottom-5 right-5 text-white text-2xl font-bold"
-      >
-        ↑
-      </button>
     </div>
   );
 }
-
