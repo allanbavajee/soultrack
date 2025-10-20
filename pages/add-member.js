@@ -1,15 +1,9 @@
-// ✅ pages/add-member.js
-"use client";
-import { useEffect, useState } from "react";
+// pages/add-member.js
+import { useState } from "react";
+import supabase from "../lib/supabaseClient"; // <- chemin corrigé
 import { useRouter } from "next/router";
-import supabase from "../lib/supabaseClient";
 
-// 🔒 Empêche le rendu statique ou serveur
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-export const revalidate = 0;
-
-export default function AddMemberPage() {
+export default function AddMember() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -18,11 +12,12 @@ export default function AddMemberPage() {
     telephone: "",
     ville: "",
     statut: "nouveau",
-    how_came: "",
+    venu: "",
     besoin: "",
     is_whatsapp: false,
     infos_supplementaires: "",
   });
+
   const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
@@ -36,17 +31,19 @@ export default function AddMemberPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { error } = await supabase.from("membres").insert([formData]);
+      const { data, error } = await supabase.from("membres").insert([formData]);
       if (error) throw error;
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
+
+      // Reset du formulaire
       setFormData({
         nom: "",
         prenom: "",
         telephone: "",
         ville: "",
         statut: "nouveau",
-        how_came: "",
+        venu: "",
         besoin: "",
         is_whatsapp: false,
         infos_supplementaires: "",
@@ -59,9 +56,11 @@ export default function AddMemberPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+        
+        {/* Flèche retour */}
         <button
           onClick={() => router.back()}
-          className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
+           className="flex items-center text-orange-500 font-semibold mb-4 hover:text-orange-600 transition-colors"
         >
           ← Retour
         </button>
@@ -82,11 +81,11 @@ export default function AddMemberPage() {
               name="prenom"
               value={formData.prenom}
               onChange={handleChange}
-              required
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              required
             />
           </div>
-
+                
           {/* Nom */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Nom</label>
@@ -95,10 +94,10 @@ export default function AddMemberPage() {
               name="nom"
               value={formData.nom}
               onChange={handleChange}
-              required
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              required
             />
-          </div>
+          </div>          
 
           {/* Téléphone */}
           <div>
@@ -108,9 +107,10 @@ export default function AddMemberPage() {
               name="telephone"
               value={formData.telephone}
               onChange={handleChange}
-              required
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              required
             />
+            {/* Case à cocher WhatsApp */}
             <div className="mt-2 flex items-center">
               <input
                 type="checkbox"
@@ -121,7 +121,7 @@ export default function AddMemberPage() {
               />
               <label className="text-gray-700">Ce numéro est WhatsApp</label>
             </div>
-          </div>
+          </div>          
 
           {/* Ville */}
           <div>
@@ -153,28 +153,24 @@ export default function AddMemberPage() {
 
           {/* Comment est venu */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">
-              Comment est-il venu ?
-            </label>
+            <label className="block text-gray-700 font-medium mb-1">Comment est-il venu ?</label>
             <select
-              name="how_came"
-              value={formData.how_came}
+              name="venu"
+              value={formData.venu}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
               <option value="">-- Sélectionner --</option>
               <option value="invité">Invité</option>
               <option value="réseaux">Réseaux</option>
-              <option value="evangélisation">Évangélisation</option>
+              <option value="evangélisation">Evangélisation</option>                             
               <option value="autre">Autre</option>
             </select>
           </div>
 
           {/* Besoin */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">
-              Besoin de la personne ?
-            </label>
+            <label className="block text-gray-700 font-medium mb-1">Besoin de la personne ?</label>
             <select
               name="besoin"
               value={formData.besoin}
@@ -188,13 +184,11 @@ export default function AddMemberPage() {
               <option value="Les Enfants">Les Enfants</option>
               <option value="La Famille">La Famille</option>
             </select>
-          </div>
+          </div>          
 
-          {/* Infos supplémentaires */}
+          {/* Informations supplémentaires */}
           <div>
-            <label className="block text-gray-700 font-medium mb-1">
-              Informations supplémentaires
-            </label>
+            <label className="block text-gray-700 font-medium mb-1">Informations supplémentaires</label>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}
@@ -216,7 +210,7 @@ export default function AddMemberPage() {
                   telephone: "",
                   ville: "",
                   statut: "nouveau",
-                  how_came: "",
+                  venu: "",
                   besoin: "",
                   is_whatsapp: false,
                   infos_supplementaires: "",
@@ -235,6 +229,7 @@ export default function AddMemberPage() {
           </div>
         </form>
 
+        {/* Message de succès */}
         {success && (
           <div className="text-green-600 font-semibold text-center mt-3">
             ✅ Membre ajouté avec succès !
