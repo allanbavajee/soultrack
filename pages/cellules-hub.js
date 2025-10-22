@@ -28,10 +28,9 @@ export default function AdministrateurPage() {
       parsedRoles = [storedRole];
     }
 
-    parsedRoles = parsedRoles.map(r => r.toLowerCase().trim());
+    parsedRoles = parsedRoles.map((r) => r.toLowerCase().trim());
     setRoles(parsedRoles);
 
-    // 🔥 Autoriser "admin" et "administrateur"
     const isAdmin =
       parsedRoles.includes("admin") || parsedRoles.includes("administrateur");
 
@@ -46,8 +45,7 @@ export default function AdministrateurPage() {
 
   if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
-  // ✅ Correction : "admin" et "administrateur" sont équivalents
-  const hasRole = role =>
+  const hasRole = (role) =>
     roles.includes(role.toLowerCase()) ||
     (role === "admin" && roles.includes("administrateur")) ||
     (role === "administrateur" && roles.includes("admin"));
@@ -80,26 +78,26 @@ export default function AdministrateurPage() {
         Espace Administrateur
       </h1>
 
-      {/* ✅ Ces boutons sont visibles si admin OU administrateur */}
+      {/* ✅ Nouvelles cartes */}
       {(hasRole("admin") || hasRole("administrateur")) && (
         <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-4xl mb-8">
           <Link
-            href="/admin/create-responsable-cellule"
+            href="/admin/ajouter-membre-cellule"
             className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
           >
-            <div className="text-5xl mb-2">👤</div>
+            <div className="text-5xl mb-2">➕</div>
             <div className="text-lg font-bold text-gray-800 text-center">
-              Créer une Cellule
+              Ajouter membres cellule
             </div>
           </Link>
 
           <Link
-            href="/admin/create-internal-user"
+            href="/admin/membres-cellule"
             className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#4285F4] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
           >
-            <div className="text-5xl mb-2">🧑‍💻</div>
+            <div className="text-5xl mb-2">👥</div>
             <div className="text-lg font-bold text-gray-800 text-center">
-              Créer un Responsable
+              Membres de la cellule
             </div>
           </Link>
         </div>
