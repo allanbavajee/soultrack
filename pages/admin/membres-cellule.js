@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient"; // ✅ import par défaut
-import LogoutLink from "../components/LogoutLink";
+import LogoutLink from "../../components/LogoutLink";
 
 export default function MembresDeLaCellule() {
   const router = useRouter();
