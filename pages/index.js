@@ -1,6 +1,4 @@
-// ✅ pages/index.js - Home page //
-
-
+// pages/index.js - home
 "use client";
 
 import { useEffect, useState } from "react";
@@ -24,12 +22,15 @@ export default function HomePage() {
     try {
       const parsedRoles = JSON.parse(storedRoles);
       if (Array.isArray(parsedRoles)) {
-        setRoles(parsedRoles);
+        // Normaliser les rôles : trim et majuscule première lettre si nécessaire
+        const normalizedRoles = parsedRoles.map(r => r.trim());
+        setRoles(normalizedRoles);
+        console.log("Roles récupérés :", normalizedRoles); // Debug
       } else {
-        setRoles([parsedRoles]);
+        setRoles([parsedRoles.trim()]);
       }
     } catch {
-      setRoles([storedRoles]);
+      setRoles([storedRoles.trim()]);
     }
 
     setLoading(false);
@@ -41,9 +42,13 @@ export default function HomePage() {
   const handleRedirect = (path) => router.push(path);
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center p-6 text-center"
-         style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      <div className="absolute top-4 right-4"><LogoutLink /></div>
+    <div
+      className="relative min-h-screen flex flex-col items-center justify-center p-6 text-center"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
+      <div className="absolute top-4 right-4">
+        <LogoutLink />
+      </div>
 
       <div className="mb-4">
         <Image src="/logo.png" alt="SoulTrack Logo" width={90} height={90} />
@@ -57,24 +62,30 @@ export default function HomePage() {
 
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl mb-10">
         {(hasRole("ResponsableIntegration") || hasRole("Admin")) && (
-          <div className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-               onClick={() => handleRedirect("/membres-hub")}>
+          <div
+            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            onClick={() => handleRedirect("/membres-hub")}
+          >
             <div className="text-4xl mb-1">👤</div>
             <div className="text-lg font-bold text-gray-800">Suivis des membres</div>
           </div>
         )}
 
         {(hasRole("ResponsableEvangelisation") || hasRole("Admin")) && (
-          <div className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-               onClick={() => handleRedirect("/evangelisation-hub")}>
+          <div
+            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            onClick={() => handleRedirect("/evangelisation-hub")}
+          >
             <div className="text-4xl mb-1">🙌</div>
             <div className="text-lg font-bold text-gray-800">Évangélisation</div>
           </div>
         )}
 
         {(hasRole("ResponsableCellule") || hasRole("Admin")) && (
-          <div className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-               onClick={() => handleRedirect("/cellules-hub")}>
+          <div
+            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            onClick={() => handleRedirect("/cellules-hub")}
+          >
             <div className="text-4xl mb-1">🏠</div>
             <div className="text-lg font-bold text-gray-800">Cellule</div>
           </div>
@@ -82,14 +93,18 @@ export default function HomePage() {
 
         {hasRole("Admin") && (
           <>
-            <div className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-                 onClick={() => handleRedirect("/rapport")}>
+            <div
+              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+              onClick={() => handleRedirect("/rapport")}
+            >
               <div className="text-4xl mb-1">📊</div>
               <div className="text-lg font-bold text-gray-800">Rapport</div>
             </div>
 
-            <div className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-                 onClick={() => handleRedirect("/administrateur")}>
+            <div
+              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+              onClick={() => handleRedirect("/administrateur")}
+            >
               <div className="text-4xl mb-1">🧑‍💻</div>
               <div className="text-lg font-bold text-gray-800">Admin</div>
             </div>
@@ -104,4 +119,3 @@ export default function HomePage() {
     </div>
   );
 }
-
