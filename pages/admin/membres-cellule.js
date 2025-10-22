@@ -1,5 +1,9 @@
-import supabase from "../../lib/supabaseClient";
+//pages/admin/membres-cellule.js
+
+"use client";
+
 import { useEffect, useState } from "react";
+import supabase from "../../lib/supabaseClient";
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
@@ -9,11 +13,19 @@ export default function MembresCellule() {
     const fetchMembres = async () => {
       setLoading(true);
 
-      // 🔹 Étape 1 : récupérer les membres qui ont un cellule_id
+      // 🔹 Récupère les membres associés à une cellule avec jointure
       const { data, error } = await supabase
         .from("membres")
-        .select("*") // on prend tout pour vérifier
-        .not("cellule_id", "is", null);
+        .select(`
+          id,
+          nom,
+          prenom,
+          telephone,
+          ville,
+          cellule_id,
+          cellules (cellule, responsable)
+        `)
+        .not("cellule_id", "is", null); // Seulement ceux assignés à une cellule
 
       if (error) {
         console.error("Erreur Supabase :", error);
@@ -30,31 +42,42 @@ export default function MembresCellule() {
 
   if (loading) return <p>Chargement...</p>;
   if (membres.length === 0)
-    return <p>Aucun membre assigné à une cellule.</p>;
+    return <p className="text-center text-gray-600 mt-10">
+      Aucun membre assigné à une cellule.
+    </p>;
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">Membres avec cellule_id</h2>
-      <table className="min-w-full bg-white rounded-xl shadow-md overflow-hidden">
-        <thead className="bg-indigo-600 text-white">
-          <tr>
-            <th className="py-2 px-4 text-left">Nom</th>
-            <th className="py-2 px-4 text-left">Prénom</th>
-            <th className="py-2 px-4 text-left">Téléphone</th>
-            <th className="py-2 px-4 text-left">Cellule ID</th>
-          </tr>
-        </thead>
-        <tbody>
-          {membres.map((m) => (
-            <tr key={m.id} className="border-b hover:bg-gray-50">
-              <td className="py-2 px-4">{m.nom}</td>
-              <td className="py-2 px-4">{m.prenom}</td>
-              <td className="py-2 px-4">{m.telephone}</td>
-              <td className="py-2 px-4">{m.cellule_id}</td>
+    <div className="p-6 min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50">
+      <h2 className="text-3xl font-bold text-center text-indigo-700 mb-6">
+        👥 Membres des Cellules
+      </h2>
+
+      <div className="overflow-x-auto bg-white rounded-3xl shadow-2xl p-6">
+        <table className="min-w-full text-sm">
+          <thead className="bg-indigo-600 text-white">
+            <tr>
+              <th className="py-3 px-4 text-left">Nom complet</th>
+              <th className="py-3 px-4 text-left">Téléphone</th>
+              <th className="py-3 px-4 text-left">Ville</th>
+              <th className="py-3 px-4 text-left">Cellule</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {membres.map((membre) => (
+              <tr key={membre.id} className="border-b hover:bg-indigo-50 transition-all">
+                <td className="py-3 px-4 font-semibold text-gray-700">
+                  {membre.nom} {membre.prenom}
+                </td>
+                <td className="py-3 px-4">{membre.telephone}</td>
+                <td className="py-3 px-4">{membre.ville || "—"}</td>
+                <td className="py-3 px-4 text-indigo-700 font-medium">
+                  {membre.cellules?.cellule || "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
