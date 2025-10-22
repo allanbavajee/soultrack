@@ -1,8 +1,9 @@
+//pages/membres-cellule.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import supabase from "../../lib/supabaseClient";
+import supabase from "../lib/supabaseClient";
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
