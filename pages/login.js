@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,13 +33,14 @@ export default function LoginPage() {
 
       const userRoles =
         data.roles && data.roles.length > 0
-          ? data.roles.map(r => r.trim())
+          ? data.roles.map((r) => r.trim())
           : [data.role?.trim() || "Membre"];
 
       localStorage.setItem("userRole", JSON.stringify(userRoles));
       localStorage.setItem("userEmail", data.email);
 
-      router.push("/index");
+      // 🔹 Navigation complète côté client pour éviter le 404
+      window.location.href = "/index";
     } catch (err) {
       console.error("Erreur de connexion :", err);
       setError("❌ Une erreur est survenue lors de la connexion.");
