@@ -1,4 +1,5 @@
 //pages/login.js
+// pages/login.js
 "use client";
 
 import { useState } from "react";
@@ -18,21 +19,24 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const { data, error: rpcError } = await supabase
-        .rpc("verify_password", { p_email: email, p_password: password })
-        .single();
+      // Utilisation de Supabase Auth pour vérifier le mot de passe
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (rpcError || !data) {
+      if (authError) {
         setError("Mot de passe incorrect ❌");
         setLoading(false);
         return;
       }
 
-      // Stocke les rôles dans localStorage
-      const userRoles = data.roles && data.roles.length > 0 ? data.roles : [data.role];
+      // Récupération des rôles depuis user_metadata
+      const userRoles = data.user?.user_metadata?.roles || [];
       localStorage.setItem("userRole", JSON.stringify(userRoles));
-      localStorage.setItem("userEmail", data.email);
+      localStorage.setItem("userEmail", data.user.email);
 
+      // Redirection vers la page d'accueil
       router.push("/index");
     } catch (err) {
       console.error("Erreur de connexion :", err);
@@ -44,7 +48,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-blue-100">
-      <form onSubmit={handleLogin} className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm">
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm"
+      >
         <h1 className="text-2xl font-bold mb-6">Se connecter</h1>
 
         <input
