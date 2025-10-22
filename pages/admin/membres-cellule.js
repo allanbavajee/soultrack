@@ -1,4 +1,4 @@
-import supabase from "../../lib/supabaseClient";
+import supabase from "../lib/supabaseClient";
 import { useEffect, useState } from "react";
 
 export default function MembresCellule() {
@@ -9,7 +9,7 @@ export default function MembresCellule() {
     const fetchMembres = async () => {
       setLoading(true);
 
-      // ✅ Jointure entre "membres" et "cellules"
+      // ✅ Correction : on joint sur la bonne colonne
       const { data, error } = await supabase
         .from("membres")
         .select(`
@@ -18,12 +18,15 @@ export default function MembresCellule() {
           prenom,
           telephone,
           cellule_id,
-          cellules (nom)
+          cellules (
+            cellule,        -- ✅ c’est le nom de la colonne dans ta table "cellules"
+            responsable
+          )
         `)
-        .not("cellule_id", "is", null); // Afficher uniquement les membres avec une cellule
+        .not("cellule_id", "is", null); // on garde seulement les membres assignés
 
       if (error) {
-        console.error("Erreur lors du chargement des membres :", error);
+        console.error("Erreur Supabase :", error);
       } else {
         setMembres(data);
       }
@@ -35,10 +38,7 @@ export default function MembresCellule() {
   }, []);
 
   if (loading) return <p>Chargement...</p>;
-
-  if (membres.length === 0) {
-    return <p>Aucun membre assigné à une cellule.</p>;
-  }
+  if (membres.length === 0) return <p>Aucun membre assigné à une cellule.</p>;
 
   return (
     <div className="p-6">
@@ -50,6 +50,7 @@ export default function MembresCellule() {
             <th className="py-2 px-4 text-left">Prénom</th>
             <th className="py-2 px-4 text-left">Téléphone</th>
             <th className="py-2 px-4 text-left">Cellule</th>
+            <th className="py-2 px-4 text-left">Responsable</th>
           </tr>
         </thead>
         <tbody>
@@ -58,7 +59,8 @@ export default function MembresCellule() {
               <td className="py-2 px-4">{m.nom}</td>
               <td className="py-2 px-4">{m.prenom}</td>
               <td className="py-2 px-4">{m.telephone}</td>
-              <td className="py-2 px-4">{m.cellules?.nom || "—"}</td>
+              <td className="py-2 px-4">{m.cellules?.cellule || "—"}</td>
+              <td className="py-2 px-4">{m.cellules?.responsable || "—"}</td>
             </tr>
           ))}
         </tbody>
