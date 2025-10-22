@@ -1,5 +1,5 @@
 //pages/login.js
-// pages/login.js
+
 "use client";
 
 import { useState } from "react";
@@ -19,22 +19,32 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // Utilisation de Supabase Auth pour vérifier le mot de passe
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Trim des inputs pour éviter les espaces invisibles
+      const emailTrimmed = email.trim().toLowerCase();
+      const passwordTrimmed = password.trim();
 
-      if (authError) {
+      // Appel du RPC verify_password
+      const { data, error: rpcError } = await supabase
+        .rpc("verify_password", {
+          p_email: emailTrimmed,
+          p_password: passwordTrimmed,
+        })
+        .single();
+
+      if (rpcError || !data) {
         setError("Mot de passe incorrect ❌");
         setLoading(false);
         return;
       }
 
-      // Récupération des rôles depuis user_metadata
-      const userRoles = data.user?.user_metadata?.roles || [];
+      // Normalisation des rôles
+      const userRoles =
+        data.roles && data.roles.length > 0
+          ? data.roles.map((r) => r.trim())
+          : [data.role?.trim() || "Membre"];
+
       localStorage.setItem("userRole", JSON.stringify(userRoles));
-      localStorage.setItem("userEmail", data.user.email);
+      localStorage.setItem("userEmail", data.email);
 
       // Redirection vers la page d'accueil
       router.push("/index");
@@ -84,3 +94,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
