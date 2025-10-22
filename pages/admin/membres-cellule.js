@@ -1,130 +1,89 @@
+// pages/membres-cellule.js
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import supabase from "../../lib/supabaseClient";
-import Image from "next/image";
+import supabase from "../lib/supabaseClient";
 
-export default function MembresCellulePage() {
-  const router = useRouter();
+export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchMembres = async () => {
-      try {
-        const storedCelluleId = localStorage.getItem("celluleId");
+    async function fetchData() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return setLoading(false);
+      setUser(user);
 
-        if (!storedCelluleId) {
-          alert("Aucune cellule associée trouvée !");
-          router.push("/cellule-hub");
-          return;
-        }
+      // Récupère le rôle et la cellule de l’utilisateur
+      const { data: profil } = await supabase
+        .from("users")
+        .select("role, cellule_id")
+        .eq("id", user.id)
+        .single();
 
-        const { data, error } = await supabase
-          .from("membres")
-          .select(
-            "id, nom, prenom, telephone, ville, statut, is_whatsapp, bapteme_eau, bapteme_esprit"
-          )
-          .eq("cellule_id", storedCelluleId)
-          .order("created_at", { ascending: false });
+      if (!profil) return setLoading(false);
 
-        if (error) throw error;
-        setMembres(data || []);
-      } catch (err) {
-        console.error("Erreur :", err.message);
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      let query = supabase.from("membres").select("*");
+
+      if (profil.role === "admin") {
+        // 🟢 Admin : voit tous les membres
+        const { data, error } = await query;
+        if (!error) setMembres(data);
+      } else if (profil.cellule_id) {
+        // 🔵 Responsable : voit les membres de sa cellule
+        const { data, error } = await query.eq("cellule_id", profil.cellule_id);
+        if (!error) setMembres(data);
       }
-    };
 
-    fetchMembres();
-  }, [router]);
+      setLoading(false);
+    }
+
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="text-center mt-10">Chargement...</div>;
+
+  if (!membres || membres.length === 0) {
+    return (
+      <div className="text-center text-gray-600 mt-10">
+        Aucune cellule trouvée. Retour au hub.
+      </div>
+    );
+  }
 
   return (
-    <div
-      className="min-h-screen p-6 flex flex-col items-center"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
-    >
-      <div className="flex items-center justify-between w-full max-w-5xl mb-6">
-        <button
-          onClick={() => router.back()}
-          className="text-white font-semibold hover:text-gray-200 transition"
-        >
-          ← Retour
-        </button>
-
-        <Image src="/logo.png" alt="Logo" width={70} height={70} />
-      </div>
-
-      <h1 className="text-3xl font-handwriting text-white mb-8 text-center">
-        Membres de la Cellule
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-indigo-100 p-6">
+      <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-6">
+        Membres de la cellule
       </h1>
 
-      {loading && <p className="text-white">Chargement...</p>}
-      {error && <p className="text-red-200">Erreur : {error}</p>}
-
-      {!loading && membres.length === 0 && (
-        <p className="text-white text-lg">Aucun membre trouvé pour cette cellule.</p>
-      )}
-
-      {!loading && membres.length > 0 && (
-        <div className="overflow-x-auto w-full max-w-5xl bg-white rounded-3xl shadow-lg p-4">
-          <table className="min-w-full border-collapse">
-            <thead>
-              <tr className="bg-gradient-to-r from-[#2E3192] to-[#92EFFD] text-white text-left">
-                <th className="p-3 rounded-tl-3xl">Nom</th>
-                <th className="p-3">Prénom</th>
-                <th className="p-3">Téléphone</th>
-                <th className="p-3">Ville</th>
-                <th className="p-3">Statut</th>
-                <th className="p-3">WhatsApp</th>
-                <th className="p-3">Baptême Eau</th>
-                <th className="p-3 rounded-tr-3xl">Baptême Esprit</th>
+      <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-3xl p-6">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-indigo-600 text-white">
+              <th className="p-3 text-left">Nom</th>
+              <th className="p-3 text-left">Prénom</th>
+              <th className="p-3 text-left">Téléphone</th>
+              <th className="p-3 text-left">Ville</th>
+              <th className="p-3 text-left">Cellule</th>
+            </tr>
+          </thead>
+          <tbody>
+            {membres.map((m) => (
+              <tr
+                key={m.id}
+                className="border-b hover:bg-indigo-50 transition-all"
+              >
+                <td className="p-3">{m.nom}</td>
+                <td className="p-3">{m.prenom}</td>
+                <td className="p-3">{m.telephone}</td>
+                <td className="p-3">{m.ville || "-"}</td>
+                <td className="p-3">{m.cellule_id || "—"}</td>
               </tr>
-            </thead>
-            <tbody>
-              {membres.map((membre) => (
-                <tr
-                  key={membre.id}
-                  className="border-b hover:bg-gray-100 transition"
-                >
-                  <td className="p-3 font-semibold">{membre.nom}</td>
-                  <td className="p-3">{membre.prenom || "-"}</td>
-                  <td className="p-3">{membre.telephone || "-"}</td>
-                  <td className="p-3">{membre.ville || "-"}</td>
-                  <td
-                    className={`p-3 ${
-                      membre.statut === "actif"
-                        ? "text-green-600 font-bold"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    {membre.statut || "-"}
-                  </td>
-                  <td className="p-3 text-center">
-                    {membre.is_whatsapp ? "✅" : "❌"}
-                  </td>
-                  <td className="p-3 text-center">
-                    {membre.bapteme_eau === "TRUE" ? "💧" : "-"}
-                  </td>
-                  <td className="p-3 text-center">
-                    {membre.bapteme_esprit === "TRUE" ? "🔥" : "-"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div className="mt-8 text-white text-center font-handwriting-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
-        1 Corinthiens 12:14 ❤️
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
