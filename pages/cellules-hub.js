@@ -1,4 +1,4 @@
-//pages/cellules-hub.js
+// pages/cellules-hub.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,16 +12,26 @@ export default function CellulesHub() {
   const [cellule, setCellule] = useState(null);
   const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
+  // ✅ Vérifie l’utilisateur et le rôle
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("userProfile"));
     if (!storedUser) {
       router.push("/login");
       return;
     }
+
+    if (storedUser.role !== "ResponsableCellule") {
+      setError("⛔ Accès non autorisé !");
+      setTimeout(() => router.push("/login"), 2000);
+      return;
+    }
+
     setUser(storedUser);
   }, [router]);
 
+  // ✅ Charge la cellule et ses membres
   useEffect(() => {
     if (!user) return;
 
@@ -29,7 +39,7 @@ export default function CellulesHub() {
       try {
         console.log("▶️ Début du chargement des données...");
 
-        // 1️⃣ Récupérer la cellule liée à ce responsable
+        // 1️⃣ Récupère la cellule du responsable
         const { data: celluleData, error: celluleError } = await supabase
           .from("cellules")
           .select("id, cellule, ville, responsable, telephone")
@@ -48,7 +58,7 @@ export default function CellulesHub() {
 
         setCellule(celluleData);
 
-        // 2️⃣ Récupérer les membres de cette cellule
+        // 2️⃣ Récupère les membres liés à cette cellule
         const { data: membresData, error: membresError } = await supabase
           .from("membres")
           .select("*")
@@ -62,6 +72,7 @@ export default function CellulesHub() {
         console.log("✅ Données chargées :", { celluleData, membresData });
       } catch (err) {
         console.error("❌ Erreur pendant fetchData :", err);
+        setError("Erreur lors du chargement des données.");
         setLoading(false);
       }
     };
@@ -69,8 +80,31 @@ export default function CellulesHub() {
     fetchData();
   }, [user]);
 
-  if (loading) return <div className="text-center mt-20">Chargement...</div>;
+  // 🌀 Affichage pendant chargement
+  if (loading) {
+    return (
+      <div className="text-center mt-20 text-white text-xl animate-pulse">
+        Chargement des données...
+      </div>
+    );
+  }
 
+  // 🚫 Affichage d’erreur d’accès
+  if (error) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center min-h-screen text-center text-white p-6"
+        style={{
+          background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
+        }}
+      >
+        <p className="text-3xl font-bold mb-4">{error}</p>
+        <p className="text-lg">Redirection en cours...</p>
+      </div>
+    );
+  }
+
+  // ✅ Contenu principal
   return (
     <div
       className="relative min-h-screen flex flex-col items-center justify-center p-6"
@@ -78,7 +112,7 @@ export default function CellulesHub() {
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      {/* 🔹 Bouton de déconnexion */}
+      {/* 🔹 Déconnexion */}
       <div className="absolute top-4 right-4">
         <LogoutLink />
       </div>
@@ -116,7 +150,9 @@ export default function CellulesHub() {
               ))}
             </ul>
           ) : (
-            <p className="text-gray-600">Aucun membre trouvé pour cette cellule.</p>
+            <p className="text-gray-600">
+              Aucun membre trouvé pour cette cellule.
+            </p>
           )}
         </div>
       ) : (
