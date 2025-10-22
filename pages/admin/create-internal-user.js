@@ -31,22 +31,34 @@ export default function CreateUserPage() {
 
   // 🧩 Vérification d’accès
   useEffect(() => {
-    const storedRole = localStorage.getItem("userRole");
-    if (!storedRole) {
-      router.replace("/login");
-      return;
-    }
+  const storedRole = localStorage.getItem("userRole");
+  if (!storedRole) {
+    router.replace("/login");
+    return;
+  }
 
-    const canAccess = canAccessPage(storedRole, router.pathname);
-    if (!canAccess) {
-      alert("⛔ Accès non autorisé !");
-      router.replace("/login");
-      return;
-    }
+  let parsedRoles = [];
+  try {
+    parsedRoles = JSON.parse(storedRole);
+    if (!Array.isArray(parsedRoles)) parsedRoles = [parsedRoles];
+  } catch {
+    parsedRoles = [storedRole];
+  }
+  parsedRoles = parsedRoles.map(r => r.toLowerCase().trim());
 
-    setRole(storedRole);
-    setLoading(false);
-  }, [router]);
+  // ✅ Correction : vérification directe admin / administrateur
+  const isAdmin =
+    parsedRoles.includes("admin") || parsedRoles.includes("administrateur");
+
+  if (!isAdmin) {
+    alert("⛔ Accès non autorisé !");
+    router.replace("/login");
+    return;
+  }
+
+  setRole(parsedRoles);
+  setLoading(false);
+}, [router]);
 
   if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
