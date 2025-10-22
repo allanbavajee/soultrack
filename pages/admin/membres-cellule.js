@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import supabase from "../lib/supabaseClient";
+import { canAccessPage } from "../../lib/accessControl";
 
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
