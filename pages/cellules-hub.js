@@ -1,128 +1,131 @@
+//pages/cellules-hub.js
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
+import { useRouter } from "next/router";
 import LogoutLink from "../components/LogoutLink";
-import { canAccessPage } from "../lib/accessControl";
 
 export default function CellulesHub() {
   const router = useRouter();
-  const [role, setRole] = useState(null);
-  const [cellules, setCellules] = useState([]);
+  const [user, setUser] = useState(null);
+  const [cellule, setCellule] = useState(null);
+  const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Récupère les cellules depuis Supabase
-  const fetchCellules = async () => {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Erreur lors du chargement :", error);
-    } else {
-      setCellules(data);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
-    const storedRole = localStorage.getItem("userRole");
-    if (!storedRole) {
+    const storedUser = JSON.parse(localStorage.getItem("userProfile"));
+    if (!storedUser) {
       router.push("/login");
       return;
     }
-
-    const canAccess = canAccessPage(storedRole, "/cellules-hub");
-    if (!canAccess) {
-      alert("⛔ Accès non autorisé !");
-      router.push("/login");
-      return;
-    }
-
-    setRole(storedRole);
-    fetchCellules();
+    setUser(storedUser);
   }, [router]);
 
-  if (loading)
-    return <div className="text-center mt-20 text-white">Chargement...</div>;
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchData = async () => {
+      try {
+        console.log("▶️ Début du chargement des données...");
+
+        // 1️⃣ Récupérer la cellule liée à ce responsable
+        const { data: celluleData, error: celluleError } = await supabase
+          .from("cellules")
+          .select("id, cellule, ville, responsable, telephone")
+          .eq("responsable_id", user.id)
+          .maybeSingle();
+
+        if (celluleError) throw celluleError;
+
+        if (!celluleData) {
+          console.log("❌ Aucune cellule assignée.");
+          setCellule(null);
+          setMembres([]);
+          setLoading(false);
+          return;
+        }
+
+        setCellule(celluleData);
+
+        // 2️⃣ Récupérer les membres de cette cellule
+        const { data: membresData, error: membresError } = await supabase
+          .from("membres")
+          .select("*")
+          .eq("cellule_id", celluleData.id);
+
+        if (membresError) throw membresError;
+
+        setMembres(membresData || []);
+        setLoading(false);
+
+        console.log("✅ Données chargées :", { celluleData, membresData });
+      } catch (err) {
+        console.error("❌ Erreur pendant fetchData :", err);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user]);
+
+  if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center p-6"
+      className="relative min-h-screen flex flex-col items-center justify-center p-6"
       style={{
         background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
       }}
     >
-      {/* 🔹 Top bar */}
-      <div className="w-full max-w-6xl flex justify-between items-center mb-6">
-        <button
-          onClick={() => router.back()}
-          className="text-white font-semibold hover:text-gray-200 transition"
-        >
-          ← Retour
-        </button>
-        <div className="flex items-center gap-4">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={50} height={50} />
-          <LogoutLink />
-        </div>
+      {/* 🔹 Bouton de déconnexion */}
+      <div className="absolute top-4 right-4">
+        <LogoutLink />
       </div>
 
-      {/* 🔹 Titre */}
-      <h1 className="text-3xl font-login text-white mb-6 text-center">
-        Gestion des Cellules
+      <h1 className="text-4xl text-white font-handwriting mb-6">
+        Espace Responsable de Cellule
       </h1>
 
-      {/* 🔹 Bouton pour créer un responsable de cellule */}
-      {role === "Admin" && (
-        <button
-          onClick={() => router.push("/admin/create-responsable-cellule")}
-          className="mb-8 bg-gradient-to-r from-purple-500 to-pink-400 text-white px-6 py-3 rounded-xl shadow-md hover:shadow-lg transition font-semibold"
-        >
-          ➕ Créer un Responsable de Cellule
-        </button>
+      {cellule ? (
+        <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-3xl mb-10">
+          <h2 className="text-2xl font-bold mb-2 text-gray-800">
+            🏠 Cellule : {cellule.cellule}
+          </h2>
+          <p className="text-gray-700">
+            📍 Ville : {cellule.ville} <br />
+            📞 Téléphone : {cellule.telephone}
+          </p>
+
+          <h3 className="text-xl font-semibold mt-6 mb-2 text-gray-800">
+            👥 Membres de la cellule
+          </h3>
+
+          {membres.length > 0 ? (
+            <ul className="space-y-2">
+              {membres.map((m) => (
+                <li
+                  key={m.id}
+                  className="border-b border-gray-300 pb-2 flex justify-between"
+                >
+                  <span>
+                    {m.prenom} {m.nom}
+                  </span>
+                  <span className="text-sm text-gray-500">{m.telephone}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-600">Aucun membre trouvé pour cette cellule.</p>
+          )}
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-3xl text-center">
+          <p className="text-gray-700">Aucune cellule assignée.</p>
+        </div>
       )}
 
-      {/* 🔹 Liste des cellules */}
-      <div className="w-full max-w-5xl bg-white/20 backdrop-blur-md rounded-3xl p-6 shadow-lg">
-        <h2 className="text-xl font-semibold text-white mb-4">
-          📋 Liste des Cellules
-        </h2>
-
-        {cellules.length === 0 ? (
-          <p className="text-white text-center">Aucune cellule enregistrée.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cellules.map((cellule) => (
-              <div
-                key={cellule.id}
-                className="bg-white rounded-2xl shadow-md p-4 border-t-4 border-purple-500 hover:shadow-xl transition"
-              >
-                <h3 className="text-lg font-bold text-gray-800 mb-1">
-                  {cellule.cellule}
-                </h3>
-                <p className="text-gray-700">
-                  <strong>Ville :</strong> {cellule.ville}
-                </p>
-                <p className="text-gray-700">
-                  <strong>Responsable :</strong> {cellule.responsable}
-                </p>
-                <p className="text-gray-700">
-                  <strong>Téléphone :</strong> {cellule.telephone_responsable || cellule.telephone}
-                </p>
-                <p className="text-gray-500 text-sm mt-2">
-                  Créée le {new Date(cellule.created_at).toLocaleDateString()}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* 🔹 Verset */}
-      <div className="mt-10 text-center text-white text-lg font-handwriting max-w-2xl">
+      <div className="text-white text-lg font-handwriting-light text-center max-w-2xl">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️
       </div>
