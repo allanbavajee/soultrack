@@ -1,5 +1,3 @@
-//pages/login.js
-
 "use client";
 
 import { useState } from "react";
@@ -19,11 +17,9 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // Trim des inputs pour éviter les espaces invisibles
       const emailTrimmed = email.trim().toLowerCase();
       const passwordTrimmed = password.trim();
 
-      // Appel du RPC verify_password
       const { data, error: rpcError } = await supabase
         .rpc("verify_password", {
           p_email: emailTrimmed,
@@ -37,16 +33,14 @@ export default function LoginPage() {
         return;
       }
 
-      // Normalisation des rôles
       const userRoles =
         data.roles && data.roles.length > 0
-          ? data.roles.map((r) => r.trim())
+          ? data.roles.map(r => r.trim())
           : [data.role?.trim() || "Membre"];
 
       localStorage.setItem("userRole", JSON.stringify(userRoles));
       localStorage.setItem("userEmail", data.email);
 
-      // Redirection vers la page d'accueil
       router.push("/index");
     } catch (err) {
       console.error("Erreur de connexion :", err);
@@ -94,4 +88,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
