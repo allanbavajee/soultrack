@@ -1,5 +1,4 @@
 //pages/login.js
-
 "use client";
 
 import { useState } from "react";
@@ -29,7 +28,7 @@ export default function LoginPage() {
         return;
       }
 
-      // stocke le role ou roles pour index.js
+      // Stocke les rôles dans localStorage
       const userRoles = data.roles && data.roles.length > 0 ? data.roles : [data.role];
       localStorage.setItem("userRole", JSON.stringify(userRoles));
       localStorage.setItem("userEmail", data.email);
