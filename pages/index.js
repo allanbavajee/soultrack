@@ -21,20 +21,22 @@ export default function HomePage() {
           ? parsedRoles.map(r => r.trim().replace(/^./, c => c.toUpperCase()))
           : [parsedRoles.trim().replace(/^./, c => c.toUpperCase())];
         setRoles(normalizedRoles);
+        console.log("Roles récupérés :", normalizedRoles);
       } catch {
         setRoles([storedRoles.trim().replace(/^./, c => c.toUpperCase())]);
       }
     } else {
-      // Rôle par défaut si pas de données dans localStorage
-      setRoles(["Admin"]); // ⚡ tu peux changer "Admin" par "Membre" si nécessaire
+      // Si pas de roles, redirige après un petit délai pour éviter conflits
+      setTimeout(() => router.push("/login"), 100);
     }
 
     setLoading(false);
-  }, []);
+  }, [router]);
 
   if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
   const hasRole = role => roles.includes(role);
+
   const handleRedirect = path => router.push(path);
 
   return (
@@ -55,12 +57,6 @@ export default function HomePage() {
         Chaque personne a une valeur infinie. Ensemble, nous avançons, nous grandissons,
         et nous partageons l’amour de Christ dans chaque action ❤️
       </p>
-
-      {roles.length === 0 && (
-        <div className="bg-yellow-200 text-yellow-800 p-2 rounded mb-4">
-          ⚠️ Aucun rôle détecté. Les cartes seront limitées.
-        </div>
-      )}
 
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl mb-10">
         {(hasRole("ResponsableIntegration") || hasRole("Admin")) && (
@@ -120,44 +116,4 @@ export default function HomePage() {
       </div>
     </div>
   );
-}
-
-// Fonction pour vérifier les accès
-export function canAccessPage(roles, pathname) {
-  if (!roles || !pathname) return false;
-
-  const roleList = Array.isArray(roles)
-    ? roles.map(r => r.trim().replace(/^./, c => c.toUpperCase()))
-    : [roles.trim().replace(/^./, c => c.toUpperCase())];
-
-  const cleanPath = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
-
-  const accessMap = {
-    Admin: [
-      "/index",
-      "/admin",
-      "/rapport",
-      "/membres-hub",
-      "/evangelisation-hub",
-      "/cellules-hub",
-      "/administrateur",
-    ],
-    ResponsableIntegration: ["/membres-hub"],
-    ResponsableEvangelisation: ["/index", "/evangelisation-hub"],
-    ResponsableCellule: ["/cellules-hub"],
-    Membre: ["/index"],
-  };
-
-  for (const role of roleList) {
-    const allowedPaths = accessMap[role];
-    if (!allowedPaths) continue;
-    for (const allowed of allowedPaths) {
-      const cleanAllowed = allowed.endsWith('/') ? allowed.slice(0, -1) : allowed;
-      if (cleanPath.startsWith(cleanAllowed)) {
-        return true;
-      }
-    }
-  }
-
-  return false;
 }
