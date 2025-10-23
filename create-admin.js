@@ -1,19 +1,54 @@
 import { createClient } from "@supabase/supabase-js";
 
+// 🔑 Remplace par ton URL Supabase et ta SERVICE_ROLE_KEY
 const supabase = createClient(
-  "https://TON-PROJECT.supabase.co",  // Remplace par ton URL Supabase
-  "SERVICE_ROLE_KEY"                  // Remplace par ta Service Role Key
+  "https://TON-PROJECT.supabase.co", 
+  "SERVICE_ROLE_KEY"
 );
 
 async function createAdmin() {
-  const { data, error } = await supabase.auth.admin.createUser({
-    email: "admins@soutltrack.com",      // email de l’admin
-    password: "Admin123",           // mot de passe
-    email_confirm: true,
-  });
+  const email = "souladmin@soultrack.com";   // email de l'admin
+  const password = "Admin123";        // mot de passe
+  const prenom = "Allan";
+  const nom = "Bavajee";
+  const telephone = "58000000";
 
-  if (error) console.log("Erreur création admin:", error);
-  else console.log("Admin créé:", data);
+  try {
+    // 1️⃣ Création de l'utilisateur dans Auth
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true
+    });
+
+    if (authError) throw authError;
+
+    console.log("✅ Utilisateur Auth créé :", authUser);
+
+    // 2️⃣ Création du profil associé dans "profiles"
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .insert([{
+        id: authUser.id,      // 🔗 lien avec auth.users.id
+        prenom,
+        nom,
+        email,
+        telephone,
+        role: "Administrateur",
+        roles: ["Administrateur"],
+        created_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (profileError) throw profileError;
+
+    console.log("✅ Profil admin créé :", profileData);
+    console.log(`🔑 Connexion : ${email} / ${password}`);
+
+  } catch (err) {
+    console.error("❌ Erreur création admin :", err);
+  }
 }
 
 createAdmin();
