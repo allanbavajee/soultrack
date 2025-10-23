@@ -1,9 +1,9 @@
-// ✅ pages/admin/create-internal-user.js
+// pages/admin/create-internal-user.js
+
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/router";
-import supabase from "../../lib/supabaseClient";
 
 export default function CreateResponsable() {
   const router = useRouter();
@@ -14,11 +14,13 @@ export default function CreateResponsable() {
     email: "",
     telephone: "",
     password: "",
+    role: "ResponsableCellule", // par défaut
   });
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
+  // Gestion du changement des champs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -30,46 +32,24 @@ export default function CreateResponsable() {
     setMessage(null);
 
     try {
-      // 1️⃣ Création de l'utilisateur dans Auth
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            prenom: formData.prenom,
-            nom: formData.nom,
-            telephone: formData.telephone,
-            role: "ResponsableCellule",
-          },
-        },
+      const res = await fetch("/api/createUser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
 
-      if (signUpError) throw signUpError;
+      const data = await res.json();
 
-      const user = authData.user;
+      if (!res.ok) throw new Error(data.error || "Erreur inconnue");
 
-      // 2️⃣ Création du profil lié (table profiles)
-      const { error: profileError } = await supabase.from("profiles").insert([
-        {
-          id: user.id, // correspond à auth.users.id
-          prenom: formData.prenom,
-          nom: formData.nom,
-          email: formData.email,
-          telephone: formData.telephone,
-          role: "ResponsableCellule",
-          created_at: new Date().toISOString(),
-        },
-      ]);
-
-      if (profileError) throw profileError;
-
-      setMessage("✅ Responsable créé avec succès !");
+      setMessage(`✅ Responsable créé avec succès ! ID: ${data.userId}`);
       setFormData({
         prenom: "",
         nom: "",
         email: "",
         telephone: "",
         password: "",
+        role: "ResponsableCellule",
       });
 
     } catch (err) {
@@ -145,7 +125,6 @@ export default function CreateResponsable() {
               name="telephone"
               value={formData.telephone}
               onChange={handleChange}
-              required
               className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
             />
           </div>
@@ -167,9 +146,7 @@ export default function CreateResponsable() {
             type="submit"
             disabled={loading}
             className={`w-full py-3 rounded-2xl text-white font-semibold transition ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700"
+              loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
             }`}
           >
             {loading ? "Création..." : "Créer le responsable"}
