@@ -1,5 +1,4 @@
 //pages/login.js
-
 "use client";
 
 import { useState } from "react";
@@ -13,79 +12,89 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = async (e) => {
+  async function handleLogin(e) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      const { data, error } = await supabase.rpc("verify_password", {
-        p_email: email,
-        p_password: password,
+      console.log("Tentative de login :", email, password);
+
+      // 🔹 Appel à la fonction RPC verify_password (dans Supabase)
+      const { data, error: rpcError } = await supabase.rpc("verify_password", {
+        user_email: email,
+        user_password: password,
       });
 
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        const user = data[0];
-
-        // Stocke les infos dans localStorage
-        localStorage.setItem("user", JSON.stringify(user));
-
-        // Redirection selon le rôle
-        if (user.roles && user.roles.includes("Admin")) {
-          router.push("/index");
-        } else {
-          router.push("/dashboard");
-        }
-      } else {
-        setError("Email ou mot de passe incorrect.");
+      if (rpcError) {
+        console.error("Erreur Supabase :", rpcError);
+        throw new Error("Erreur interne Supabase");
       }
+
+      const user = data?.[0];
+      if (!user) {
+        setError("Email ou mot de passe incorrect ❌");
+        return;
+      }
+
+      // ✅ Stockage des infos utilisateur
+      localStorage.setItem("userEmail", user.email);
+      localStorage.setItem("userName", `${user.prenom || ""} ${user.nom || ""}`.trim());
+      localStorage.setItem("userRole", JSON.stringify(user.roles || [user.role || "Membre"]));
+
+      console.log("Login OK ! Redirection vers : /index");
+
+      // ✅ Redirection complète (pour éviter les erreurs de chunks)
+      setTimeout(() => {
+        window.location.href = "/index"; // 👉 modifie ici si ta home est ailleurs
+      }, 200);
     } catch (err) {
-      console.error("Erreur de connexion :", err.message);
-      setError("Erreur interne : " + err.message);
+      console.error("Erreur de connexion :", err);
+      setError("Erreur interne ❌");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-blue-50">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white shadow-lg rounded-2xl p-8 w-96"
-      >
-        <h2 className="text-2xl font-bold text-center mb-6">Connexion</h2>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-blue-900">
+      <div className="bg-white p-8 rounded-2xl shadow-lg w-96">
+        <h1 className="text-2xl font-bold mb-6 text-center text-blue-800">Connexion</h1>
 
-        {error && <p className="text-red-600 mb-4">{error}</p>}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg"
+              required
+            />
+          </div>
 
-        <label className="block mb-2 font-medium">Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-2 border rounded mb-4"
-          required
-        />
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Mot de passe</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg"
+              required
+            />
+          </div>
 
-        <label className="block mb-2 font-medium">Mot de passe</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-2 border rounded mb-6"
-          required
-        />
+          {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition"
-        >
-          {loading ? "Connexion..." : "Se connecter"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-700 hover:bg-blue-800 text-white py-2 rounded-lg font-semibold transition"
+          >
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
-
