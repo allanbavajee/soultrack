@@ -1,10 +1,10 @@
 // pages/login.js
+
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import bcrypt from "bcryptjs";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,60 +19,52 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 🔹 Étape 1 : Cherche le profil par email
+      // 🔹 Récupère l'utilisateur par email
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
-        .eq("email", email.trim().toLowerCase())
-        .maybeSingle(); // <-- évite le crash si aucun profil trouvé
+        .eq("email", email)
+        .single();
 
-      if (profileError) {
-        console.error("Erreur Supabase :", profileError);
-        setError("Erreur lors de la récupération du profil ❌");
-        setLoading(false);
-        return;
-      }
-
-      if (!profile) {
+      if (profileError || !profile) {
         setError("Email ou mot de passe incorrect ❌");
         setLoading(false);
         return;
       }
 
-      // 🔹 Étape 2 : Vérifie le mot de passe avec bcrypt
+      // 🔹 Vérifie le mot de passe
+      const bcrypt = await import("bcryptjs");
       const valid = await bcrypt.compare(password, profile.password_hash);
+
       if (!valid) {
         setError("Email ou mot de passe incorrect ❌");
         setLoading(false);
         return;
       }
 
-      // 🔹 Étape 3 : Normalisation des rôles
+      // 🔹 Normalise les rôles
       const userRoles = Array.isArray(profile.roles) ? profile.roles : [profile.role];
+
       const normalizedRoles = userRoles.map((r) => {
         const lower = r.toLowerCase();
         if (lower.includes("admin")) return "Admin";
         if (lower.includes("responsablecellule")) return "ResponsableCellule";
-        if (lower.includes("responsableintegration")) return "ResponsableIntegration";
+        if (lower.includes("responsable integration") || lower.includes("responsableintegration"))
+          return "ResponsableIntegration";
         if (lower.includes("responsableevangelisation")) return "ResponsableEvangelisation";
         if (lower.includes("membre")) return "Membre";
         return r;
       });
 
-      // 🔹 Étape 4 : Stocke localement
+      // 🔹 Stocke les infos localement
       localStorage.setItem("userEmail", profile.email);
-      localStorage.setItem("userName", `${profile.prenom} ${profile.nom}`);
+      localStorage.setItem("userName", profile.prenom + " " + profile.nom);
       localStorage.setItem("userRole", JSON.stringify(normalizedRoles));
 
-      // 🔹 Étape 5 : Redirection selon rôle
-      if (normalizedRoles.includes("Admin")) router.push("/index");
-      else if (normalizedRoles.includes("ResponsableCellule")) router.push("/cellules-hub");
-      else if (normalizedRoles.includes("ResponsableIntegration")) router.push("/membres-hub");
-      else if (normalizedRoles.includes("ResponsableEvangelisation")) router.push("/evangelisation-hub");
-      else router.push("/index");
-
+      // 🔹 Redirige vers index (tu pourras ajouter redirection par rôle si nécessaire)
+      router.push("/index");
     } catch (err) {
-      console.error("Erreur de connexion :", err);
+      console.error(err);
       setError("Une erreur est survenue ❌");
     } finally {
       setLoading(false);
@@ -91,7 +83,6 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="border p-3 w-full rounded-xl mb-4"
-            required
           />
           <input
             type="password"
@@ -99,7 +90,6 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="border p-3 w-full rounded-xl mb-4"
-            required
           />
 
           {error && <p className="text-red-600 font-semibold mb-3">{error}</p>}
