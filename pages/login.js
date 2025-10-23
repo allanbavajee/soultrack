@@ -1,153 +1,113 @@
-// pages/login.js
+//pages/login.js
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setSuccess("");
 
     try {
-      const emailTrimmed = email.trim().toLowerCase();
-      const passwordTrimmed = password.trim();
-
-      const { data, error: rpcError } = await supabase
-        .rpc("verify_password", {
-          p_email: emailTrimmed,
-          p_password: passwordTrimmed,
-        })
+      // 🔹 Étape 1 : Vérifie si l'utilisateur existe dans profiles
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", email)
         .single();
 
-      if (rpcError || !data) {
-        console.error("Erreur RPC :", rpcError);
+      if (profileError || !profile) {
         setError("Mot de passe incorrect ❌");
         setLoading(false);
         return;
       }
 
-      const userRoles =
-        data.roles && data.roles.length > 0
-          ? data.roles.map((r) => r.trim())
-          : [data.role?.trim() || "Membre"];
+      // 🔹 Étape 2 : Vérifie le mot de passe
+      const bcrypt = await import("bcryptjs");
+      const valid = await bcrypt.compare(password, profile.password_hash);
 
-      localStorage.setItem("userRole", JSON.stringify(userRoles));
-      localStorage.setItem("userEmail", data.email);
+      if (!valid) {
+        setError("Mot de passe incorrect ❌");
+        setLoading(false);
+        return;
+      }
 
-      setSuccess("Connexion réussie ✅");
-      setTimeout(() => {
-        window.location.href = "/index";
-      }, 1200);
+      // 🔹 Étape 3 : Normalisation automatique du ou des rôles
+      const userRoles = Array.isArray(profile.roles)
+        ? profile.roles
+        : [profile.role];
+
+      const normalizedRoles = userRoles.map((r) => {
+        const lower = r.toLowerCase();
+        if (lower.includes("admin")) return "Admin";
+        if (lower.includes("responsablecellule")) return "ResponsableCellule";
+        if (lower.includes("responsable integration")) return "ResponsableIntegration";
+        if (lower.includes("responsableintegration")) return "ResponsableIntegration";
+        if (lower.includes("responsableevangelisation")) return "ResponsableEvangelisation";
+        if (lower.includes("membre")) return "Membre";
+        return r; // cas par défaut
+      });
+
+      // 🔹 Étape 4 : Stocke les infos utilisateur localement
+      localStorage.setItem("userEmail", profile.email);
+      localStorage.setItem("userName", profile.prenom + " " + profile.nom);
+      localStorage.setItem("userRole", JSON.stringify(normalizedRoles));
+
+      // 🔹 Étape 5 : Redirection selon le rôle
+      if (normalizedRoles.includes("Admin")) router.push("/");
+      else if (normalizedRoles.includes("ResponsableCellule")) router.push("/cellule");
+      else if (normalizedRoles.includes("ResponsableIntegration")) router.push("/integration");
+      else if (normalizedRoles.includes("ResponsableEvangelisation")) router.push("/evangelisation");
+      else router.push("/");
+
     } catch (err) {
-      console.error("Erreur de connexion :", err);
-      setError("❌ Une erreur est survenue lors de la connexion.");
+      console.error(err);
+      setError("Erreur de connexion ❌");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
-      <div className="relative bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
+    <div className="flex justify-center items-center h-screen bg-blue-50">
+      <div className="bg-white shadow-2xl rounded-2xl p-10 w-full max-w-md text-center">
+        <h1 className="text-2xl font-bold text-blue-600 mb-6">Connexion</h1>
 
-        {/* 🔔 Alertes visuelles */}
-        {(error || success) && (
-          <div
-            className={`absolute top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg text-white font-medium shadow-md transition-all duration-300 ${
-              error
-                ? "bg-red-500 animate-shake"
-                : "bg-green-500 animate-fade-in"
-            }`}
-          >
-            {error || success}
-          </div>
-        )}
-
-        {/* Logo + titre */}
-        <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3 mt-4">
-          <img
-            src="/logo.png"
-            alt="Logo SoulTrack"
-            className="w-12 h-12 object-contain"
-          />
-          SoulTrack
-        </h1>
-
-        {/* Message de bienvenue */}
-        <p className="text-center text-gray-700 mb-6">
-          Bienvenue sur SoulTrack !<br />
-          Une plateforme pour garder le contact, organiser les visites,
-          et soutenir chaque membre dans sa vie spirituelle.
-        </p>
-
-        {/* Formulaire */}
-        <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
+        <form onSubmit={handleLogin}>
           <input
             type="email"
-            placeholder="Email"
+            placeholder="Adresse e-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
-            required
-            autoComplete="email"
+            className="border p-3 w-full rounded-xl mb-4"
           />
-
           <input
             type="password"
             placeholder="Mot de passe"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm focus:outline-green-500 focus:ring-2 focus:ring-green-200 transition"
-            required
-            autoComplete="current-password"
+            className="border p-3 w-full rounded-xl mb-4"
           />
+
+          {error && <p className="text-red-600 font-semibold mb-3">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all duration-200"
+            className="bg-blue-600 hover:bg-blue-700 text-white w-full p-3 rounded-xl transition-all duration-200"
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>
-
-          {/* 🔹 Lien mot de passe oublié */}
-          <p className="text-center text-sm text-gray-600 hover:text-green-600 transition mt-2 cursor-pointer">
-            <a href="/forgot-password">Mot de passe oublié ?</a>
-          </p>
         </form>
-
-        {/* Verset */}
-        <p className="text-center italic font-semibold mt-4 text-green-600">
-          "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
-        </p>
-
-        {/* ✅ Animations pour les toasts */}
-        <style jsx>{`
-          @keyframes shake {
-            0%, 100% { transform: translate(-50%, 0); }
-            20%, 60% { transform: translate(-50%, -3px); }
-            40%, 80% { transform: translate(-50%, 3px); }
-          }
-          .animate-shake {
-            animation: shake 0.4s ease-in-out;
-          }
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translate(-50%, -10px); }
-            to { opacity: 1; transform: translate(-50%, 0); }
-          }
-          .animate-fade-in {
-            animation: fadeIn 0.5s ease-out;
-          }
-        `}</style>
       </div>
     </div>
   );
