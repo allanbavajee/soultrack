@@ -1,5 +1,3 @@
-//pages/login.js
-
 "use client";
 
 import { useState } from "react";
@@ -19,7 +17,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 1️⃣ Récupérer le profil utilisateur
+      // 🔹 Récupère le profil
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -32,22 +30,21 @@ export default function LoginPage() {
         return;
       }
 
-      // 2️⃣ Vérifier le mot de passe
-      const bcrypt = await import("bcryptjs");
-      const valid = await bcrypt.compare(password, profile.password_hash);
+      // 🔹 Vérifie le mot de passe en ligne via PostgreSQL
+      const { data: verify } = await supabase.rpc("verify_password", {
+        p_password: password,
+        p_hash: profile.password_hash,
+      });
 
-      if (!valid) {
+      if (!verify || verify.length === 0 || !verify[0].result) {
         setError("Email ou mot de passe incorrect ❌");
         setLoading(false);
         return;
       }
 
-      // 3️⃣ Normalisation des rôles
-      const userRoles = Array.isArray(profile.roles)
-        ? profile.roles
-        : [profile.role];
-
-      const normalizedRoles = userRoles.map((r) => {
+      // 🔹 Normalise les rôles
+      const rolesArray = Array.isArray(profile.roles) ? profile.roles : [profile.role];
+      const normalizedRoles = rolesArray.map((r) => {
         const lower = r.toLowerCase();
         if (lower.includes("admin")) return "Admin";
         if (lower.includes("responsablecellule")) return "ResponsableCellule";
@@ -57,19 +54,13 @@ export default function LoginPage() {
         return r;
       });
 
-      // 4️⃣ Stocker localement
+      // 🔹 Stocke dans localStorage
       localStorage.setItem("userEmail", profile.email);
       localStorage.setItem("userName", profile.prenom + " " + profile.nom);
       localStorage.setItem("userRole", JSON.stringify(normalizedRoles));
 
-      console.log("Login OK ! Redirection vers :", "/");
-
-      // 5️⃣ Redirection selon rôle
-      if (normalizedRoles.includes("Admin")) router.push("/");
-      else if (normalizedRoles.includes("ResponsableCellule")) router.push("/cellules-hub");
-      else if (normalizedRoles.includes("ResponsableIntegration")) router.push("/membres-hub");
-      else if (normalizedRoles.includes("ResponsableEvangelisation")) router.push("/evangelisation-hub");
-      else router.push("/");
+      console.log("Login OK ! Redirection vers : /");
+      router.replace("/"); // 🔹 Important : replace() pour éviter boucle
 
     } catch (err) {
       console.error(err);
