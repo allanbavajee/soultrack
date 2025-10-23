@@ -66,7 +66,7 @@ export default function AddMember() {
         </button>
 
         <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-2">
-          Ajouter un nouveau membre
+          Ajouter un nouveau membre a ma Cellule
         </h1>
         <p className="text-center text-gray-500 italic mb-6">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
