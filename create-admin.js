@@ -1,3 +1,4 @@
+//create-admin.js
 import { createClient } from "@supabase/supabase-js";
 
 // 🔑 Remplace par ton URL Supabase et ta SERVICE_ROLE_KEY
