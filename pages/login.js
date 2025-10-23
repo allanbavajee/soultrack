@@ -3,74 +3,64 @@
 
 import { useState } from "react";
 import { useRouter } from "next/router";
-import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+  // ✅ Liste des utilisateurs (en dur)
+  const users = [
+    {
+      email: "admin@soultrack.com",
+      password: "admin123",
+      roles: ["Admin"],
+      redirect: "/",
+    },
+    {
+      email: "cellule@soultrack.com",
+      password: "cellule123",
+      roles: ["ResponsableCellule"],
+      redirect: "/cellules-hub",
+    },
+    {
+      email: "integration@soultrack.com",
+      password: "integration123",
+      roles: ["ResponsableIntegration"],
+      redirect: "/membres-hub",
+    },
+    {
+      email: "evangelisation@soultrack.com",
+      password: "evangelisation123",
+      roles: ["ResponsableEvangelisation"],
+      redirect: "/evangelisation-hub",
+    },
+  ];
+
+  const handleLogin = (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    try {
-      // 🔹 Étape 1 : Récupérer le profil par email
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("email", email)
-        .single();
+    // Cherche l'utilisateur
+    const user = users.find(
+      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+    );
 
-      if (profileError || !profile) {
-        setError("Email ou mot de passe incorrect ❌");
-        setLoading(false);
-        return;
-      }
-
-      // 🔹 Étape 2 : Vérifier le mot de passe avec bcrypt
-      const bcrypt = await import("bcryptjs");
-      const valid = await bcrypt.compare(password, profile.password_hash);
-
-      if (!valid) {
-        setError("Email ou mot de passe incorrect ❌");
-        setLoading(false);
-        return;
-      }
-
-      // 🔹 Étape 3 : Normaliser les rôles
-      const userRoles = Array.isArray(profile.roles) ? profile.roles : [profile.role];
-      const normalizedRoles = userRoles.map((r) => {
-        const lower = r.toLowerCase();
-        if (lower.includes("admin")) return "Admin";
-        if (lower.includes("responsablecellule")) return "ResponsableCellule";
-        if (lower.includes("responsableintegration")) return "ResponsableIntegration";
-        if (lower.includes("responsableevangelisation")) return "ResponsableEvangelisation";
-        if (lower.includes("membre")) return "Membre";
-        return r;
-      });
-
-      // 🔹 Étape 4 : Stocker localement
-      localStorage.setItem("userEmail", profile.email);
-      localStorage.setItem("userName", profile.prenom + " " + profile.nom);
-      localStorage.setItem("userRole", JSON.stringify(normalizedRoles));
-
-      // 🔹 Étape 5 : Redirection selon rôle
-      if (normalizedRoles.includes("Admin")) router.push("/");
-      else if (normalizedRoles.includes("ResponsableCellule")) router.push("/cellules-hub");
-      else if (normalizedRoles.includes("ResponsableIntegration")) router.push("/membres-hub");
-      else if (normalizedRoles.includes("ResponsableEvangelisation")) router.push("/evangelisation-hub");
-      else router.push("/");
-
-    } catch (err) {
-      console.error(err);
-      setError("Une erreur est survenue ❌");
-    } finally {
+    if (!user) {
+      setError("Email ou mot de passe incorrect ❌");
       setLoading(false);
+      return;
     }
+
+    // Stocker les infos dans localStorage
+    localStorage.setItem("userEmail", user.email);
+    localStorage.setItem("userRole", JSON.stringify(user.roles));
+
+    // Redirection
+    router.push(user.redirect);
   };
 
   return (
