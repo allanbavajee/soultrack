@@ -1,4 +1,7 @@
+//pages/login.js
+
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
@@ -16,6 +19,7 @@ export default function LoginPage() {
     setError("");
 
     try {
+      // 1️⃣ Récupérer le profil utilisateur
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -28,6 +32,7 @@ export default function LoginPage() {
         return;
       }
 
+      // 2️⃣ Vérifier le mot de passe
       const bcrypt = await import("bcryptjs");
       const valid = await bcrypt.compare(password, profile.password_hash);
 
@@ -37,8 +42,11 @@ export default function LoginPage() {
         return;
       }
 
-      // Normalisation des rôles
-      const userRoles = Array.isArray(profile.roles) ? profile.roles : [profile.role];
+      // 3️⃣ Normalisation des rôles
+      const userRoles = Array.isArray(profile.roles)
+        ? profile.roles
+        : [profile.role];
+
       const normalizedRoles = userRoles.map((r) => {
         const lower = r.toLowerCase();
         if (lower.includes("admin")) return "Admin";
@@ -49,29 +57,24 @@ export default function LoginPage() {
         return r;
       });
 
-      // Stockage local
+      // 4️⃣ Stocker localement
       localStorage.setItem("userEmail", profile.email);
       localStorage.setItem("userName", profile.prenom + " " + profile.nom);
       localStorage.setItem("userRole", JSON.stringify(normalizedRoles));
 
-      console.log("Login OK ! Redirection selon rôle");
+      console.log("Login OK ! Redirection vers :", "/");
 
-      // Reset state
-      setLoading(false);
-      setEmail("");
-      setPassword("");
-      setError("");
-
-      // Redirection selon rôle
-      if (normalizedRoles.includes("Admin")) router.replace("/");
-      else if (normalizedRoles.includes("ResponsableCellule")) router.replace("/cellules-hub");
-      else if (normalizedRoles.includes("ResponsableIntegration")) router.replace("/membres-hub");
-      else if (normalizedRoles.includes("ResponsableEvangelisation")) router.replace("/evangelisation-hub");
-      else router.replace("/");
+      // 5️⃣ Redirection selon rôle
+      if (normalizedRoles.includes("Admin")) router.push("/");
+      else if (normalizedRoles.includes("ResponsableCellule")) router.push("/cellules-hub");
+      else if (normalizedRoles.includes("ResponsableIntegration")) router.push("/membres-hub");
+      else if (normalizedRoles.includes("ResponsableEvangelisation")) router.push("/evangelisation-hub");
+      else router.push("/");
 
     } catch (err) {
       console.error(err);
       setError("Une erreur est survenue ❌");
+    } finally {
       setLoading(false);
     }
   };
@@ -80,6 +83,7 @@ export default function LoginPage() {
     <div className="flex justify-center items-center h-screen bg-blue-50">
       <div className="bg-white shadow-2xl rounded-2xl p-10 w-full max-w-md text-center">
         <h1 className="text-2xl font-bold text-blue-600 mb-6">Connexion</h1>
+
         <form onSubmit={handleLogin}>
           <input
             type="email"
@@ -87,7 +91,6 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="border p-3 w-full rounded-xl mb-4"
-            required
           />
           <input
             type="password"
@@ -95,9 +98,10 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="border p-3 w-full rounded-xl mb-4"
-            required
           />
+
           {error && <p className="text-red-600 font-semibold mb-3">{error}</p>}
+
           <button
             type="submit"
             disabled={loading}
