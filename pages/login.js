@@ -1,8 +1,7 @@
-// pages/login.js
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/router";
+import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,66 +10,76 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔹 Utilisateurs en dur pour test
-  const users = [
-    {
-      email: "admin@soultrack.com",
-      password: "admin123",
-      roles: ["Admin"],
-      redirect: "/" // page d'accueil
-    },
-    {
-      email: "cellule@soultrack.com",
-      password: "cellule123",
-      roles: ["ResponsableCellule"],
-      redirect: "/cellules-hub"
-    },
-    {
-      email: "integration@soultrack.com",
-      password: "integration123",
-      roles: ["ResponsableIntegration"],
-      redirect: "/membres-hub"
-    },
-    {
-      email: "evangelisation@soultrack.com",
-      password: "evangelisation123",
-      roles: ["ResponsableEvangelisation"],
-      redirect: "/evangelisation-hub"
-    }
-  ];
-
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    console.log("Tentative de login :", email, password);
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", email)
+        .single();
 
-    const user = users.find(
-      (u) =>
-        u.email.toLowerCase() === email.toLowerCase() &&
-        u.password === password
-    );
+      if (profileError || !profile) {
+        setError("Email ou mot de passe incorrect ❌");
+        setLoading(false);
+        return;
+      }
 
-    if (!user) {
-      setError("Email ou mot de passe incorrect ❌");
+      const bcrypt = await import("bcryptjs");
+      const valid = await bcrypt.compare(password, profile.password_hash);
+
+      if (!valid) {
+        setError("Email ou mot de passe incorrect ❌");
+        setLoading(false);
+        return;
+      }
+
+      // Normalisation des rôles
+      const userRoles = Array.isArray(profile.roles) ? profile.roles : [profile.role];
+      const normalizedRoles = userRoles.map((r) => {
+        const lower = r.toLowerCase();
+        if (lower.includes("admin")) return "Admin";
+        if (lower.includes("responsablecellule")) return "ResponsableCellule";
+        if (lower.includes("responsableintegration")) return "ResponsableIntegration";
+        if (lower.includes("responsableevangelisation")) return "ResponsableEvangelisation";
+        if (lower.includes("membre")) return "Membre";
+        return r;
+      });
+
+      // Stockage local
+      localStorage.setItem("userEmail", profile.email);
+      localStorage.setItem("userName", profile.prenom + " " + profile.nom);
+      localStorage.setItem("userRole", JSON.stringify(normalizedRoles));
+
+      console.log("Login OK ! Redirection selon rôle");
+
+      // Reset state
       setLoading(false);
-      return;
+      setEmail("");
+      setPassword("");
+      setError("");
+
+      // Redirection selon rôle
+      if (normalizedRoles.includes("Admin")) router.replace("/");
+      else if (normalizedRoles.includes("ResponsableCellule")) router.replace("/cellules-hub");
+      else if (normalizedRoles.includes("ResponsableIntegration")) router.replace("/membres-hub");
+      else if (normalizedRoles.includes("ResponsableEvangelisation")) router.replace("/evangelisation-hub");
+      else router.replace("/");
+
+    } catch (err) {
+      console.error(err);
+      setError("Une erreur est survenue ❌");
+      setLoading(false);
     }
-
-    // Stockage local pour la page index
-    localStorage.setItem("userEmail", user.email);
-    localStorage.setItem("userRole", JSON.stringify(user.roles));
-
-    console.log("Login OK ! Redirection vers :", user.redirect);
-    router.push(user.redirect);
   };
 
   return (
     <div className="flex justify-center items-center h-screen bg-blue-50">
       <div className="bg-white shadow-2xl rounded-2xl p-10 w-full max-w-md text-center">
         <h1 className="text-2xl font-bold text-blue-600 mb-6">Connexion</h1>
-
         <form onSubmit={handleLogin}>
           <input
             type="email"
@@ -88,9 +97,7 @@ export default function LoginPage() {
             className="border p-3 w-full rounded-xl mb-4"
             required
           />
-
           {error && <p className="text-red-600 font-semibold mb-3">{error}</p>}
-
           <button
             type="submit"
             disabled={loading}
@@ -99,12 +106,6 @@ export default function LoginPage() {
             {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
-
-        <div className="text-gray-500 mt-4 text-sm">
-          Testez avec : <br />
-          admin@soultrack.com / admin123 <br />
-          cellule@soultrack.com / cellule123
-        </div>
       </div>
     </div>
   );
