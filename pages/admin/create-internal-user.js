@@ -1,213 +1,180 @@
 // pages/admin/create-internal-user.js
-
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";
-import { canAccessPage } from "../../lib/accessControl";
 
-// 🧮 Fonction pour hasher le mot de passe (SHA-256)
-async function hashPassword(password) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-  return hashHex;
-}
-
-export default function CreateUserPage() {
+export default function CreateResponsable() {
   const router = useRouter();
-  const [role, setRole] = useState(null);
-  const [loading, setLoading] = useState(true);
+
   const [formData, setFormData] = useState({
     prenom: "",
     nom: "",
     email: "",
+    telephone: "",
     password: "",
-    roles: [], // ✅ tableau pour plusieurs rôles
   });
 
-  // 🧩 Vérification d’accès
-  useEffect(() => {
-  const storedRole = localStorage.getItem("userRole");
-  if (!storedRole) {
-    router.replace("/login");
-    return;
-  }
-
-  let parsedRoles = [];
-  try {
-    parsedRoles = JSON.parse(storedRole);
-    if (!Array.isArray(parsedRoles)) parsedRoles = [parsedRoles];
-  } catch {
-    parsedRoles = [storedRole];
-  }
-  parsedRoles = parsedRoles.map(r => r.toLowerCase().trim());
-
-  // ✅ Correction : vérification directe admin / administrateur
-  const isAdmin =
-    parsedRoles.includes("admin") || parsedRoles.includes("administrateur");
-
-  if (!isAdmin) {
-    alert("⛔ Accès non autorisé !");
-    router.replace("/login");
-    return;
-  }
-
-  setRole(parsedRoles);
-  setLoading(false);
-}, [router]);
-
-  if (loading) return <div className="text-center mt-20">Chargement...</div>;
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
-  const handleRoleChange = (e) => {
-    const value = e.target.value;
-    let newRoles = [...formData.roles];
-    if (e.target.checked) {
-      if (!newRoles.includes(value)) newRoles.push(value);
-    } else {
-      newRoles = newRoles.filter(r => r !== value);
-    }
-    setFormData({ ...formData, roles: newRoles });
-  };
-
-  // 💾 Création utilisateur
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setMessage(null);
+
     try {
-      const { data: existingUser } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", formData.email)
-        .single();
+      // 1️⃣ Création du compte dans Supabase Auth
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+      });
 
-      if (existingUser) {
-        alert("⚠️ Cet email est déjà utilisé !");
-        return;
-      }
+      if (signUpError) throw signUpError;
 
-      const hashedPassword = await hashPassword(formData.password);
+      // 2️⃣ Création du profil associé (table profiles)
+      const user = authData.user;
+      const { error: profileError } = await supabase.from("profiles").insert([
+        {
+          id: user.id, // 🔗 correspond à auth.users.id
+          prenom: formData.prenom,
+          nom: formData.nom,
+          email: formData.email,
+          telephone: formData.telephone,
+          role: "ResponsableCellule", // ✅ très important
+          created_at: new Date().toISOString(),
+        },
+      ]);
 
-      // 🔹 Crée le profil avec tableau de rôles
-      const { data: newUser, error: createError } = await supabase
-        .from("profiles")
-        .insert([
-          {
-            email: formData.email,
-            password_hash: hashedPassword,
-            prenom: formData.prenom,
-            nom: formData.nom,
-            roles: formData.roles, // ✅ tableau multi-rôles
-          },
-        ])
-        .select()
-        .single();
+      if (profileError) throw profileError;
 
-      if (createError) {
-        console.error("Erreur Supabase:", createError);
-        alert("❌ Erreur lors de la création de l’utilisateur !");
-        return;
-      }
-
-      // 🔹 Si ResponsableCellule est coché, créer automatiquement une cellule
-      if (formData.roles.includes("ResponsableCellule")) {
-        const responsableNom = `${formData.prenom} ${formData.nom}`;
-        const celluleName = `Cellule de ${formData.prenom}`;
-
-        const { error: celluleError } = await supabase
-          .from("cellules")
-          .insert([
-            {
-              cellule: celluleName,
-              ville: "À définir",
-              responsable: responsableNom,
-              telephone: "N/A",
-              responsable_id: newUser.id,
-            },
-          ]);
-
-        if (celluleError) {
-          console.error("Erreur création cellule:", celluleError);
-          alert("⚠️ Utilisateur créé mais la cellule n’a pas pu être ajoutée.");
-        } else {
-          console.log(`✅ Cellule "${celluleName}" créée pour ${responsableNom}`);
-        }
-      }
-
-      alert(`✅ Utilisateur "${formData.prenom} ${formData.nom}" créé avec succès !`);
-      router.push("/administrateur");
+      setMessage("✅ Responsable créé avec succès !");
+      setFormData({
+        prenom: "",
+        nom: "",
+        email: "",
+        telephone: "",
+        password: "",
+      });
 
     } catch (err) {
-      console.error("Erreur inattendue:", err);
-      alert("❌ Une erreur inattendue s’est produite");
+      console.error("Erreur création responsable :", err);
+      setMessage(`❌ Erreur : ${err.message}`);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userRole");
-    router.push("/login");
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      <h1 className="text-4xl font-bold text-white mb-6">Créer un utilisateur</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-100 to-indigo-50 p-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
 
-      <form onSubmit={handleSubmit}
-        className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md flex flex-col gap-4"
-      >
-        <input type="text" name="prenom" placeholder="Prénom" value={formData.prenom}
-          onChange={handleChange} required className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"/>
-        <input type="text" name="nom" placeholder="Nom" value={formData.nom}
-          onChange={handleChange} required className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"/>
-        <input type="email" name="email" placeholder="Email" value={formData.email}
-          onChange={handleChange} required className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"/>
-        <input type="password" name="password" placeholder="Mot de passe" value={formData.password}
-          onChange={handleChange} required className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"/>
-
-        {/* 🔹 Checkbox pour rôles */}
-        <div className="flex flex-col gap-2">
-          <label className="font-semibold text-gray-700">Rôles :</label>
-          <label>
-            <input type="checkbox" value="ResponsableIntegration" onChange={handleRoleChange}/>
-            Responsable Intégration
-          </label>
-          <label>
-            <input type="checkbox" value="ResponsableCellule" onChange={handleRoleChange}/>
-            Responsable Cellule
-          </label>
-          <label>
-            <input type="checkbox" value="ResponsableEvangelisation" onChange={handleRoleChange}/>
-            Responsable Évangélisation
-          </label>
-          <label>
-            <input type="checkbox" value="Admin" onChange={handleRoleChange}/>
-            Administrateur
-          </label>
-        </div>
-
-        <button type="submit"
-          className="mt-2 bg-gradient-to-r from-blue-600 to-blue-400 text-white font-semibold rounded-xl py-2 hover:opacity-90 transition">
-          Créer l’utilisateur
+        {/* Retour */}
+        <button
+          onClick={() => router.back()}
+          className="text-indigo-600 font-semibold mb-4 hover:text-indigo-800 transition"
+        >
+          ← Retour
         </button>
-      </form>
 
-      <button onClick={() => router.push("/administrateur")}
-        className="mt-4 text-white underline hover:opacity-80">
-        ⬅️ Retour à l’accueil
-      </button>
+        <h1 className="text-3xl font-bold text-center text-indigo-700 mb-2">
+          Créer un responsable
+        </h1>
+        <p className="text-center text-gray-500 italic mb-6">
+          « Servir, c’est régner » 👑
+        </p>
 
-      <p onClick={handleLogout} className="mt-3 text-sm text-white cursor-pointer hover:underline">
-        Se déconnecter
-      </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Prénom */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Prénom</label>
+            <input
+              type="text"
+              name="prenom"
+              value={formData.prenom}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
+            />
+          </div>
+
+          {/* Nom */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Nom</label>
+            <input
+              type="text"
+              name="nom"
+              value={formData.nom}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
+            />
+          </div>
+
+          {/* Téléphone */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
+            <input
+              type="text"
+              name="telephone"
+              value={formData.telephone}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
+            />
+          </div>
+
+          {/* Mot de passe */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Mot de passe</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-3 rounded-2xl text-white font-semibold transition ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700"
+            }`}
+          >
+            {loading ? "Création..." : "Créer le responsable"}
+          </button>
+        </form>
+
+        {message && (
+          <div className="mt-4 text-center font-semibold text-indigo-700">
+            {message}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
