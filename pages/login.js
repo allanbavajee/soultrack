@@ -34,7 +34,7 @@ export default function LoginPage() {
 
         // Redirection selon le rôle
         if (user.roles && user.roles.includes("Admin")) {
-          router.push("/");
+          router.push("/index");
         } else {
           router.push("/dashboard");
         }
