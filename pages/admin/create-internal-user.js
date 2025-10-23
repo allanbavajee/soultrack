@@ -149,9 +149,9 @@ export default function CreateResponsable() {
               required
               className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
             >
-              <option value="Responsable Integration">Responsable Intégration</option>
-              <option value="Responsable Evangelisation">Responsable Évangélisation</option>
-              <option value="Responsable Cellule">Responsable Cellule</option>
+              <option value="ResponsableIntegration">Responsable Intégration</option>
+              <option value="ResponsableEvangelisation">Responsable Évangélisation</option>
+              <option value="ResponsableCellule">Responsable Cellule</option>
             </select>
           </div>
 
