@@ -129,26 +129,26 @@ export default function LoginPage() {
         <p className="text-center italic font-semibold mt-4 text-green-600">
           "Aimez-vous les uns les autres comme je vous ai aimés." – Jean 13:34
         </p>
+
+        {/* ✅ Animations pour les toasts */}
+        <style jsx>{`
+          @keyframes shake {
+            0%, 100% { transform: translate(-50%, 0); }
+            20%, 60% { transform: translate(-50%, -3px); }
+            40%, 80% { transform: translate(-50%, 3px); }
+          }
+          .animate-shake {
+            animation: shake 0.4s ease-in-out;
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -10px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+          }
+          .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+          }
+        `}</style>
       </div>
     </div>
   );
 }
-
-/* ✅ Animations pour les toasts */
-<style jsx>{`
-  @keyframes shake {
-    0%, 100% { transform: translate(-50%, 0); }
-    20%, 60% { transform: translate(-50%, -3px); }
-    40%, 80% { transform: translate(-50%, 3px); }
-  }
-  .animate-shake {
-    animation: shake 0.4s ease-in-out;
-  }
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-out;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translate(-50%, -10px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
-  }
-`}</style>
