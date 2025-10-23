@@ -2,8 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 
 // 🔑 Remplace par ton URL Supabase et ta SERVICE_ROLE_KEY
 const supabase = createClient(
-  "https://TON-PROJECT.supabase.co",
-  "SERVICE_ROLE_KEY"
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 );
 
 async function createAdmin() {
