@@ -1,4 +1,5 @@
 //*pages/admin/create-responsable-cellule.js - Creer une Celule
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,41 +9,42 @@ import supabase from "../../lib/supabaseClient";
 export default function CreateResponsableCellule() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [profiles, setProfiles] = useState([]); // Profils avec rôle ResponsableCellule
-  const [fallbackResponsables, setFallbackResponsables] = useState([]); // noms présents dans cellules.responsable
+  const [profiles, setProfiles] = useState([]);
+  const [fallbackResponsables, setFallbackResponsables] = useState([]);
   const [form, setForm] = useState({
     cellule: "",
     ville: "",
     telephone: "",
-    responsable_id: "", // id du profil responsable
-    responsable_nom_libre: "", // nom libre si aucun id
+    responsable_id: "",
+    responsable_nom_libre: "",
   });
   const [message, setMessage] = useState("");
 
-  // 🔁 Fonction pour charger les profils responsables
+  // 🔁 Récupère la liste des responsables
   const fetchProfiles = async () => {
     try {
-      // Récupère les profils avec rôle ResponsableCellule
-      const { data: profs, error: profError } = await supabase
+      const { data: profs, error } = await supabase
         .from("profiles")
-        .select("id, prenom, nom, roles, role")
+        .select("id, prenom, nom, telephone, roles, role")
         .or("role.eq.ResponsableCellule,roles.cs.{ResponsableCellule}");
 
-      if (profError) throw profError;
+      if (error) throw error;
 
       if (profs && profs.length > 0) {
         const mapped = profs.map((p) => ({
           id: p.id,
           displayName: `${p.prenom || ""} ${p.nom || ""}`.trim() || p.id,
+          telephone: p.telephone || "",
         }));
         setProfiles(mapped);
       } else {
-        // fallback : noms déjà enregistrés dans "cellules.responsable"
+        // fallback depuis les anciennes cellules
         const { data: fallback, error: fallbackError } = await supabase
           .from("cellules")
           .select("responsable")
           .neq("responsable", null)
           .limit(100);
+
         if (!fallbackError && fallback) {
           const uniques = Array.from(new Set(fallback.map((r) => r.responsable))).filter(Boolean);
           setFallbackResponsables(uniques);
@@ -55,7 +57,6 @@ export default function CreateResponsableCellule() {
     }
   };
 
-  // 🔁 Charger les profils au montage
   useEffect(() => {
     fetchProfiles();
   }, []);
@@ -63,6 +64,16 @@ export default function CreateResponsableCellule() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((s) => ({ ...s, [name]: value }));
+
+    // 🔁 Si on change le responsable, on remplit automatiquement le téléphone
+    if (name === "responsable_id" && value) {
+      const selected = profiles.find((p) => p.id === value);
+      if (selected && selected.telephone) {
+        setForm((s) => ({ ...s, telephone: selected.telephone }));
+      } else {
+        setForm((s) => ({ ...s, telephone: "" }));
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -105,7 +116,7 @@ export default function CreateResponsableCellule() {
         responsable_nom_libre: "",
       });
 
-      // 🔁 Recharge la liste des responsables pour inclure le nouveau
+      // rafraîchit la liste
       await fetchProfiles();
     } catch (err) {
       console.error("Erreur création cellule :", err);
@@ -116,18 +127,17 @@ export default function CreateResponsableCellule() {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-6"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       <form
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-2xl shadow-md w-full max-w-lg"
       >
-        <h2 className="text-2xl font-bold mb-4 text-center text-[#2E3192]">
+        <h2 className="text-2xl font-bold mb-6 text-center text-[#2E3192]">
           Créer une cellule
         </h2>
 
+        {/* Nom cellule */}
         <label className="block mb-3">
           <span className="text-sm font-medium">Nom de la cellule</span>
           <input
@@ -139,6 +149,7 @@ export default function CreateResponsableCellule() {
           />
         </label>
 
+        {/* Ville */}
         <label className="block mb-3">
           <span className="text-sm font-medium">Ville</span>
           <input
@@ -150,22 +161,12 @@ export default function CreateResponsableCellule() {
           />
         </label>
 
-        <label className="block mb-4">
-          <span className="text-sm font-medium">Téléphone</span>
-          <input
-            name="telephone"
-            value={form.telephone}
-            onChange={handleChange}
-            className="w-full mt-1 p-2 border rounded"
-          />
-        </label>
-
+        {/* 🔽 Responsable AVANT le téléphone */}
         <div className="mb-4">
           <label className="block text-sm font-medium mb-1">
             Nom du responsable
           </label>
 
-          {/* ✅ Select principal : profils */}
           {profiles.length > 0 ? (
             <select
               name="responsable_id"
@@ -182,7 +183,6 @@ export default function CreateResponsableCellule() {
             </select>
           ) : null}
 
-          {/* Fallback : anciens noms de responsables */}
           {fallbackResponsables.length > 0 && (
             <select
               name="responsable_nom_libre"
@@ -199,7 +199,6 @@ export default function CreateResponsableCellule() {
             </select>
           )}
 
-          {/* Option manuelle */}
           <input
             name="responsable_nom_libre"
             value={form.responsable_nom_libre}
@@ -209,10 +208,22 @@ export default function CreateResponsableCellule() {
           />
 
           <small className="text-gray-500 block mt-1">
-            Si vous sélectionnez un profil, la cellule sera liée à son{" "}
-            <code>responsable_id</code>.
+            Si vous sélectionnez un profil, son téléphone s'affichera
+            automatiquement.
           </small>
         </div>
+
+        {/* 📞 Téléphone (auto-rempli) */}
+        <label className="block mb-4">
+          <span className="text-sm font-medium">Téléphone</span>
+          <input
+            name="telephone"
+            value={form.telephone}
+            onChange={handleChange}
+            className="w-full mt-1 p-2 border rounded"
+            placeholder="Numéro de téléphone"
+          />
+        </label>
 
         {message && (
           <p
@@ -243,3 +254,4 @@ export default function CreateResponsableCellule() {
     </div>
   );
 }
+
