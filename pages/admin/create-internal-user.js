@@ -1,4 +1,4 @@
-// pages/admin/create-internal-user.js
+// ✅ pages/admin/create-internal-user.js
 "use client";
 
 import { useState } from "react";
@@ -30,24 +30,33 @@ export default function CreateResponsable() {
     setMessage(null);
 
     try {
-      // 1️⃣ Création du compte dans Supabase Auth
+      // 1️⃣ Création de l'utilisateur dans Auth
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          data: {
+            prenom: formData.prenom,
+            nom: formData.nom,
+            telephone: formData.telephone,
+            role: "ResponsableCellule",
+          },
+        },
       });
 
       if (signUpError) throw signUpError;
 
-      // 2️⃣ Création du profil associé (table profiles)
       const user = authData.user;
+
+      // 2️⃣ Création du profil lié (table profiles)
       const { error: profileError } = await supabase.from("profiles").insert([
         {
-          id: user.id, // 🔗 correspond à auth.users.id
+          id: user.id, // correspond à auth.users.id
           prenom: formData.prenom,
           nom: formData.nom,
           email: formData.email,
           telephone: formData.telephone,
-          role: "ResponsableCellule", // ✅ très important
+          role: "ResponsableCellule",
           created_at: new Date().toISOString(),
         },
       ]);
@@ -74,8 +83,6 @@ export default function CreateResponsable() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-100 to-indigo-50 p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
-
-        {/* Retour */}
         <button
           onClick={() => router.back()}
           className="text-indigo-600 font-semibold mb-4 hover:text-indigo-800 transition"
@@ -138,6 +145,7 @@ export default function CreateResponsable() {
               name="telephone"
               value={formData.telephone}
               onChange={handleChange}
+              required
               className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
             />
           </div>
@@ -177,4 +185,3 @@ export default function CreateResponsable() {
     </div>
   );
 }
-
