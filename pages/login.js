@@ -1,5 +1,4 @@
 // pages/login.js
-
 "use client";
 
 import { useState } from "react";
@@ -19,7 +18,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 🔹 Récupère l'utilisateur par email
+      // 🔹 Étape 1 : Récupérer le profil par email
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -32,7 +31,7 @@ export default function LoginPage() {
         return;
       }
 
-      // 🔹 Vérifie le mot de passe
+      // 🔹 Étape 2 : Vérifier le mot de passe avec bcrypt
       const bcrypt = await import("bcryptjs");
       const valid = await bcrypt.compare(password, profile.password_hash);
 
@@ -42,27 +41,30 @@ export default function LoginPage() {
         return;
       }
 
-      // 🔹 Normalise les rôles
+      // 🔹 Étape 3 : Normaliser les rôles
       const userRoles = Array.isArray(profile.roles) ? profile.roles : [profile.role];
-
       const normalizedRoles = userRoles.map((r) => {
         const lower = r.toLowerCase();
         if (lower.includes("admin")) return "Admin";
         if (lower.includes("responsablecellule")) return "ResponsableCellule";
-        if (lower.includes("responsable integration") || lower.includes("responsableintegration"))
-          return "ResponsableIntegration";
+        if (lower.includes("responsableintegration")) return "ResponsableIntegration";
         if (lower.includes("responsableevangelisation")) return "ResponsableEvangelisation";
         if (lower.includes("membre")) return "Membre";
         return r;
       });
 
-      // 🔹 Stocke les infos localement
+      // 🔹 Étape 4 : Stocker localement
       localStorage.setItem("userEmail", profile.email);
       localStorage.setItem("userName", profile.prenom + " " + profile.nom);
       localStorage.setItem("userRole", JSON.stringify(normalizedRoles));
 
-      // 🔹 Redirige vers index (tu pourras ajouter redirection par rôle si nécessaire)
-      router.push("/index");
+      // 🔹 Étape 5 : Redirection selon rôle
+      if (normalizedRoles.includes("Admin")) router.push("/");
+      else if (normalizedRoles.includes("ResponsableCellule")) router.push("/cellules-hub");
+      else if (normalizedRoles.includes("ResponsableIntegration")) router.push("/membres-hub");
+      else if (normalizedRoles.includes("ResponsableEvangelisation")) router.push("/evangelisation-hub");
+      else router.push("/");
+
     } catch (err) {
       console.error(err);
       setError("Une erreur est survenue ❌");
