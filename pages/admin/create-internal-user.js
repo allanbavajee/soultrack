@@ -1,5 +1,3 @@
-// pages/admin/create-internal-user.js
-
 "use client";
 
 import { useState } from "react";
@@ -14,7 +12,7 @@ export default function CreateResponsable() {
     email: "",
     telephone: "",
     password: "",
-    role: "ResponsableCellule", // par défaut
+    role: "Responsable Integration", // rôle par défaut
   });
 
   const [loading, setLoading] = useState(false);
@@ -26,6 +24,7 @@ export default function CreateResponsable() {
     setFormData({ ...formData, [name]: value });
   };
 
+  // Soumission du formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -39,19 +38,17 @@ export default function CreateResponsable() {
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || "Erreur inconnue");
 
-      setMessage(`✅ Responsable créé avec succès ! ID: ${data.userId}`);
+      setMessage(`✅ ${formData.role} créé avec succès ! ID: ${data.userId}`);
       setFormData({
         prenom: "",
         nom: "",
         email: "",
         telephone: "",
         password: "",
-        role: "ResponsableCellule",
+        role: "Responsable Integration",
       });
-
     } catch (err) {
       console.error("Erreur création responsable :", err);
       setMessage(`❌ Erreur : ${err.message}`);
@@ -142,6 +139,23 @@ export default function CreateResponsable() {
             />
           </div>
 
+          {/* Sélection du rôle */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">Rôle</label>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
+            >
+              <option value="Responsable Integration">Responsable Intégration</option>
+              <option value="Responsable Evangelisation">Responsable Évangélisation</option>
+              <option value="Responsable Cellule">Responsable Cellule</option>
+            </select>
+          </div>
+
+          {/* Bouton de soumission */}
           <button
             type="submit"
             disabled={loading}
