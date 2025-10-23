@@ -1,3 +1,6 @@
+//pages/login.js
+
+// pages/login.js
 "use client";
 
 import { useState } from "react";
@@ -17,7 +20,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 🔹 Récupère le profil
+      // 🔹 1️⃣ Cherche l'utilisateur
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -30,37 +33,30 @@ export default function LoginPage() {
         return;
       }
 
-      // 🔹 Vérifie le mot de passe en ligne via PostgreSQL
-      const { data: verify } = await supabase.rpc("verify_password", {
+      // 🔹 2️⃣ Vérifie le mot de passe via RPC
+      const { data: passwordCheck, error: rpcError } = await supabase.rpc("verify_password", {
         p_password: password,
         p_hash: profile.password_hash,
       });
 
-      if (!verify || verify.length === 0 || !verify[0].result) {
+      if (rpcError || !passwordCheck || passwordCheck[0].result === false) {
         setError("Email ou mot de passe incorrect ❌");
         setLoading(false);
         return;
       }
 
-      // 🔹 Normalise les rôles
-      const rolesArray = Array.isArray(profile.roles) ? profile.roles : [profile.role];
-      const normalizedRoles = rolesArray.map((r) => {
-        const lower = r.toLowerCase();
-        if (lower.includes("admin")) return "Admin";
-        if (lower.includes("responsablecellule")) return "ResponsableCellule";
-        if (lower.includes("responsableintegration")) return "ResponsableIntegration";
-        if (lower.includes("responsableevangelisation")) return "ResponsableEvangelisation";
-        if (lower.includes("membre")) return "Membre";
-        return r;
-      });
-
-      // 🔹 Stocke dans localStorage
+      // 🔹 3️⃣ Stocke les infos localement
+      const roles = Array.isArray(profile.roles) ? profile.roles : [profile.role];
       localStorage.setItem("userEmail", profile.email);
       localStorage.setItem("userName", profile.prenom + " " + profile.nom);
-      localStorage.setItem("userRole", JSON.stringify(normalizedRoles));
+      localStorage.setItem("userRole", JSON.stringify(roles));
 
-      console.log("Login OK ! Redirection vers : /");
-      router.replace("/"); // 🔹 Important : replace() pour éviter boucle
+      // 🔹 4️⃣ Redirection selon rôle
+      if (roles.includes("Admin")) router.push("/");
+      else if (roles.includes("ResponsableCellule")) router.push("/cellules-hub");
+      else if (roles.includes("ResponsableIntegration")) router.push("/membres-hub");
+      else if (roles.includes("ResponsableEvangelisation")) router.push("/evangelisation-hub");
+      else router.push("/");
 
     } catch (err) {
       console.error(err);
@@ -74,7 +70,6 @@ export default function LoginPage() {
     <div className="flex justify-center items-center h-screen bg-blue-50">
       <div className="bg-white shadow-2xl rounded-2xl p-10 w-full max-w-md text-center">
         <h1 className="text-2xl font-bold text-blue-600 mb-6">Connexion</h1>
-
         <form onSubmit={handleLogin}>
           <input
             type="email"
@@ -90,9 +85,7 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="border p-3 w-full rounded-xl mb-4"
           />
-
           {error && <p className="text-red-600 font-semibold mb-3">{error}</p>}
-
           <button
             type="submit"
             disabled={loading}
