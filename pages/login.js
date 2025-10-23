@@ -1,9 +1,10 @@
-//pages/login.js
+// pages/login.js
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
+import bcrypt from "bcryptjs";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,55 +19,52 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 🔹 Étape 1 : Vérifie si l'utilisateur existe dans profiles
-      const { data: profile, error: profileError } = await supabase
+      // 1️⃣ Récupère le profil par email
+      const { data: user, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("email", email)
         .single();
 
-      if (profileError || !profile) {
+      if (profileError || !user) {
+        setError("Utilisateur introuvable ❌");
+        setLoading(false);
+        return;
+      }
+
+      // 2️⃣ Vérifie le mot de passe
+      const match = await bcrypt.compare(password, user.password_hash);
+      if (!match) {
         setError("Mot de passe incorrect ❌");
         setLoading(false);
         return;
       }
 
-      // 🔹 Étape 2 : Vérifie le mot de passe
-      const bcrypt = await import("bcryptjs");
-      const valid = await bcrypt.compare(password, profile.password_hash);
-
-      if (!valid) {
-        setError("Mot de passe incorrect ❌");
-        setLoading(false);
-        return;
-      }
-
-      // 🔹 Étape 3 : Normalisation automatique du ou des rôles
-      const userRoles = Array.isArray(profile.roles)
-        ? profile.roles
-        : [profile.role];
+      // 3️⃣ Normalise les rôles
+      const userRoles = Array.isArray(user.roles)
+        ? user.roles
+        : [user.role || ""];
 
       const normalizedRoles = userRoles.map((r) => {
         const lower = r.toLowerCase();
         if (lower.includes("admin")) return "Admin";
         if (lower.includes("responsablecellule")) return "ResponsableCellule";
         if (lower.includes("responsable integration")) return "ResponsableIntegration";
-        if (lower.includes("responsableintegration")) return "ResponsableIntegration";
         if (lower.includes("responsableevangelisation")) return "ResponsableEvangelisation";
         if (lower.includes("membre")) return "Membre";
-        return r; // cas par défaut
+        return r;
       });
 
-      // 🔹 Étape 4 : Stocke les infos utilisateur localement
-      localStorage.setItem("userEmail", profile.email);
-      localStorage.setItem("userName", profile.prenom + " " + profile.nom);
+      // 4️⃣ Stockage local
+      localStorage.setItem("userEmail", user.email);
+      localStorage.setItem("userName", `${user.prenom} ${user.nom}`);
       localStorage.setItem("userRole", JSON.stringify(normalizedRoles));
 
-      // 🔹 Étape 5 : Redirection selon le rôle
+      // 5️⃣ Redirection
       if (normalizedRoles.includes("Admin")) router.push("/");
-      else if (normalizedRoles.includes("ResponsableCellule")) router.push("/cellule");
-      else if (normalizedRoles.includes("ResponsableIntegration")) router.push("/integration");
-      else if (normalizedRoles.includes("ResponsableEvangelisation")) router.push("/evangelisation");
+      else if (normalizedRoles.includes("ResponsableCellule")) router.push("/cellules-hub");
+      else if (normalizedRoles.includes("ResponsableIntegration")) router.push("/membres-hub");
+      else if (normalizedRoles.includes("ResponsableEvangelisation")) router.push("/evangelisation-hub");
       else router.push("/");
 
     } catch (err) {
@@ -89,6 +87,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="border p-3 w-full rounded-xl mb-4"
+            required
           />
           <input
             type="password"
@@ -96,6 +95,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="border p-3 w-full rounded-xl mb-4"
+            required
           />
 
           {error && <p className="text-red-600 font-semibold mb-3">{error}</p>}
