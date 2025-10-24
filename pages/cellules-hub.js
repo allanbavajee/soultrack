@@ -7,6 +7,8 @@ import Image from "next/image";
 import Link from "next/link";
 import LogoutLink from "../components/LogoutLink";
 import SendLinkPopup from "../components/SendLinkPopup";
+import { canAccessPage } from "../lib/accessControl";
+
 
 export default function AdministrateurPage() {
   const router = useRouter();
