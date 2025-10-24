@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";
+import AccessGuard from "../components/AccessGuard";
 
 export default function CreateUser() {
   const router = useRouter();
