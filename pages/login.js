@@ -20,7 +20,6 @@ export default function LoginPage() {
     try {
       console.log("Tentative de login :", email, password);
 
-      // 🔹 Appel à la fonction RPC verify_password (dans Supabase)
       const { data, error: rpcError } = await supabase.rpc("verify_password", {
         user_email: email,
         user_password: password,
@@ -37,17 +36,17 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Stockage des infos utilisateur
+      // ✅ Stocke les infos
       localStorage.setItem("userEmail", user.email);
       localStorage.setItem("userName", `${user.prenom || ""} ${user.nom || ""}`.trim());
       localStorage.setItem("userRole", JSON.stringify(user.roles || [user.role || "Membre"]));
 
-      console.log("Login OK ! Redirection vers : /index");
+      console.log("✅ Login OK → redirection vers /index");
 
-      // ✅ Redirection complète (pour éviter les erreurs de chunks)
+      // 🔁 Redirection
       setTimeout(() => {
-        window.location.href = "/index"; // 👉 modifie ici si ta home est ailleurs
-      }, 200);
+        window.location.href = "/index";
+      }, 300);
     } catch (err) {
       console.error("Erreur de connexion :", err);
       setError("Erreur interne ❌");
