@@ -1,5 +1,6 @@
-// components/AccessGuard.js
+// /components/AccessGuard.js
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { canAccessPage } from "../lib/accessControl";
@@ -7,34 +8,39 @@ import { canAccessPage } from "../lib/accessControl";
 export default function AccessGuard({ children }) {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAccess = () => {
-      const storedRoles = localStorage.getItem("userRole");
-      if (!storedRoles) {
-        router.replace("/login");
+    // 🧭 Vérifie l'accès quand la page change
+    checkAccess();
+  }, [router.pathname]);
+
+  const checkAccess = () => {
+    try {
+      const rolesData = localStorage.getItem("userRole");
+      if (!rolesData) {
+        console.warn("🚫 Aucun rôle trouvé → redirection vers /login");
+        router.push("/login");
         return;
       }
 
-      try {
-        const roles = JSON.parse(storedRoles);
-        if (canAccessPage(roles, router.pathname)) {
-          setAuthorized(true);
-        } else {
-          router.replace("/index"); // redirection vers accueil si pas autorisé
-        }
-      } catch {
-        router.replace("/login");
-      } finally {
-        setLoading(false);
+      const roles = JSON.parse(rolesData);
+
+      // 🔍 Vérifie si l'utilisateur peut accéder à la page actuelle
+      if (canAccessPage(roles, router.pathname)) {
+        setAuthorized(true);
+      } else {
+        console.warn("⛔ Accès refusé :", router.pathname, "pour rôle(s)", roles);
+        router.push("/index");
       }
-    };
+    } catch (err) {
+      console.error("Erreur AccessGuard :", err);
+      router.push("/login");
+    }
+  };
 
-    checkAccess();
-  }, [router]);
+  // 🕐 Pendant la vérification, on ne rend rien
+  if (!authorized) return null;
 
-  if (loading) return <div className="text-center mt-20 text-white">Vérification des accès...</div>;
-
-  return authorized ? children : null;
+  // ✅ Accès autorisé → affiche le contenu
+  return <>{children}</>;
 }
