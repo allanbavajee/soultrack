@@ -1,100 +1,77 @@
-//pages/membres-cellule.js"use client";
+//pages/membres-cellule.js"
+
+"use client";
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function MembresCellule() {
+  const [user, setUser] = useState(null);
   const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    const fetchMembres = async () => {
+    const fetchData = async () => {
       setLoading(true);
 
-      try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          console.error("Erreur récupération user :", userError);
-          setLoading(false);
-          return;
-        }
+      // 🔹 Récupération de l'utilisateur connecté
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error("Erreur récupération user :", userError);
+        setLoading(false);
+        return;
+      }
+      setUser(user);
 
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, email, role, roles")
-          .eq("id", user.id)
-          .single();
+      // 🔹 Récupération du profil complet pour obtenir le rôle
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", user.email)
+        .single();
 
-        if (profileError || !profile) {
-          console.error("Erreur récupération profil :", profileError);
-          setLoading(false);
-          return;
-        }
+      if (profileError || !profile) {
+        console.error("Erreur récupération profil :", profileError);
+        setLoading(false);
+        return;
+      }
 
-        setCurrentUser(profile);
+      // 🔹 Construire la requête selon le rôle
+      let query = supabase
+        .from("membres")
+        .select(`
+          id,
+          nom,
+          prenom,
+          telephone,
+          ville,
+          cellule_id,
+          cellules (cellule, responsable)
+        `)
+        .not("cellule_id", "is", null);
 
-        // Déterminer si l'utilisateur est ResponsableCellule
-        const rolesArray = Array.isArray(profile.roles) ? profile.roles : [profile.role];
-        let celluleId = null;
+      if (profile.role === "ResponsableCellule") {
+        // Filtre pour ne montrer que les membres de la cellule du responsable
+        query = query.eq("cellule_id", profile.id);
+      }
 
-        if (rolesArray.includes("ResponsableCellule")) {
-          // Récupérer la cellule dont il est responsable
-          const { data: celluleData, error: celluleError } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", profile.id)
-            .single();
-
-          if (celluleError || !celluleData) {
-            console.error("Erreur récupération cellule :", celluleError);
-            setLoading(false);
-            return;
-          }
-
-          celluleId = celluleData.id;
-        }
-
-        // 🔹 Requête membres
-        let query = supabase
-          .from("membres")
-          .select(`
-            id,
-            nom,
-            prenom,
-            telephone,
-            ville,
-            cellule_id,
-            cellules (cellule, responsable)
-          `)
-          .not("cellule_id", "is", null);
-
-        if (celluleId) {
-          query = query.eq("cellule_id", celluleId);
-        }
-
-        const { data, error } = await query;
-        if (error) {
-          console.error("Erreur Supabase :", error);
-        } else {
-          setMembres(data);
-        }
-
-      } catch (err) {
-        console.error("Erreur inattendue :", err);
+      const { data: membresData, error: membresError } = await query;
+      if (membresError) {
+        console.error("Erreur récupération membres :", membresError);
+      } else {
+        setMembres(membresData);
       }
 
       setLoading(false);
     };
 
-    fetchMembres();
+    fetchData();
   }, []);
 
-  if (loading) return <p className="text-center mt-10">Chargement...</p>;
+  if (loading) return <p className="text-center mt-10">Chargement utilisateur...</p>;
+  if (!user) return <p className="text-center mt-10 text-red-500">Utilisateur non connecté</p>;
   if (membres.length === 0)
-    return <p className="text-center text-gray-600 mt-10">
-      Aucun membre assigné à une cellule.
-    </p>;
+    return <p className="text-center mt-10 text-gray-600">Aucun membre assigné à une cellule.</p>;
 
   return (
     <div className="p-6 min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50">
@@ -131,4 +108,5 @@ export default function MembresCellule() {
     </div>
   );
 }
+
 
