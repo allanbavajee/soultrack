@@ -1,5 +1,4 @@
 //pages/membres-cellule.js"
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,69 +8,103 @@ export default function MembresCellule() {
   const [user, setUser] = useState(null);
   const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
 
+  // 🔹 Récupère la session et l'utilisateur
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+    const fetchUser = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
 
-      // 🔹 Récupération de l'utilisateur connecté
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        console.error("Erreur récupération user :", userError);
+        if (!session) {
+          setErrorMsg("Utilisateur non connecté");
+          setLoading(false);
+          return;
+        }
+
+        setUser(session.user);
+      } catch (err) {
+        console.error("Erreur récupération user :", err);
+        setErrorMsg("Erreur récupération utilisateur");
         setLoading(false);
-        return;
       }
-      setUser(user);
-
-      // 🔹 Récupération du profil complet pour obtenir le rôle
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("email", user.email)
-        .single();
-
-      if (profileError || !profile) {
-        console.error("Erreur récupération profil :", profileError);
-        setLoading(false);
-        return;
-      }
-
-      // 🔹 Construire la requête selon le rôle
-      let query = supabase
-        .from("membres")
-        .select(`
-          id,
-          nom,
-          prenom,
-          telephone,
-          ville,
-          cellule_id,
-          cellules (cellule, responsable)
-        `)
-        .not("cellule_id", "is", null);
-
-      if (profile.role === "ResponsableCellule") {
-        // Filtre pour ne montrer que les membres de la cellule du responsable
-        query = query.eq("cellule_id", profile.id);
-      }
-
-      const { data: membresData, error: membresError } = await query;
-      if (membresError) {
-        console.error("Erreur récupération membres :", membresError);
-      } else {
-        setMembres(membresData);
-      }
-
-      setLoading(false);
     };
 
-    fetchData();
+    fetchUser();
+
+    // Écoute les changements de session (login/logout)
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => listener.subscription.unsubscribe();
   }, []);
 
-  if (loading) return <p className="text-center mt-10">Chargement utilisateur...</p>;
-  if (!user) return <p className="text-center mt-10 text-red-500">Utilisateur non connecté</p>;
+  // 🔹 Récupère les membres selon le rôle
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchMembres = async () => {
+      setLoading(true);
+
+      try {
+        // 🔹 Récupère le rôle depuis la table profiles
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        let query = supabase
+          .from("membres")
+          .select(`
+            id,
+            nom,
+            prenom,
+            telephone,
+            ville,
+            cellule_id,
+            cellules (cellule, responsable)
+          `)
+          .not("cellule_id", "is", null);
+
+        // 🔹 Si ce n'est pas un admin, filtre par cellule
+        if (profile.role === "ResponsableCellule") {
+          // Récupère la cellule du responsable
+          const { data: cellule, error: celluleError } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", user.id)
+            .single();
+
+          if (celluleError) throw celluleError;
+
+          query = query.eq("cellule_id", cellule.id);
+        }
+
+        const { data: membresData, error: membresError } = await query;
+
+        if (membresError) throw membresError;
+
+        setMembres(membresData || []);
+      } catch (err) {
+        console.error("Erreur récupération membres :", err);
+        setErrorMsg("Impossible de récupérer les membres");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMembres();
+  }, [user]);
+
+  if (loading) return <p className="text-center mt-10">Chargement...</p>;
+  if (errorMsg) return <p className="text-center mt-10 text-red-600">{errorMsg}</p>;
   if (membres.length === 0)
-    return <p className="text-center mt-10 text-gray-600">Aucun membre assigné à une cellule.</p>;
+    return <p className="text-center text-gray-600 mt-10">Aucun membre assigné à une cellule.</p>;
 
   return (
     <div className="p-6 min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50">
@@ -108,5 +141,4 @@ export default function MembresCellule() {
     </div>
   );
 }
-
 
