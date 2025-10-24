@@ -1,20 +1,20 @@
 //pages/admin/membres-cellule.js
 
 "use client";
-
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function MembresCellule() {
+export default function MembresCellule({ currentUser }) {
   const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchMembres = async () => {
+      if (!currentUser) return; // On attend que currentUser soit défini
+
       setLoading(true);
 
-      // 🔹 Récupère les membres associés à une cellule avec jointure
-      const { data, error } = await supabase
+      let query = supabase
         .from("membres")
         .select(`
           id,
@@ -27,10 +27,16 @@ export default function MembresCellule() {
         `)
         .not("cellule_id", "is", null); // Seulement ceux assignés à une cellule
 
+      // 🔹 Si l'utilisateur est ResponsableCellule, on filtre uniquement sa cellule
+      if (currentUser.role === "ResponsableCellule") {
+        query = query.eq("cellule_id", currentUser.cellule_id);
+      }
+
+      const { data, error } = await query;
+
       if (error) {
         console.error("Erreur Supabase :", error);
       } else {
-        console.log("Membres avec cellule_id :", data);
         setMembres(data);
       }
 
@@ -38,13 +44,16 @@ export default function MembresCellule() {
     };
 
     fetchMembres();
-  }, []);
+  }, [currentUser]);
 
-  if (loading) return <p>Chargement...</p>;
+  if (!currentUser) return <p>Chargement utilisateur...</p>;
+  if (loading) return <p>Chargement membres...</p>;
   if (membres.length === 0)
-    return <p className="text-center text-gray-600 mt-10">
-      Aucun membre assigné à une cellule.
-    </p>;
+    return (
+      <p className="text-center text-gray-600 mt-10">
+        Aucun membre assigné à une cellule.
+      </p>
+    );
 
   return (
     <div className="p-6 min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50">
@@ -64,7 +73,10 @@ export default function MembresCellule() {
           </thead>
           <tbody>
             {membres.map((membre) => (
-              <tr key={membre.id} className="border-b hover:bg-indigo-50 transition-all">
+              <tr
+                key={membre.id}
+                className="border-b hover:bg-indigo-50 transition-all"
+              >
                 <td className="py-3 px-4 font-semibold text-gray-700">
                   {membre.nom} {membre.prenom}
                 </td>
@@ -81,3 +93,4 @@ export default function MembresCellule() {
     </div>
   );
 }
+
