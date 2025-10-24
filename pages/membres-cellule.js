@@ -9,59 +9,52 @@ export default function MembresCellule() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchMembres = async () => {
-      setLoading(true);
+  const fetchMembres = async () => {
+    setLoading(true);
 
-      try {
-        const userEmail = localStorage.getItem("userEmail");
-        if (!userEmail) throw new Error("Utilisateur non connecté");
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+      const userRole = JSON.parse(localStorage.getItem("userRole") || "[]");
+      const userName = localStorage.getItem("userName");
 
-        // Récupère l'id du responsable
-        const { data: userData, error: userError } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("email", userEmail)
-          .single();
+      if (!userEmail) throw new Error("Utilisateur non connecté");
 
-        if (userError) throw userError;
-        const userId = userData.id;
+      let query = supabase
+        .from("membres")
+        .select(`
+          id,
+          nom,
+          prenom,
+          telephone,
+          ville,
+          cellule_id,
+          cellules (id, cellule, responsable)
+        `)
+        .not("cellule_id", "is", null);
 
-        // Récupère la cellule du responsable
-        const { data: celluleData, error: celluleError } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", userId)
-          .single();
-
-        if (celluleError) throw celluleError;
-        const celluleId = celluleData.id;
-
-        // Récupère les membres de cette cellule
-        const { data: membresData, error: membresError } = await supabase
-          .from("membres")
-          .select(`
-            id,
-            nom,
-            prenom,
-            telephone,
-            ville,
-            cellule_id,
-            cellules (cellule, responsable)
-          `)
-          .eq("cellule_id", celluleId);
-
-        if (membresError) throw membresError;
-        setMembres(membresData || []);
-
-      } catch (err) {
-        console.error("Erreur:", err);
-      } finally {
-        setLoading(false);
+      // 🔹 Si c’est un ResponsableCellule → on filtre côté Supabase
+      if (userRole.includes("ResponsableCellule")) {
+        query = query.eq("cellules.responsable", userName);
       }
-    };
 
-    fetchMembres();
-  }, []);
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      console.log("✅ Membres récupérés :", data);
+      setMembres(data || []);
+
+    } catch (err) {
+      console.error("❌ Erreur :", err.message || err);
+      setMembres([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchMembres();
+}, []);
+
 
   if (loading) return <p>Chargement...</p>;
   if (membres.length === 0)
