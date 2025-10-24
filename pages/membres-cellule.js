@@ -1,17 +1,18 @@
-//pages/admin/membres-cellule.js
+//pages/membres-cellule.js
+
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function MembresCellule() {
-  const [membres, setMembres] = useState([]);
+export default function SuivisMembres() {
+  const [suivis, setSuivis] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
-    fetchMembres();
+    fetchSuivis();
   }, []);
 
-  const fetchMembres = async () => {
+  const fetchSuivis = async () => {
     setLoading(true);
     setMessage(null);
 
@@ -20,6 +21,7 @@ export default function MembresCellule() {
       const userId = localStorage.getItem("userId");
       let userCelluleId = null;
 
+      // Récupérer l'ID de la cellule si c'est un ResponsableCellule
       if (role === "ResponsableCellule") {
         const { data: celluleData, error: celluleError } = await supabase
           .from("cellules")
@@ -30,7 +32,10 @@ export default function MembresCellule() {
         else userCelluleId = celluleData?.id;
       }
 
-      let query = supabase.from("membres").select("*").order("nom", { ascending: true });
+      let query = supabase
+        .from("suivis_membres")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (role === "ResponsableCellule" && userCelluleId) {
         query = query.eq("cellule_id", userCelluleId);
@@ -38,16 +43,16 @@ export default function MembresCellule() {
 
       const { data, error } = await query;
       if (error) {
-        console.error("Erreur chargement membres :", error);
+        console.error("Erreur chargement suivis :", error);
         setMessage({ type: "error", text: `Erreur chargement : ${error.message}` });
-        setMembres([]);
+        setSuivis([]);
       } else {
-        setMembres(data || []);
+        setSuivis(data || []);
       }
     } catch (err) {
-      console.error("Exception fetchMembres:", err);
+      console.error("Exception fetchSuivis:", err);
       setMessage({ type: "error", text: `Exception fetch: ${err.message}` });
-      setMembres([]);
+      setSuivis([]);
     } finally {
       setLoading(false);
     }
@@ -58,10 +63,11 @@ export default function MembresCellule() {
       {loading && <p>Chargement...</p>}
       {message && <p>{message.text}</p>}
       <ul>
-        {membres.map((m) => (
-          <li key={m.id}>{m.nom}</li>
+        {suivis.map((s) => (
+          <li key={s.id}>{s.nom_membre}</li>
         ))}
       </ul>
     </div>
   );
 }
+
