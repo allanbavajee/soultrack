@@ -1,7 +1,8 @@
-// pages/admin/ajouter-membre-cellule.js
+// pages/ajouter-membre-cellule.js
 import { useState } from "react";
 import supabase from "../lib/supabaseClient"; // <- chemin corrigé
 import { useRouter } from "next/router";
+import AccessGuard from "../components/AccessGuard";
 
 export default function AddMember() {
   const router = useRouter();
@@ -66,7 +67,7 @@ export default function AddMember() {
         </button>
 
         <h1 className="text-3xl font-extrabold text-center text-indigo-700 mb-2">
-          Ajouter un nouveau membre a ma Cellule
+          Ajouter un nouveau membre
         </h1>
         <p className="text-center text-gray-500 italic mb-6">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
