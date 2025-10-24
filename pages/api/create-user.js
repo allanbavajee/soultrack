@@ -1,52 +1,64 @@
 // pages/api/create-user.js
+
 import supabase from "../../lib/supabaseClient";
+// ⚠️ Utilise la clé service_role ici (jamais côté client !)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY // à définir dans .env.local
+);
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée" });
-
-  const { username, email, nomComplet, role, password } = req.body;
-
-  if (!username || !email || !nomComplet || !role || !password) {
-    return res.status(400).json({ error: "Tous les champs sont obligatoires !" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
   try {
-    // 🔹 Créer utilisateur via Supabase Auth admin
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    const { email, password, prenom, nom, role } = req.body;
+
+    if (!email || !password || !prenom || !nom) {
+      return res.status(400).json({ error: "Champs requis manquants." });
+    }
+
+    // ✅ Étape 1 : Créer l'utilisateur dans Auth
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
-      password,
-      email_confirm: true,
+      password, // tu peux générer un mot de passe aléatoire si tu veux
+      email_confirm: true, // optionnel, évite confirmation manuelle
+      user_metadata: { prenom, nom, role },
     });
 
-    if (authError) throw authError;
-    const userId = authData.id;
+    if (userError) {
+      console.error("Erreur création utilisateur Auth:", userError);
+      return res.status(500).json({ error: userError.message });
+    }
 
-    // 🔹 Ajouter profil
-    const { error: profileError } = await supabase.from("profiles").insert([{
-      id: userId,
-      username,
-      email,
-      role,
-      responsable: nomComplet,
-      access_pages: JSON.stringify(getAccessPages(role)),
-    }]);
+    const user = userData.user;
 
-    if (profileError) throw profileError;
+    // ✅ Étape 2 : Créer un profil lié à l'ID Auth
+    const { error: profileError } = await supabaseAdmin.from("profiles").insert([
+      {
+        id: user.id, // même ID que l’utilisateur Auth
+        email,
+        prenom,
+        nom,
+        role,
+        created_at: new Date(),
+      },
+    ]);
 
-    res.status(200).json({ message: "Utilisateur créé avec succès !" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message || "Erreur serveur" });
-  }
-}
+    if (profileError) {
+      console.error("Erreur création profil:", profileError);
+      return res.status(500).json({ error: profileError.message });
+    }
 
-function getAccessPages(role) {
-  switch (role) {
-    case "ResponsableCelluleCpe": return ["/suivis-membres"];
-    case "ResponsableCellule": return ["/membres"];
-    case "ResponsableEvangelisation": return ["/evangelisation"];
-    case "Admin": return ["/admin/creation-utilisateur", "/suivis-membres", "/membres"];
-    default: return [];
+    // ✅ Réponse finale
+    return res.status(200).json({
+      message: "Utilisateur créé avec succès.",
+      user: { id: user.id, email, prenom, nom, role },
+    });
+  } catch (error) {
+    console.error("Erreur interne:", error);
+    return res.status(500).json({ error: "Erreur interne du serveur." });
   }
 }
 
