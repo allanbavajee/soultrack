@@ -3,122 +3,74 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import Image from "next/image";
-import Link from "next/link";
-import LogoutLink from "../components/LogoutLink";
-import SendLinkPopup from "../components/SendLinkPopup";
-import { canAccessPage } from "../lib/accessControl";
+import supabase from "../lib/supabaseClient";
 
-
-export default function AdministrateurPage() {
+export default function CellulesHub() {
   const router = useRouter();
-  const [roles, setRoles] = useState([]);
+  const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedRole = localStorage.getItem("userRole");
+    // Vérifie la session actuelle
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        router.replace("/login"); // pas de session => redirection
+      } else {
+        setSession(data.session);
+      }
+      setLoading(false);
+    };
 
-    if (!storedRole) {
-      router.push("/login");
-      return;
-    }
+    checkSession();
 
-    let parsedRoles = [];
-    try {
-      parsedRoles = JSON.parse(storedRole);
-      if (!Array.isArray(parsedRoles)) parsedRoles = [parsedRoles];
-    } catch {
-      parsedRoles = [storedRole];
-    }
+    // Écoute les changements d'auth (connexion/déconnexion)
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) router.replace("/login");
+      else setSession(session);
+    });
 
-    parsedRoles = parsedRoles.map((r) => r.toLowerCase().trim());
-    setRoles(parsedRoles);
-
-    const isAdmin =
-      parsedRoles.includes("admin") || parsedRoles.includes("administrateur");
-
-    if (!isAdmin) {
-      alert("⛔ Accès non autorisé !");
-      router.push("/login");
-      return;
-    }
-
-    setLoading(false);
+    // Nettoyage
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, [router]);
 
-  if (loading) return <div className="text-center mt-20">Chargement...</div>;
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center text-lg">
+        Vérification de la session...
+      </div>
+    );
+  }
 
-  const hasRole = (role) =>
-    roles.includes(role.toLowerCase()) ||
-    (role === "admin" && roles.includes("administrateur")) ||
-    (role === "administrateur" && roles.includes("admin"));
+  if (!session) return null; // évite le flash avant redirection
 
   return (
-    <div
-      className="relative min-h-screen flex flex-col items-center justify-center p-6"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
-    >
-      <div className="absolute top-4 left-4">
-        <button
-          onClick={() => router.back()}
-          className="text-white font-semibold hover:text-gray-200 transition"
-        >
-          ← Retour
-        </button>
-      </div>
-
-      <div className="absolute top-4 right-4">
-        <LogoutLink />
-      </div>
-
-      <div className="mb-4">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={90} height={90} />
-      </div>
-
-      <h1 className="text-4xl font-handwriting text-white mb-6 text-center">
-        Espace Administrateur
+    <div className="min-h-screen bg-blue-50 p-6">
+      <h1 className="text-3xl font-bold text-blue-800 mb-4">
+        Tableau de bord — Cellules Hub
       </h1>
 
-      {/* ✅ Nouvelles cartes */}
-      {(hasRole("admin") || hasRole("administrateur")) && (
-        <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-4xl mb-8">
-          <Link
-            href="/admin/ajouter-membre-cellule"
-            className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
-          >
-            <div className="text-5xl mb-2">➕</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Ajouter membres cellule
-            </div>
-          </Link>
+      <p className="text-gray-700 mb-6">
+        Bienvenue, <strong>{session.user.email}</strong> 👋
+      </p>
 
-          <Link
-            href="/admin/membres-cellule"
-            className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#4285F4] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
-          >
-            <div className="text-5xl mb-2">👥</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Membres de la cellule
-            </div>
-          </Link>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="bg-white p-4 rounded-2xl shadow">
+          <h2 className="font-semibold text-xl mb-2 text-blue-700">Gestion des Cellules</h2>
+          <p>Créez, modifiez et suivez les cellules.</p>
         </div>
-      )}
 
-      <div className="flex flex-col gap-4 items-center justify-center w-full max-w-sm">
-        {(hasRole("admin") || hasRole("administrateur")) && (
-          <SendLinkPopup
-            label="Voir / Copier liens…"
-            type="voir_copier"
-            buttonColor="from-[#005AA7] to-[#FFFDE4]"
-          />
-        )}
-      </div>
+        <div className="bg-white p-4 rounded-2xl shadow">
+          <h2 className="font-semibold text-xl mb-2 text-blue-700">Suivi des Membres</h2>
+          <p>Consultez les membres rattachés à chaque cellule.</p>
+        </div>
 
-      <div className="mt-10 text-center text-white text-lg font-handwriting-light max-w-2xl">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
-        1 Corinthiens 12:14 ❤️
+        <div className="bg-white p-4 rounded-2xl shadow">
+          <h2 className="font-semibold text-xl mb-2 text-blue-700">Rapports & Statistiques</h2>
+          <p>Visualisez les performances des cellules.</p>
+        </div>
       </div>
     </div>
   );
