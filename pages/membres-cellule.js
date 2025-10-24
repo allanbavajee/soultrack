@@ -1,17 +1,45 @@
 //pages/admin/membres-cellule.js
-
 "use client";
+
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function MembresCellule({ currentUser }) {
+export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    const fetchMembres = async () => {
-      if (!currentUser) return; // On attend que currentUser soit défini
+    // 🔹 Récupérer l'utilisateur connecté et son rôle
+    const fetchUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        console.error("Erreur récupération user :", error);
+        return;
+      }
 
+      // 🔹 Récupérer le profil complet pour avoir role et cellule_id
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role, roles, cellule_id")
+        .eq("email", user.email)
+        .single();
+
+      if (profileError) {
+        console.error("Erreur récupération profil :", profileError);
+        return;
+      }
+
+      setCurrentUser(profile);
+    };
+
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser) return; // on attend d'avoir currentUser
+
+    const fetchMembres = async () => {
       setLoading(true);
 
       let query = supabase
@@ -25,20 +53,17 @@ export default function MembresCellule({ currentUser }) {
           cellule_id,
           cellules (cellule, responsable)
         `)
-        .not("cellule_id", "is", null); // Seulement ceux assignés à une cellule
+        .not("cellule_id", "is", null);
 
-      // 🔹 Si l'utilisateur est ResponsableCellule, on filtre uniquement sa cellule
+      // 🔹 Filtre pour le responsable de cellule
       if (currentUser.role === "ResponsableCellule") {
         query = query.eq("cellule_id", currentUser.cellule_id);
       }
 
       const { data, error } = await query;
 
-      if (error) {
-        console.error("Erreur Supabase :", error);
-      } else {
-        setMembres(data);
-      }
+      if (error) console.error("Erreur Supabase :", error);
+      else setMembres(data);
 
       setLoading(false);
     };
@@ -93,4 +118,3 @@ export default function MembresCellule({ currentUser }) {
     </div>
   );
 }
-
