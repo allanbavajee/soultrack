@@ -1,5 +1,4 @@
-//pages/admin/membres-cellule.js
-"use client";
+//pages/membres-cellule.js"use client";
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -14,29 +13,20 @@ export default function MembresCellule() {
       setLoading(true);
 
       try {
-        // 🔹 Récupérer l'utilisateur courant
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-        if (userError) {
+        if (userError || !user) {
           console.error("Erreur récupération user :", userError);
           setLoading(false);
           return;
         }
 
-        if (!user) {
-          console.error("Aucun utilisateur connecté");
-          setLoading(false);
-          return;
-        }
-
-        // 🔹 Récupérer le profil complet avec rôle
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("id, email, role, roles")
           .eq("id", user.id)
           .single();
 
-        if (profileError) {
+        if (profileError || !profile) {
           console.error("Erreur récupération profil :", profileError);
           setLoading(false);
           return;
@@ -44,7 +34,28 @@ export default function MembresCellule() {
 
         setCurrentUser(profile);
 
-        // 🔹 Construire la requête des membres
+        // Déterminer si l'utilisateur est ResponsableCellule
+        const rolesArray = Array.isArray(profile.roles) ? profile.roles : [profile.role];
+        let celluleId = null;
+
+        if (rolesArray.includes("ResponsableCellule")) {
+          // Récupérer la cellule dont il est responsable
+          const { data: celluleData, error: celluleError } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", profile.id)
+            .single();
+
+          if (celluleError || !celluleData) {
+            console.error("Erreur récupération cellule :", celluleError);
+            setLoading(false);
+            return;
+          }
+
+          celluleId = celluleData.id;
+        }
+
+        // 🔹 Requête membres
         let query = supabase
           .from("membres")
           .select(`
@@ -58,14 +69,11 @@ export default function MembresCellule() {
           `)
           .not("cellule_id", "is", null);
 
-        // 🔹 Filtrer uniquement si ResponsableCellule
-        const rolesArray = Array.isArray(profile.roles) ? profile.roles : [profile.role];
-        if (rolesArray.includes("ResponsableCellule")) {
-          query = query.eq("cellule_id", profile.cellule_id);
+        if (celluleId) {
+          query = query.eq("cellule_id", celluleId);
         }
 
         const { data, error } = await query;
-
         if (error) {
           console.error("Erreur Supabase :", error);
         } else {
@@ -123,3 +131,4 @@ export default function MembresCellule() {
     </div>
   );
 }
+
