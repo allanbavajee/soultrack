@@ -1,138 +1,108 @@
+/* ✅ pages/cellules-hub.js */
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/router";
-import supabase from "../lib/supabaseClient"; // ✅ chemin vérifié
+import SendLinkPopup from "../components/SendLinkPopup";
 import LogoutLink from "../components/LogoutLink";
+import AccessGuard from "../components/AccessGuard";
 
-export default function MembresDeLaCellule() {
+export default function EvangelisationHub() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [membres, setMembres] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState("");
-
-  // 🔹 Récupération du profil utilisateur depuis le localStorage
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("userProfile"));
-    if (!storedUser) {
-      router.push("/login");
-      return;
-    }
-    setUser(storedUser);
-  }, [router]);
-
-  // 🔹 Récupération des membres
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchMembres = async () => {
-      try {
-        setLoading(true);
-        setErrorMsg("");
-
-        console.log("🟢 Chargement des membres...");
-
-        // Si admin → voir tous les membres
-        const roles = JSON.parse(localStorage.getItem("userRole")) || [];
-        const lowerRoles = Array.isArray(roles)
-          ? roles.map((r) => r.toLowerCase())
-          : [roles.toLowerCase()];
-
-        let query = supabase.from("membres").select("*, cellules(cellule, ville)");
-
-        if (!lowerRoles.includes("admin") && !lowerRoles.includes("administrateur")) {
-          // Sinon, on filtre par cellule liée à ce responsable
-          const { data: celluleData, error: celluleError } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", user.id)
-            .maybeSingle();
-
-          if (celluleError) throw celluleError;
-          if (!celluleData) {
-            setErrorMsg("❌ Aucune cellule associée trouvée !");
-            setMembres([]);
-            setLoading(false);
-            return;
-          }
-
-          query = query.eq("cellule_id", celluleData.id);
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-        if (!data || data.length === 0) {
-          setErrorMsg("⚠️ Aucun membre trouvé.");
-        }
-
-        setMembres(data || []);
-      } catch (err) {
-        console.error("❌ Erreur :", err.message);
-        setErrorMsg("Erreur de chargement : " + err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMembres();
-  }, [user]);
-
-  if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
   return (
     <div
-      className="min-h-screen p-6 flex flex-col items-center"
+      className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      <div className="absolute top-4 right-4">
-        <LogoutLink />
+      {/* 🔹 Top bar: Retour + logo + Déconnexion */}
+      <div className="w-full max-w-5xl flex justify-between items-center mb-6">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
+        >
+          ← Retour
+        </button>
+
+        <div className="flex items-center gap-4">
+          <Image src="/logo.png" alt="SoulTrack Logo" width={50} height={50} />
+          <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+        </div>
       </div>
 
-      <h1 className="text-3xl text-white font-handwriting mb-6 text-center">
-        👥 Membres de la Cellule
+      {/* 🔹 Titre */}
+      <h1 className="text-3xl font-login text-white mb-6 text-center">
+        Cellule
       </h1>
 
-      {errorMsg ? (
-        <div className="bg-white p-4 rounded-xl shadow-md text-center text-gray-700">
-          {errorMsg}
-        </div>
-      ) : (
-        <div className="bg-white p-6 rounded-3xl shadow-lg w-full max-w-4xl">
-          <table className="min-w-full table-auto border-collapse">
-            <thead>
-              <tr className="bg-indigo-100 text-indigo-800">
-                <th className="p-3 text-left">Nom</th>
-                <th className="p-3 text-left">Prénom</th>
-                <th className="p-3 text-left">Téléphone</th>
-                <th className="p-3 text-left">Ville</th>
-                <th className="p-3 text-left">Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {membres.map((m) => (
-                <tr key={m.id} className="border-b hover:bg-indigo-50">
-                  <td className="p-3">{m.nom}</td>
-                  <td className="p-3">{m.prenom || "-"}</td>
-                  <td className="p-3">{m.telephone || "-"}</td>
-                  <td className="p-3">{m.ville || "-"}</td>
-                  <td className="p-3 capitalize">{m.statut || "N/A"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {/* 🔹 Cartes principales */}
+      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6">
+        {/* Ajouter un évangélisé */}
+        <Link
+          href="/add-evangelise"
+          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#4285F4] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-5xl mb-2">➕</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Ajouter un évangélisé
+          </div>
+        </Link>
 
-      <button
-        onClick={() => router.push("/add-member")}
-        className="mt-6 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold shadow-md transition-all"
-      >
-        ➕ Ajouter un membre
-      </button>
+        {/* Liste des évangélisés */}
+        <Link
+          href="/membres-cellules
+          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-5xl mb-2">👥</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Liste des évangélisés
+          </div>
+        </Link>
 
-      <div className="text-white text-lg font-handwriting-light text-center mt-8 max-w-2xl">
+        {/* Suivis des évangélisés */}
+        <Link
+          href="/suivis-evangelisation"
+          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-5xl mb-2">📋</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Suivis des évangélisés
+          </div>
+        </Link>
+      </div>
+      <Link
+          href="/suivis-membres"
+          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-5xl mb-2">📋</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Suivis des évangélisés
+          </div>
+        </Link>
+      </div>
+      <Link
+          href="/ajouter-membre-cellule"
+          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-5xl mb-2">📋</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Suivis des évangélisés
+          </div>
+        </Link>
+      </div>
+
+      {/* 🔹 Bouton popup ajouté sous les cartes */}
+      <div className="w-full max-w-md mb-10">
+        <SendLinkPopup
+          label="Envoyer l'appli – Évangélisé"
+          type="ajouter_evangelise"
+          buttonColor="from-[#09203F] to-[#537895]"
+        />
+      </div>
+
+      {/* 🔹 Verset biblique */}
+      <div className="mt-auto mb-4 text-center text-white text-lg font-handwriting max-w-2xl">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️
       </div>
