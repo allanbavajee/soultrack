@@ -1,6 +1,6 @@
 //pages/list-members.js
-
 "use client";
+
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -81,17 +81,17 @@ export default function ListMembers() {
     }
   };
 
+  const filterBySearch = (list) =>
+    list.filter((m) =>
+      `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase())
+    );
+
   const nouveaux = members.filter(
     (m) => m.statut === "visiteur" || m.statut === "veut rejoindre ICC"
   );
   const anciens = members.filter(
     (m) => m.statut !== "visiteur" && m.statut !== "veut rejoindre ICC"
   );
-
-  const filterBySearch = (list) =>
-    list.filter((m) =>
-      `${m.prenom} ${m.nom}`.toLowerCase().includes(search.toLowerCase())
-    );
 
   const nouveauxFiltres = filterBySearch(
     filter ? nouveaux.filter((m) => m.statut === filter) : nouveaux
@@ -483,7 +483,7 @@ export default function ListMembers() {
                       String(c.id) === String(selectedCellules[popupMember.id])
                   )}
                   onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                  session={session} // <-- session vérifiée
+                  session={session}
                 />
               </div>
             )}
