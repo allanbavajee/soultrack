@@ -1,77 +1,140 @@
-//pages/cellules-hub.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import supabase from "../lib/supabaseClient";
-import AccessGuard from "../components/AccessGuard";
+import supabase from "../lib/supabaseClient"; // ✅ chemin vérifié
+import LogoutLink from "../components/LogoutLink";
 
-export default function CellulesHub() {
+export default function MembresDeLaCellule() {
   const router = useRouter();
-  const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
+  const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
 
+  // 🔹 Récupération du profil utilisateur depuis le localStorage
   useEffect(() => {
-    // Vérifie la session actuelle
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        router.replace("/login"); // pas de session => redirection
-      } else {
-        setSession(data.session);
-      }
-      setLoading(false);
-    };
-
-    checkSession();
-
-    // Écoute les changements d'auth (connexion/déconnexion)
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) router.replace("/login");
-      else setSession(session);
-    });
-
-    // Nettoyage
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+    const storedUser = JSON.parse(localStorage.getItem("userProfile"));
+    if (!storedUser) {
+      router.push("/login");
+      return;
+    }
+    setUser(storedUser);
   }, [router]);
 
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center text-lg">
-        Vérification de la session...
-      </div>
-    );
-  }
+  // 🔹 Récupération des membres
+  useEffect(() => {
+    if (!user) return;
 
-  if (!session) return null; // évite le flash avant redirection
+    const fetchMembres = async () => {
+      try {
+        setLoading(true);
+        setErrorMsg("");
+
+        console.log("🟢 Chargement des membres...");
+
+        // Si admin → voir tous les membres
+        const roles = JSON.parse(localStorage.getItem("userRole")) || [];
+        const lowerRoles = Array.isArray(roles)
+          ? roles.map((r) => r.toLowerCase())
+          : [roles.toLowerCase()];
+
+        let query = supabase.from("membres").select("*, cellules(cellule, ville)");
+
+        if (!lowerRoles.includes("admin") && !lowerRoles.includes("administrateur")) {
+          // Sinon, on filtre par cellule liée à ce responsable
+          const { data: celluleData, error: celluleError } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", user.id)
+            .maybeSingle();
+
+          if (celluleError) throw celluleError;
+          if (!celluleData) {
+            setErrorMsg("❌ Aucune cellule associée trouvée !");
+            setMembres([]);
+            setLoading(false);
+            return;
+          }
+
+          query = query.eq("cellule_id", celluleData.id);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+        if (!data || data.length === 0) {
+          setErrorMsg("⚠️ Aucun membre trouvé.");
+        }
+
+        setMembres(data || []);
+      } catch (err) {
+        console.error("❌ Erreur :", err.message);
+        setErrorMsg("Erreur de chargement : " + err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMembres();
+  }, [user]);
+
+  if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
   return (
-    <div className="min-h-screen bg-blue-50 p-6">
-      <h1 className="text-3xl font-bold text-blue-800 mb-4">
-        Tableau de bord — Cellules Hub
+    <div
+      className="min-h-screen p-6 flex flex-col items-center"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
+      <div className="absolute top-4 right-4">
+        <LogoutLink />
+      </div>
+
+      <h1 className="text-3xl text-white font-handwriting mb-6 text-center">
+        👥 Membres de la Cellule
       </h1>
 
-      <p className="text-gray-700 mb-6">
-        Bienvenue, <strong>{session.user.email}</strong> 👋
-      </p>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className="bg-white p-4 rounded-2xl shadow">
-          <h2 className="font-semibold text-xl mb-2 text-blue-700">Gestion des Cellules</h2>
-          <p>Créez, modifiez et suivez les cellules.</p>
+      {errorMsg ? (
+        <div className="bg-white p-4 rounded-xl shadow-md text-center text-gray-700">
+          {errorMsg}
         </div>
-
-        <div className="bg-white p-4 rounded-2xl shadow">
-          <h2 className="font-semibold text-xl mb-2 text-blue-700">Suivi des Membres</h2>
-          <p>Consultez les membres rattachés à chaque cellule.</p>
+      ) : (
+        <div className="bg-white p-6 rounded-3xl shadow-lg w-full max-w-4xl">
+          <table className="min-w-full table-auto border-collapse">
+            <thead>
+              <tr className="bg-indigo-100 text-indigo-800">
+                <th className="p-3 text-left">Nom</th>
+                <th className="p-3 text-left">Prénom</th>
+                <th className="p-3 text-left">Téléphone</th>
+                <th className="p-3 text-left">Ville</th>
+                <th className="p-3 text-left">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {membres.map((m) => (
+                <tr key={m.id} className="border-b hover:bg-indigo-50">
+                  <td className="p-3">{m.nom}</td>
+                  <td className="p-3">{m.prenom || "-"}</td>
+                  <td className="p-3">{m.telephone || "-"}</td>
+                  <td className="p-3">{m.ville || "-"}</td>
+                  <td className="p-3 capitalize">{m.statut || "N/A"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+      )}
 
-        <div className="bg-white p-4 rounded-2xl shadow">
-          <h2 className="font-semibold text-xl mb-2 text-blue-700">Rapports & Statistiques</h2>
-          <p>Visualisez les performances des cellules.</p>
-        </div>
+      <button
+        onClick={() => router.push("/add-member")}
+        className="mt-6 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold shadow-md transition-all"
+      >
+        ➕ Ajouter un membre
+      </button>
+
+      <div className="text-white text-lg font-handwriting-light text-center mt-8 max-w-2xl">
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
+        1 Corinthiens 12:14 ❤️
       </div>
     </div>
   );
