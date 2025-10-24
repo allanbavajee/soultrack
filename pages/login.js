@@ -1,9 +1,11 @@
 //pages/login.js
+
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
+import AccessGuard from "../components/AccessGuard";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,23 +38,30 @@ export default function LoginPage() {
         return;
       }
 
-      const roles = user.roles || [user.role || "Membre"];
-
+      // ✅ Stocke les infos
       localStorage.setItem("userEmail", user.email);
       localStorage.setItem("userName", `${user.prenom || ""} ${user.nom || ""}`.trim());
+      const roles = user.roles || [user.role || "Membre"];
       localStorage.setItem("userRole", JSON.stringify(roles));
 
-      console.log("✅ Rôle détecté :", roles[0]);
+      console.log("✅ Rôle détecté :", roles);
 
-      // 🔀 Détermination de la bonne redirection
-      let redirect = "/index";
-      if (roles.includes("Admin")) redirect = "/index";
-      else if (roles.includes("ResponsableCellule")) redirect = "/cellules-hub";
-      else if (roles.includes("ResponsableIntegration")) redirect = "/membres-hub";
-      else if (roles.includes("ResponsableEvangelisation")) redirect = "/evangelisation-hub";
-
-      console.log("🔀 Redirection vers :", redirect);
-      await router.push(redirect);
+      // 🔀 Redirection selon rôle
+      if (roles.includes("ResponsableCellule")) {
+        console.log("🔀 Redirection vers : /cellules-hub");
+        router.push("/cellules-hub");
+      } else if (roles.includes("ResponsableIntegration")) {
+        console.log("🔀 Redirection vers : /membres-hub");
+        router.push("/membres-hub");
+      } else if (roles.includes("ResponsableEvangelisation")) {
+        console.log("🔀 Redirection vers : /evangelisation-hub");
+        router.push("/evangelisation-hub");
+      } else if (roles.includes("Admin")) {
+        console.log("🔀 Redirection vers : /index");
+        router.push("/index");
+      } else {
+        setError("Rôle non autorisé ❌");
+      }
     } catch (err) {
       console.error("Erreur de connexion :", err);
       setError("Erreur interne ❌");
@@ -103,3 +112,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
