@@ -1,27 +1,30 @@
 //components/BoutonEnvoyer.js
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate }) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [session, setSession] = useState(null);
+
+  // ✅ On charge la session au montage
+  useEffect(() => {
+    const loadSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (!error && data?.session) {
+        setSession(data.session);
+      } else {
+        console.warn("⚠️ Aucune session trouvée (non connecté).");
+      }
+    };
+    loadSession();
+  }, []);
 
   const handleSend = async () => {
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error("Erreur de session:", sessionError.message);
-      alert("Erreur de session Supabase");
-      return;
-    }
-
     if (!session) {
-      alert("❌ Erreur : utilisateur non connecté");
+      alert("❌ Vous devez être connecté pour envoyer un membre à une cellule.");
       return;
     }
 
@@ -97,7 +100,9 @@ Voici leurs infos :
       }
 
       setSent(true);
-      alert(`✅ ${membre.prenom} ${membre.nom} a été envoyé au responsable ${cellule.responsable}`);
+      alert(
+        `✅ ${membre.prenom} ${membre.nom} a été envoyé au responsable ${cellule.responsable}`
+      );
     } catch (err) {
       console.error("Erreur lors de l’envoi :", err.message);
       alert("Erreur inattendue lors de l’envoi");
