@@ -1,27 +1,9 @@
 //components/BoutonEnvoyer.js
-"use client";
 
-import { useState, useEffect } from "react";
+"use client";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate }) {
-  const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [session, setSession] = useState(null);
-
-  // ✅ On charge la session au montage
-  useEffect(() => {
-    const loadSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (!error && data?.session) {
-        setSession(data.session);
-      } else {
-        console.warn("⚠️ Aucune session trouvée (non connecté).");
-      }
-    };
-    loadSession();
-  }, []);
-
+export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session }) {
   const handleSend = async () => {
     if (!session) {
       alert("❌ Vous devez être connecté pour envoyer un membre à une cellule.");
@@ -29,101 +11,64 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate }) {
     }
 
     if (!cellule) {
-      alert("⚠️ Sélectionne une cellule avant d’envoyer !");
+      alert("❌ Veuillez sélectionner une cellule !");
       return;
     }
 
-    setLoading(true);
+    const now = new Date().toISOString();
 
-    try {
-      // 🔹 Enregistrer dans Supabase
-      const { error } = await supabase.from("suivis_membres").insert([
-        {
-          membre_id: membre.id,
-          cellule_id: cellule.id,
-          prenom: membre.prenom,
-          nom: membre.nom,
-          telephone: membre.telephone,
-          statut_membre: membre.statut,
-          besoin: membre.besoin,
-          infos_supplementaires: membre.infos_supplementaires,
-          cellule_nom: cellule.cellule,
-          responsable: cellule.responsable,
-          statut: "envoye",
-          created_at: new Date().toISOString(),
-        },
-      ]);
+    const suivisData = {
+      prenom: membre.prenom,
+      nom: membre.nom,
+      telephone: membre.telephone,
+      is_whatsapp: true,
+      ville: membre.ville,
+      besoin: membre.besoin,
+      infos_supplementaires: membre.infos_supplementaires,
+      cellule_id: cellule.id,
+      responsable_cellule: cellule.responsable,
+      date_suivi: now,
+    };
 
-      if (error) throw error;
+    // Insertion du suivi
+    const { error: insertError } = await supabase
+      .from("suivis_des_membres")
+      .insert([suivisData]);
 
-      // 🔄 Mise à jour du statut du membre
-      if (
-        membre.statut === "visiteur" ||
-        membre.statut === "veut rejoindre ICC"
-      ) {
-        await supabase
-          .from("membres")
-          .update({ statut: "actif" })
-          .eq("id", membre.id);
-
-        if (onStatusUpdate) onStatusUpdate(membre.id, "actif");
-      }
-
-      // ✅ Message WhatsApp
-      const message = `
-👋 Salut ${cellule.responsable},
-
-🙏 Dieu nous a envoyé de nouvelles âmes à suivre.
-Voici leurs infos :
-
-- 👤 Nom : ${membre.prenom || ""} ${membre.nom || ""}
-- 📱 Téléphone : ${membre.telephone || "—"}
-- 📲 WhatsApp : Oui
-- 🏙 Ville : ${membre.ville || "—"}
-- 🙏 Besoin : ${membre.besoin || "—"}
-- 📝 Infos supplémentaires : ${membre.infos_supplementaires || "—"}
-
-🙏 Merci pour ton cœur ❤ et ton amour ✨
-      `;
-
-      const sanitizedPhone = cellule.telephone
-        ? cellule.telephone.replace(/\D/g, "")
-        : null;
-
-      if (sanitizedPhone) {
-        const whatsappURL = `https://wa.me/${sanitizedPhone}?text=${encodeURIComponent(
-          message.trim()
-        )}`;
-        window.open(whatsappURL, "_blank");
-      } else {
-        alert("⚠️ Aucun numéro WhatsApp trouvé pour ce responsable.");
-      }
-
-      setSent(true);
-      alert(
-        `✅ ${membre.prenom} ${membre.nom} a été envoyé au responsable ${cellule.responsable}`
-      );
-    } catch (err) {
-      console.error("Erreur lors de l’envoi :", err.message);
-      alert("Erreur inattendue lors de l’envoi");
+    if (insertError) {
+      console.error("Erreur lors de l'insertion du suivi :", insertError.message);
+      alert("❌ Une erreur est survenue lors de l’enregistrement du suivi.");
+      return;
     }
 
-    setLoading(false);
+    // Mise à jour du statut du membre
+    const { error: updateError } = await supabase
+      .from("membres")
+      .update({ statut: "Integrer" })
+      .eq("id", membre.id);
+
+    if (updateError) {
+      console.error("Erreur lors de la mise à jour du statut :", updateError.message);
+      alert("❌ Erreur lors de la mise à jour du statut du membre.");
+      return;
+    }
+
+    // Notification WhatsApp
+    const phone = cellule.telephone.replace(/\D/g, "");
+    const message = `👋 Salut ${cellule.responsable},\n\n🙏 Voici les infos du membre à intégrer :\n- Nom : ${membre.prenom} ${membre.nom}\n- Téléphone : ${membre.telephone || "—"}\n- Ville : ${membre.ville || "—"}\n- Besoin : ${membre.besoin || "—"}\n- Infos supplémentaires : ${membre.infos_supplementaires || "—"}\n\n🙏 Merci !`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+
+    alert("✅ Membre envoyé avec succès !");
+    onStatusUpdate(membre.id, "Integrer");
   };
 
   return (
     <button
       onClick={handleSend}
-      disabled={loading || sent}
-      className={`mt-2 w-full py-2 rounded-lg text-white font-semibold transition duration-300 ${
-        sent
-          ? "bg-green-500 cursor-not-allowed"
-          : loading
-          ? "bg-gray-400 cursor-wait"
-          : "bg-teal-600 hover:bg-teal-700"
-      }`}
+      className="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all"
     >
-      {sent ? "✅ Envoyé" : loading ? "⏳ Envoi..." : "📤 Envoyer au responsable"}
+      Envoyer à la cellule
     </button>
   );
 }
+
