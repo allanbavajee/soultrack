@@ -1,3 +1,4 @@
+//components/BoutonEnvoyer.js
 "use client";
 
 import React, { useState } from "react";
@@ -7,13 +8,11 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
   const [loading, setLoading] = useState(false);
 
   const sendToWhatsapp = async () => {
-    // ❌ Vérification session
     if (!session) {
       alert("❌ Vous devez être connecté pour envoyer un membre à une cellule.");
       return;
     }
 
-    // ❌ Vérification cellule
     if (!cellule) {
       alert("❌ Sélectionnez une cellule !");
       return;
@@ -24,7 +23,6 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
     try {
       const now = new Date().toISOString();
 
-      // Préparer les données à insérer dans la table suivis_des_membres
       const suiviData = {
         prenom: membre.prenom,
         nom: membre.nom,
@@ -38,7 +36,6 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         date_suivi: now,
       };
 
-      // Insertion dans Supabase
       const { error: insertError } = await supabase
         .from("suivis_des_membres")
         .insert([suiviData]);
@@ -50,7 +47,6 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         return;
       }
 
-      // Préparer le message WhatsApp
       let message = `👋 Salut ${cellule.responsable},\n\n🙏 Nous avons un nouveau membre à suivre :\n\n`;
       message += `- 👤 Nom : ${membre.prenom || ""} ${membre.nom || ""}\n`;
       message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
@@ -60,14 +56,12 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
       message += `- 📝 Infos supplémentaires : ${membre.infos_supplementaires || "—"}\n\n`;
       message += "🙏 Merci pour ton cœur ❤ et ton amour ✨";
 
-      // Ouvrir WhatsApp
       const phone = cellule.telephone.replace(/\D/g, "");
       window.open(
         `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
         "_blank"
       );
 
-      // Mettre à jour le statut du membre
       if (onStatusUpdate) {
         onStatusUpdate(membre.id, "Integrer");
       }
