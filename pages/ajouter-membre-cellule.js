@@ -1,6 +1,6 @@
 // pages/admin/ajouter-membre-cellule.js
 import { useState } from "react";
-import supabase from "../../lib/supabaseClient"; // <- chemin corrigé
+import supabase from "../lib/supabaseClient"; // <- chemin corrigé
 import { useRouter } from "next/router";
 
 export default function AddMember() {
