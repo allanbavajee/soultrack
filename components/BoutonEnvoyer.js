@@ -1,74 +1,91 @@
-//components/BoutonEnvoyer.js
-
 "use client";
+
+import React, { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session }) {
-  const handleSend = async () => {
+  const [loading, setLoading] = useState(false);
+
+  const sendToWhatsapp = async () => {
     if (!session) {
       alert("❌ Vous devez être connecté pour envoyer un membre à une cellule.");
       return;
     }
 
     if (!cellule) {
-      alert("❌ Veuillez sélectionner une cellule !");
+      alert("❌ Sélectionnez une cellule !");
       return;
     }
 
-    const now = new Date().toISOString();
+    setLoading(true);
 
-    const suivisData = {
-      prenom: membre.prenom,
-      nom: membre.nom,
-      telephone: membre.telephone,
-      is_whatsapp: true,
-      ville: membre.ville,
-      besoin: membre.besoin,
-      infos_supplementaires: membre.infos_supplementaires,
-      cellule_id: cellule.id,
-      responsable_cellule: cellule.responsable,
-      date_suivi: now,
-    };
+    try {
+      const now = new Date().toISOString();
 
-    // Insertion du suivi
-    const { error: insertError } = await supabase
-      .from("suivis_des_membres")
-      .insert([suivisData]);
+      // Préparer les données à insérer dans la table suivis_des_membres
+      const suiviData = {
+        prenom: membre.prenom,
+        nom: membre.nom,
+        telephone: membre.telephone,
+        is_whatsapp: true,
+        ville: membre.ville,
+        besoin: membre.besoin,
+        infos_supplementaires: membre.infos_supplementaires,
+        cellule_id: cellule.id,
+        responsable_cellule: cellule.responsable,
+        date_suivi: now,
+      };
 
-    if (insertError) {
-      console.error("Erreur lors de l'insertion du suivi :", insertError.message);
-      alert("❌ Une erreur est survenue lors de l’enregistrement du suivi.");
-      return;
+      // Insertion dans la table Supabase
+      const { error: insertError } = await supabase
+        .from("suivis_des_membres")
+        .insert([suiviData]);
+
+      if (insertError) {
+        console.error("Erreur lors de l'insertion du suivi :", insertError.message);
+        alert("❌ Une erreur est survenue lors de l’enregistrement du suivi.");
+        setLoading(false);
+        return;
+      }
+
+      // Préparer le message WhatsApp
+      let message = `👋 Salut ${cellule.responsable},\n\n🙏 Nous avons un nouveau membre à suivre :\n\n`;
+      message += `- 👤 Nom : ${membre.prenom || ""} ${membre.nom || ""}\n`;
+      message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
+      message += `- 📲 WhatsApp : Oui\n`;
+      message += `- 🏙 Ville : ${membre.ville || "—"}\n`;
+      message += `- 🙏 Besoin : ${membre.besoin || "—"}\n`;
+      message += `- 📝 Infos supplémentaires : ${membre.infos_supplementaires || "—"}\n\n`;
+      message += "🙏 Merci pour ton cœur ❤ et ton amour ✨";
+
+      // Ouvrir WhatsApp
+      const phone = cellule.telephone.replace(/\D/g, "");
+      window.open(
+        `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
+
+      // Mettre à jour le statut du membre
+      if (onStatusUpdate) {
+        onStatusUpdate(membre.id, "Integrer");
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'envoi WhatsApp :", error.message);
+      alert("❌ Une erreur est survenue.");
+    } finally {
+      setLoading(false);
     }
-
-    // Mise à jour du statut du membre
-    const { error: updateError } = await supabase
-      .from("membres")
-      .update({ statut: "Integrer" })
-      .eq("id", membre.id);
-
-    if (updateError) {
-      console.error("Erreur lors de la mise à jour du statut :", updateError.message);
-      alert("❌ Erreur lors de la mise à jour du statut du membre.");
-      return;
-    }
-
-    // Notification WhatsApp
-    const phone = cellule.telephone.replace(/\D/g, "");
-    const message = `👋 Salut ${cellule.responsable},\n\n🙏 Voici les infos du membre à intégrer :\n- Nom : ${membre.prenom} ${membre.nom}\n- Téléphone : ${membre.telephone || "—"}\n- Ville : ${membre.ville || "—"}\n- Besoin : ${membre.besoin || "—"}\n- Infos supplémentaires : ${membre.infos_supplementaires || "—"}\n\n🙏 Merci !`;
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-
-    alert("✅ Membre envoyé avec succès !");
-    onStatusUpdate(membre.id, "Integrer");
   };
 
   return (
     <button
-      onClick={handleSend}
-      className="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all"
+      onClick={sendToWhatsapp}
+      disabled={loading}
+      className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all ${
+        loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+      }`}
     >
-      Envoyer à la cellule
+      {loading ? "Envoi..." : "Envoyer par WhatsApp"}
     </button>
   );
 }
-
