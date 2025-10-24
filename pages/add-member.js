@@ -2,6 +2,7 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient"; // <- chemin corrigé
 import { useRouter } from "next/router";
+import AccessGuard from "../components/AccessGuard";
 
 export default function AddMember() {
   const router = useRouter();
