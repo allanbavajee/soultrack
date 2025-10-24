@@ -3,16 +3,16 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SuivisMembres() {
-  const [suivis, setSuivis] = useState([]);
+export default function MembresCellule() {
+  const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
-    fetchSuivis();
+    fetchMembres();
   }, []);
 
-  const fetchSuivis = async () => {
+  const fetchMembres = async () => {
     setLoading(true);
     setMessage(null);
 
@@ -21,38 +21,53 @@ export default function SuivisMembres() {
       const userId = localStorage.getItem("userId");
       let userCelluleId = null;
 
-      // Récupérer l'ID de la cellule si c'est un ResponsableCellule
+      // Récupérer la cellule si c'est un ResponsableCellule
       if (role === "ResponsableCellule") {
         const { data: celluleData, error: celluleError } = await supabase
           .from("cellules")
           .select("id")
           .eq("responsable_id", userId)
           .single();
-        if (celluleError) console.error(celluleError);
-        else userCelluleId = celluleData?.id;
+
+        if (celluleError) {
+          console.error("Erreur cellule:", celluleError);
+          setMessage({ type: "error", text: "Erreur récupération cellule." });
+        } else if (!celluleData) {
+          console.warn("Aucune cellule trouvée pour ce responsable.");
+          setMessage({ type: "info", text: "Vous n'avez pas de cellule assignée." });
+        } else {
+          userCelluleId = celluleData.id;
+        }
       }
 
-      let query = supabase
-        .from("suivis_membres")
-        .select("*")
-        .order("created_at", { ascending: false });
+      let query = supabase.from("membres").select("*").order("nom", { ascending: true });
 
-      if (role === "ResponsableCellule" && userCelluleId) {
+      if (role === "ResponsableCellule") {
+        if (!userCelluleId) {
+          // Si le responsable n'a pas de cellule, on n'affiche rien
+          setMembres([]);
+          setLoading(false);
+          return;
+        }
         query = query.eq("cellule_id", userCelluleId);
       }
 
       const { data, error } = await query;
+
       if (error) {
-        console.error("Erreur chargement suivis :", error);
+        console.error("Erreur chargement membres :", error);
         setMessage({ type: "error", text: `Erreur chargement : ${error.message}` });
-        setSuivis([]);
+        setMembres([]);
       } else {
-        setSuivis(data || []);
+        setMembres(data || []);
+        if ((data || []).length === 0 && role !== "ResponsableCellule") {
+          setMessage({ type: "info", text: "Aucun membre trouvé." });
+        }
       }
     } catch (err) {
-      console.error("Exception fetchSuivis:", err);
+      console.error("Exception fetchMembres:", err);
       setMessage({ type: "error", text: `Exception fetch: ${err.message}` });
-      setSuivis([]);
+      setMembres([]);
     } finally {
       setLoading(false);
     }
@@ -62,11 +77,15 @@ export default function SuivisMembres() {
     <div>
       {loading && <p>Chargement...</p>}
       {message && <p>{message.text}</p>}
-      <ul>
-        {suivis.map((s) => (
-          <li key={s.id}>{s.nom_membre}</li>
-        ))}
-      </ul>
+      {membres.length > 0 ? (
+        <ul>
+          {membres.map((m) => (
+            <li key={m.id}>{m.nom}</li>
+          ))}
+        </ul>
+      ) : (
+        !loading && <p>Aucun membre à afficher.</p>
+      )}
     </div>
   );
 }
