@@ -5,7 +5,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import AccessGuard from "../components/AccessGuard";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,30 +37,23 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Stocke les infos
+      // ✅ Stocke les infos dans localStorage
       localStorage.setItem("userEmail", user.email);
       localStorage.setItem("userName", `${user.prenom || ""} ${user.nom || ""}`.trim());
-      const roles = user.roles || [user.role || "Membre"];
-      localStorage.setItem("userRole", JSON.stringify(roles));
+      localStorage.setItem("userRole", JSON.stringify(user.roles || [user.role || "Membre"]));
 
-      console.log("✅ Rôle détecté :", roles);
+      console.log("✅ Rôle détecté :", user.roles);
 
-      // 🔀 Redirection selon rôle
-      if (roles.includes("ResponsableCellule")) {
-        console.log("🔀 Redirection vers : /cellules-hub");
-        router.push("/cellules-hub");
-      } else if (roles.includes("ResponsableIntegration")) {
-        console.log("🔀 Redirection vers : /membres-hub");
-        router.push("/membres-hub");
-      } else if (roles.includes("ResponsableEvangelisation")) {
-        console.log("🔀 Redirection vers : /evangelisation-hub");
-        router.push("/evangelisation-hub");
-      } else if (roles.includes("Admin")) {
-        console.log("🔀 Redirection vers : /index");
-        router.push("/index");
-      } else {
-        setError("Rôle non autorisé ❌");
-      }
+      // 🔀 Définir la redirection selon le rôle
+      let redirectPath = "/index"; // défaut
+      if (user.roles.includes("Admin")) redirectPath = "/index";
+      else if (user.roles.includes("ResponsableCellule")) redirectPath = "/cellules-hub";
+      else if (user.roles.includes("ResponsableIntegration")) redirectPath = "/membres-hub";
+      else if (user.roles.includes("ResponsableEvangelisation")) redirectPath = "/evangelisation-hub";
+
+      console.log("🔀 Redirection vers :", redirectPath);
+      router.push(redirectPath);
+
     } catch (err) {
       console.error("Erreur de connexion :", err);
       setError("Erreur interne ❌");
@@ -112,4 +104,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
 
