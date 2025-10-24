@@ -1,4 +1,5 @@
 //pages/list-members.js
+
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
@@ -154,107 +155,5 @@ export default function ListMembers() {
             className="px-3 py-2 rounded-lg border text-sm"
           >
             <option value="">Tous les statuts</option>
-            {statusOptions.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
+            {statusOptions.map((s)
 
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher par nom..."
-            className="px-3 py-2 rounded-lg border text-sm w-48"
-          />
-
-          <span className="text-white text-sm">({totalCount})</span>
-        </div>
-
-        <button
-          onClick={() => setView(view === "card" ? "table" : "card")}
-          className="text-white text-sm underline hover:text-gray-200"
-        >
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
-      </div>
-
-      {/* === VUE CARTE === */}
-      {/* ... ici tu gardes tout le code carte et table existant ... */}
-
-      {/* ✅ Popup Détails */}
-      {popupMember && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
-            <button
-              onClick={() => setPopupMember(null)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
-            >
-              ✖
-            </button>
-            <h2 className="text-xl font-bold mb-2 text-indigo-700">
-              {popupMember.prenom} {popupMember.nom}
-            </h2>
-            <p className="text-gray-700 text-sm mb-1">
-              📱 {popupMember.telephone || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-2">
-              Statut :
-              <select
-                value={popupMember.statut}
-                onChange={(e) =>
-                  handleChangeStatus(popupMember.id, e.target.value)
-                }
-                className="ml-2 border rounded-md px-2 py-1 text-sm"
-              >
-                {statusOptions.map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-            </p>
-            <p className="text-sm text-gray-700 mb-1">
-              Besoin : {popupMember.besoin || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-1">
-              Infos : {popupMember.infos_supplementaires || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-3">
-              Comment venu : {popupMember.comment || "—"}
-            </p>
-
-            <p className="text-green-600 font-semibold mt-2">Cellule :</p>
-            <select
-              value={selectedCellules[popupMember.id] || ""}
-              onChange={(e) =>
-                setSelectedCellules((prev) => ({
-                  ...prev,
-                  [popupMember.id]: e.target.value,
-                }))
-              }
-              className="border rounded-lg px-2 py-1 text-sm w-full"
-            >
-              <option value="">-- Sélectionner cellule --</option>
-              {cellules.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule} ({c.responsable})
-                </option>
-              ))}
-            </select>
-
-            {selectedCellules[popupMember.id] && (
-              <div className="mt-3">
-                <BoutonEnvoyer
-                  membre={popupMember}
-                  cellule={cellules.find(
-                    (c) => String(c.id) === String(selectedCellules[popupMember.id])
-                  )}
-                  onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                  session={session} // ✅ Passer session
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
