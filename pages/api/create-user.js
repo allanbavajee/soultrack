@@ -1,7 +1,8 @@
-// pages/api/create-user.js
-
+// ✅ pages/api/create-user.js
+import { createClient } from "@supabase/supabase-js"; // ← import manquant corrigé
 import supabase from "../../lib/supabaseClient";
-// ⚠️ Utilise la clé service_role ici (jamais côté client !)
+
+// ⚠️ Crée un client admin avec la clé service_role (jamais côté client)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY // à définir dans .env.local
@@ -13,19 +14,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, password, prenom, nom, role } = req.body;
+    const { email, password, prenom, nom, telephone, role } = req.body;
 
     if (!email || !password || !prenom || !nom) {
       return res.status(400).json({ error: "Champs requis manquants." });
     }
 
     // ✅ Étape 1 : Créer l'utilisateur dans Auth
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password, // tu peux générer un mot de passe aléatoire si tu veux
-      email_confirm: true, // optionnel, évite confirmation manuelle
-      user_metadata: { prenom, nom, role },
-    });
+    const { data: userData, error: userError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true, // évite confirmation par email
+        user_metadata: { prenom, nom, telephone, role },
+      });
 
     if (userError) {
       console.error("Erreur création utilisateur Auth:", userError);
@@ -34,13 +36,14 @@ export default async function handler(req, res) {
 
     const user = userData.user;
 
-    // ✅ Étape 2 : Créer un profil lié à l'ID Auth
+    // ✅ Étape 2 : Créer le profil lié à l'utilisateur
     const { error: profileError } = await supabaseAdmin.from("profiles").insert([
       {
         id: user.id, // même ID que l’utilisateur Auth
         email,
         prenom,
         nom,
+        telephone,
         role,
         created_at: new Date(),
       },
@@ -51,14 +54,13 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: profileError.message });
     }
 
-    // ✅ Réponse finale
+    // ✅ Réponse finale propre
     return res.status(200).json({
       message: "Utilisateur créé avec succès.",
-      user: { id: user.id, email, prenom, nom, role },
+      userId: user.id,
     });
   } catch (error) {
     console.error("Erreur interne:", error);
     return res.status(500).json({ error: "Erreur interne du serveur." });
   }
 }
-
