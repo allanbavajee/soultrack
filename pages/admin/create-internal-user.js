@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/router";
-import AccessGuard from "../../components/AccessGuard";
 
 export default function CreateResponsable() {
   const router = useRouter();
@@ -13,7 +12,7 @@ export default function CreateResponsable() {
     email: "",
     telephone: "",
     password: "",
-    role: "Responsable Integration", // rôle par défaut
+    role: "ResponsableIntegration", // par défaut
   });
 
   const [loading, setLoading] = useState(false);
@@ -32,23 +31,24 @@ export default function CreateResponsable() {
     setMessage(null);
 
     try {
-      const res = await fetch("/api/createUser", {
+      const res = await fetch("/api/create-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.error || "Erreur inconnue");
 
-      setMessage(`✅ ${formData.role} créé avec succès ! ID: ${data.userId}`);
+      setMessage(`✅ ${formData.role} créé avec succès !`);
       setFormData({
         prenom: "",
         nom: "",
         email: "",
         telephone: "",
         password: "",
-        role: "Responsable Integration",
+        role: "ResponsableIntegration",
       });
     } catch (err) {
       console.error("Erreur création responsable :", err);
@@ -140,7 +140,7 @@ export default function CreateResponsable() {
             />
           </div>
 
-          {/* Sélection du rôle */}
+          {/* Rôle */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Rôle</label>
             <select
@@ -156,12 +156,14 @@ export default function CreateResponsable() {
             </select>
           </div>
 
-          {/* Bouton de soumission */}
+          {/* Bouton */}
           <button
             type="submit"
             disabled={loading}
             className={`w-full py-3 rounded-2xl text-white font-semibold transition ${
-              loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700"
             }`}
           >
             {loading ? "Création..." : "Créer le responsable"}
@@ -169,7 +171,11 @@ export default function CreateResponsable() {
         </form>
 
         {message && (
-          <div className="mt-4 text-center font-semibold text-indigo-700">
+          <div
+            className={`mt-4 text-center font-semibold ${
+              message.startsWith("✅") ? "text-green-600" : "text-red-600"
+            }`}
+          >
             {message}
           </div>
         )}
