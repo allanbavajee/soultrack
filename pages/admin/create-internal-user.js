@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/router";
+import AccessGuard from "../components/AccessGuard";
 
 export default function CreateResponsable() {
   const router = useRouter();
