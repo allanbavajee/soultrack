@@ -1,49 +1,80 @@
 //pages/admin/membres-cellule.js
-
 "use client";
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-// 🔹 Remplacer par les infos réelles du user connecté
-// Pour test, on simule ici un responsable de cellule ou un admin
-const currentUser = {
-  email: "cellule@soultrack.com",          // email du user
-  role: "ResponsableCellule",              // "Admin" ou "ResponsableCellule"
-  cellule_id: "d30d84bb-cb28-41ee-8a9c-bc185ae74dc3", // id de sa cellule
-};
-
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const fetchMembres = async () => {
       setLoading(true);
 
-      // 🔹 Construction de la requête
-      let query = supabase
-        .from("membres")
-        .select(`
-          id,
-          nom,
-          prenom,
-          telephone,
-          ville,
-          cellule_id,
-          cellules (cellule, responsable)
-        `)
-        .not("cellule_id", "is", null); // seulement ceux assignés à une cellule
+      try {
+        // 🔹 Récupérer l'utilisateur courant
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-      // 🔹 Filtre pour responsable de cellule
-      if (currentUser.role === "ResponsableCellule") {
-        query = query.eq("cellule_id", currentUser.cellule_id);
+        if (userError) {
+          console.error("Erreur récupération user :", userError);
+          setLoading(false);
+          return;
+        }
+
+        if (!user) {
+          console.error("Aucun utilisateur connecté");
+          setLoading(false);
+          return;
+        }
+
+        // 🔹 Récupérer le profil complet avec rôle
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, email, role, roles")
+          .eq("id", user.id)
+          .single();
+
+        if (profileError) {
+          console.error("Erreur récupération profil :", profileError);
+          setLoading(false);
+          return;
+        }
+
+        setCurrentUser(profile);
+
+        // 🔹 Construire la requête des membres
+        let query = supabase
+          .from("membres")
+          .select(`
+            id,
+            nom,
+            prenom,
+            telephone,
+            ville,
+            cellule_id,
+            cellules (cellule, responsable)
+          `)
+          .not("cellule_id", "is", null);
+
+        // 🔹 Filtrer uniquement si ResponsableCellule
+        const rolesArray = Array.isArray(profile.roles) ? profile.roles : [profile.role];
+        if (rolesArray.includes("ResponsableCellule")) {
+          query = query.eq("cellule_id", profile.cellule_id);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error("Erreur Supabase :", error);
+        } else {
+          setMembres(data);
+        }
+
+      } catch (err) {
+        console.error("Erreur inattendue :", err);
       }
-
-      const { data, error } = await query;
-
-      if (error) console.error("Erreur Supabase :", error);
-      else setMembres(data);
 
       setLoading(false);
     };
@@ -51,13 +82,11 @@ export default function MembresCellule() {
     fetchMembres();
   }, []);
 
-  if (loading) return <p>Chargement...</p>;
+  if (loading) return <p className="text-center mt-10">Chargement...</p>;
   if (membres.length === 0)
-    return (
-      <p className="text-center text-gray-600 mt-10">
-        Aucun membre assigné à une cellule.
-      </p>
-    );
+    return <p className="text-center text-gray-600 mt-10">
+      Aucun membre assigné à une cellule.
+    </p>;
 
   return (
     <div className="p-6 min-h-screen bg-gradient-to-b from-indigo-100 to-indigo-50">
@@ -77,10 +106,7 @@ export default function MembresCellule() {
           </thead>
           <tbody>
             {membres.map((membre) => (
-              <tr
-                key={membre.id}
-                className="border-b hover:bg-indigo-50 transition-all"
-              >
+              <tr key={membre.id} className="border-b hover:bg-indigo-50 transition-all">
                 <td className="py-3 px-4 font-semibold text-gray-700">
                   {membre.nom} {membre.prenom}
                 </td>
