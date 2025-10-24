@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
+import AccessGuard from "../components/AccessGuard";
 
 export default function HomePage() {
   const router = useRouter();
