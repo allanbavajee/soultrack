@@ -1,7 +1,7 @@
 //components/BoutonEnvoyer.js
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session }) {
@@ -23,6 +23,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
     try {
       const now = new Date().toISOString();
 
+      // Préparer les données à insérer dans la table suivis_des_membres
       const suiviData = {
         prenom: membre.prenom,
         nom: membre.nom,
@@ -36,17 +37,19 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         date_suivi: now,
       };
 
+      // Insertion dans Supabase
       const { error: insertError } = await supabase
         .from("suivis_des_membres")
         .insert([suiviData]);
 
       if (insertError) {
-        console.error("Erreur lors de l'insertion du suivi :", insertError.message);
+        console.error("Erreur insertion suivi :", insertError.message);
         alert("❌ Une erreur est survenue lors de l’enregistrement du suivi.");
         setLoading(false);
         return;
       }
 
+      // Préparer le message WhatsApp
       let message = `👋 Salut ${cellule.responsable},\n\n🙏 Nous avons un nouveau membre à suivre :\n\n`;
       message += `- 👤 Nom : ${membre.prenom || ""} ${membre.nom || ""}\n`;
       message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
@@ -56,12 +59,14 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
       message += `- 📝 Infos supplémentaires : ${membre.infos_supplementaires || "—"}\n\n`;
       message += "🙏 Merci pour ton cœur ❤ et ton amour ✨";
 
+      // Ouvrir WhatsApp
       const phone = cellule.telephone.replace(/\D/g, "");
       window.open(
         `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
         "_blank"
       );
 
+      // Mettre à jour le statut du membre
       if (onStatusUpdate) {
         onStatusUpdate(membre.id, "Integrer");
       }
@@ -85,3 +90,4 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
     </button>
   );
 }
+
