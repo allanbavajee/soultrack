@@ -1,5 +1,4 @@
 //pages/membres-cellule.js
-
 "use client";
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
@@ -10,6 +9,10 @@ export default function Membres({ currentUser }) {
 
   useEffect(() => {
     async function fetchMembres() {
+      if (!currentUser) {
+        return; // On attend que currentUser soit défini
+      }
+
       let query = supabase.from("membres").select("*");
 
       // Filtre par rôle
@@ -27,7 +30,8 @@ export default function Membres({ currentUser }) {
     fetchMembres();
   }, [currentUser]);
 
-  if (loading) return <p>Chargement...</p>;
+  if (!currentUser) return <p>Chargement utilisateur...</p>;
+  if (loading) return <p>Chargement membres...</p>;
   if (!membres.length) return <p>Aucun membre à afficher.</p>;
 
   return (
@@ -41,5 +45,3 @@ export default function Membres({ currentUser }) {
     </div>
   );
 }
-
-
