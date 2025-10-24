@@ -321,7 +321,6 @@ export default function ListMembers() {
                   </td>
                 </tr>
               )}
-
               {nouveauxFiltres.map((m, index) => (
                 <tr
                   key={m.id}
@@ -360,7 +359,6 @@ export default function ListMembers() {
                   </td>
                 </tr>
               ))}
-
               {anciensFiltres.length > 0 && (
                 <tr>
                   <td colSpan={4} className="px-4 py-2 font-semibold">
@@ -377,7 +375,6 @@ export default function ListMembers() {
                   </td>
                 </tr>
               )}
-
               {anciensFiltres.map((m, index) => (
                 <tr
                   key={m.id}
@@ -482,10 +479,11 @@ export default function ListMembers() {
                 <BoutonEnvoyer
                   membre={popupMember}
                   cellule={cellules.find(
-                    (c) => String(c.id) === String(selectedCellules[popupMember.id])
+                    (c) =>
+                      String(c.id) === String(selectedCellules[popupMember.id])
                   )}
                   onStatusUpdate={handleStatusUpdateFromEnvoyer}
-                  session={session} // <-- session passée ici
+                  session={session} // <-- session vérifiée
                 />
               </div>
             )}
@@ -495,5 +493,4 @@ export default function ListMembers() {
     </div>
   );
 }
-
 
