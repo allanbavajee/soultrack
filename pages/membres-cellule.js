@@ -1,47 +1,27 @@
 //pages/admin/membres-cellule.js
+
 "use client";
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 
+// 🔹 Remplacer par les infos réelles du user connecté
+// Pour test, on simule ici un responsable de cellule ou un admin
+const currentUser = {
+  email: "cellule@soultrack.com",          // email du user
+  role: "ResponsableCellule",              // "Admin" ou "ResponsableCellule"
+  cellule_id: "d30d84bb-cb28-41ee-8a9c-bc185ae74dc3", // id de sa cellule
+};
+
 export default function MembresCellule() {
   const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    // 🔹 Récupérer l'utilisateur connecté et son rôle
-    const fetchUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) {
-        console.error("Erreur récupération user :", error);
-        return;
-      }
-
-      // 🔹 Récupérer le profil complet pour avoir role et cellule_id
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role, roles, cellule_id")
-        .eq("email", user.email)
-        .single();
-
-      if (profileError) {
-        console.error("Erreur récupération profil :", profileError);
-        return;
-      }
-
-      setCurrentUser(profile);
-    };
-
-    fetchUser();
-  }, []);
-
-  useEffect(() => {
-    if (!currentUser) return; // on attend d'avoir currentUser
-
     const fetchMembres = async () => {
       setLoading(true);
 
+      // 🔹 Construction de la requête
       let query = supabase
         .from("membres")
         .select(`
@@ -53,9 +33,9 @@ export default function MembresCellule() {
           cellule_id,
           cellules (cellule, responsable)
         `)
-        .not("cellule_id", "is", null);
+        .not("cellule_id", "is", null); // seulement ceux assignés à une cellule
 
-      // 🔹 Filtre pour le responsable de cellule
+      // 🔹 Filtre pour responsable de cellule
       if (currentUser.role === "ResponsableCellule") {
         query = query.eq("cellule_id", currentUser.cellule_id);
       }
@@ -69,10 +49,9 @@ export default function MembresCellule() {
     };
 
     fetchMembres();
-  }, [currentUser]);
+  }, []);
 
-  if (!currentUser) return <p>Chargement utilisateur...</p>;
-  if (loading) return <p>Chargement membres...</p>;
+  if (loading) return <p>Chargement...</p>;
   if (membres.length === 0)
     return (
       <p className="text-center text-gray-600 mt-10">
