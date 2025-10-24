@@ -473,90 +473,87 @@ export default function ListMembers() {
           </table>
         </div>
       )}
-
       {/* ✅ Popup Détails */}
-      {popupMember && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
-            <button
-              onClick={() => setPopupMember(null)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
-            >
-              ✖
-            </button>
-            <h2 className="text-xl font-bold mb-2 text-indigo-700">
-              {popupMember.prenom} {popupMember.nom}
-            </h2>
-            <p className="text-gray-700 text-sm mb-1">
-              📱 {popupMember.telephone || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-2">
-              Statut :
-              <select
-                value={popupMember.statut}
-                onChange={(e) =>
-                  handleChangeStatus(popupMember.id, e.target.value)
-                }
-                className="ml-2 border rounded-md px-2 py-1 text-sm"
-              >
-                {statusOptions.map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-            </p>
-            <p className="text-sm text-gray-700 mb-1">
-              Besoin : {popupMember.besoin || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-1">
-              Infos : {popupMember.infos_supplementaires || "—"}
-            </p>
-            <p className="text-sm text-gray-700 mb-3">
-              Comment venu : {popupMember.comment || "—"}
-            </p>
+{popupMember && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
+    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative">
+      <button
+        onClick={() => setPopupMember(null)}
+        className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+      >
+        ✖
+      </button>
+      <h2 className="text-xl font-bold mb-2 text-indigo-700">
+        {popupMember.prenom} {popupMember.nom}
+      </h2>
+      <p className="text-gray-700 text-sm mb-1">
+        📱 {popupMember.telephone || "—"}
+      </p>
+      <p className="text-sm text-gray-700 mb-2">
+        Statut :
+        <select
+          value={popupMember.statut}
+          onChange={(e) =>
+            handleChangeStatus(popupMember.id, e.target.value)
+          }
+          className="ml-2 border rounded-md px-2 py-1 text-sm"
+        >
+          {statusOptions.map((s) => (
+            <option key={s}>{s}</option>
+          ))}
+        </select>
+      </p>
+      <p className="text-sm text-gray-700 mb-1">
+        Besoin : {popupMember.besoin || "—"}
+      </p>
+      <p className="text-sm text-gray-700 mb-1">
+        Infos : {popupMember.infos_supplementaires || "—"}
+      </p>
+      <p className="text-sm text-gray-700 mb-3">
+        Comment venu : {popupMember.comment || "—"}
+      </p>
 
-            <p className="text-green-600 font-semibold mt-2">Cellule :</p>
-            <select
-              value={selectedCellules[popupMember.id] || ""}
-              onChange={(e) =>
-                setSelectedCellules((prev) => ({
-                  ...prev,
-                  [popupMember.id]: e.target.value,
-                }))
-              }
-              className="border rounded-lg px-2 py-1 text-sm w-full mb-3"
-            >
-              <option value="">-- Sélectionner cellule --</option>
-              {cellules.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.cellule} ({c.responsable})
-                </option>
-              ))}
-            </select>
+      <p className="text-green-600 font-semibold mt-2">Cellule :</p>
+      <select
+        value={selectedCellules[popupMember.id] || ""}
+        onChange={(e) =>
+          setSelectedCellules((prev) => ({
+            ...prev,
+            [popupMember.id]: e.target.value,
+          }))
+        }
+        className="border rounded-lg px-2 py-1 text-sm w-full"
+      >
+        <option value="">-- Sélectionner cellule --</option>
+        {cellules.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.cellule} ({c.responsable})
+          </option>
+        ))}
+      </select>
 
-            {selectedCellules[popupMember.id] && (
-              <button
-                onClick={() =>
-                  sendWhatsapp(
-                    popupMember,
-                    cellules.find(
-                      (c) =>
-                        String(c.id) === String(selectedCellules[popupMember.id])
-                    )
-                  )
-                }
-                disabled={loadingSend}
-                className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg transition-all ${
-                  loadingSend
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-green-500 hover:bg-green-600"
-                }`}
-              >
-                {loadingSend ? "Envoi..." : "Envoyer par WhatsApp"}
-              </button>
+      {/* Gestion session */}
+      {session === null ? (
+        <p className="text-gray-700 text-sm mt-3">Chargement...</p>
+      ) : !session ? (
+        <p className="text-red-500 text-sm mt-3">
+          ❌ Vous devez être connecté pour envoyer un membre à une cellule.
+        </p>
+      ) : selectedCellules[popupMember.id] ? (
+        <div className="mt-3">
+          <BoutonEnvoyer
+            membre={popupMember}
+            cellule={cellules.find(
+              (c) =>
+                String(c.id) === String(selectedCellules[popupMember.id])
             )}
-          </div>
+            onStatusUpdate={handleStatusUpdateFromEnvoyer}
+            session={session} // ⚡ session transmise ici
+          />
         </div>
-      )}
+      ) : null}
     </div>
-  );
-}
+  </div>
+)}
+
+      
