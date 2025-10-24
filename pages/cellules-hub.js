@@ -51,7 +51,7 @@ export default function EvangelisationHub() {
 
         {/* Liste des évangélisés */}
         <Link
-          href="/membres-cellules
+          href="admin/membres-cellules"
           className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
         >
           <div className="text-5xl mb-2">👥</div>
@@ -82,7 +82,7 @@ export default function EvangelisationHub() {
         </Link>
       </div>
       <Link
-          href="/ajouter-membre-cellule"
+          href="admin/ajouter-membre-cellule"
           className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
         >
           <div className="text-5xl mb-2">📋</div>
