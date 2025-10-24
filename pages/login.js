@@ -1,3 +1,4 @@
+//pages/login.js
 "use client";
 
 import { useState } from "react";
@@ -37,7 +38,7 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Stocke les infos utilisateur
+      // ✅ Stockage des infos utilisateur
       localStorage.setItem("userEmail", user.email);
       localStorage.setItem("userName", `${user.prenom || ""} ${user.nom || ""}`.trim());
       localStorage.setItem("userRole", JSON.stringify(user.roles || [user.role || "Membre"]));
@@ -63,6 +64,7 @@ export default function LoginPage() {
           break;
 
         case "ResponsableCellule":
+          // ✅ Redirection vers la page principale du responsable de cellule
           redirectUrl = "/cellules-hub";
           break;
 
@@ -74,9 +76,10 @@ export default function LoginPage() {
 
       console.log("🔀 Redirection vers :", redirectUrl);
 
+      // 🧠 Nouvelle méthode : attendre un petit instant avant navigation
       setTimeout(() => {
-        window.location.href = redirectUrl;
-      }, 300);
+        router.push(redirectUrl);
+      }, 200);
     } catch (err) {
       console.error("Erreur de connexion :", err);
       setError("Erreur interne ❌");
