@@ -7,11 +7,13 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
   const [loading, setLoading] = useState(false);
 
   const sendToWhatsapp = async () => {
+    // ❌ Vérification session
     if (!session) {
       alert("❌ Vous devez être connecté pour envoyer un membre à une cellule.");
       return;
     }
 
+    // ❌ Vérification cellule
     if (!cellule) {
       alert("❌ Sélectionnez une cellule !");
       return;
@@ -36,7 +38,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         date_suivi: now,
       };
 
-      // Insertion dans la table Supabase
+      // Insertion dans Supabase
       const { error: insertError } = await supabase
         .from("suivis_des_membres")
         .insert([suiviData]);
