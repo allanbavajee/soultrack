@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
+import AccessGuard from "../components/AccessGuard";
 
 export default function LoginPage() {
   const router = useRouter();
