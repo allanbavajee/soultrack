@@ -4,7 +4,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import AccessGuard from "../components/AccessGuard";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,7 +20,6 @@ export default function LoginPage() {
     try {
       console.log("Tentative de login :", email, password);
 
-      // 🔹 Vérification via ta fonction RPC
       const { data, error: rpcError } = await supabase.rpc("verify_password", {
         user_email: email,
         user_password: password,
@@ -38,48 +36,23 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Stockage des infos utilisateur
+      const roles = user.roles || [user.role || "Membre"];
+
       localStorage.setItem("userEmail", user.email);
       localStorage.setItem("userName", `${user.prenom || ""} ${user.nom || ""}`.trim());
-      localStorage.setItem("userRole", JSON.stringify(user.roles || [user.role || "Membre"]));
+      localStorage.setItem("userRole", JSON.stringify(roles));
 
-      const roles = user.roles || [user.role || "Membre"];
-      const firstRole = roles[0];
-      console.log("✅ Rôle détecté :", firstRole);
+      console.log("✅ Rôle détecté :", roles[0]);
 
-      // 🔁 Redirection selon le rôle
-      let redirectUrl = "/index"; // par défaut
+      // 🔀 Détermination de la bonne redirection
+      let redirect = "/index";
+      if (roles.includes("Admin")) redirect = "/index";
+      else if (roles.includes("ResponsableCellule")) redirect = "/cellules-hub";
+      else if (roles.includes("ResponsableIntegration")) redirect = "/membres-hub";
+      else if (roles.includes("ResponsableEvangelisation")) redirect = "/evangelisation-hub";
 
-      switch (firstRole) {
-        case "Admin":
-          redirectUrl = "/index";
-          break;
-
-        case "ResponsableIntegration":
-          redirectUrl = "/membres-hub";
-          break;
-
-        case "ResponsableEvangelisation":
-          redirectUrl = "/evangelisation-hub";
-          break;
-
-        case "ResponsableCellule":
-          // ✅ Redirection vers la page principale du responsable de cellule
-          redirectUrl = "/cellules-hub";
-          break;
-
-        case "Membre":
-        default:
-          redirectUrl = "/index";
-          break;
-      }
-
-      console.log("🔀 Redirection vers :", redirectUrl);
-
-      // 🧠 Nouvelle méthode : attendre un petit instant avant navigation
-      setTimeout(() => {
-        router.push(redirectUrl);
-      }, 200);
+      console.log("🔀 Redirection vers :", redirect);
+      await router.push(redirect);
     } catch (err) {
       console.error("Erreur de connexion :", err);
       setError("Erreur interne ❌");
