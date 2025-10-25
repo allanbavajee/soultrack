@@ -3,13 +3,13 @@
 import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req, res) {
-  console.log("➡️ [API] /api/createUser appelée");
+  console.log("➡️ [API] /api/create-user appelée");
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
-  // ✅ Création du client admin avec la clé service_role
+  // ⚙️ Crée le client Supabase admin avec la clé service role
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -18,29 +18,29 @@ export default async function handler(req, res) {
   try {
     const { email, password, prenom, nom, telephone, role } = req.body;
 
+    // 🧾 Vérifie les champs
     if (!email || !password || !prenom || !nom) {
-      console.log("❌ Champs manquants :", req.body);
+      console.warn("❌ Champs manquants :", req.body);
       return res.status(400).json({ error: "Champs requis manquants." });
     }
 
     console.log("🟡 Création de l'utilisateur Supabase Auth...");
-    const { data: userData, error: userError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { prenom, nom, telephone, role },
-      });
+    const { data, error: userError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { prenom, nom, telephone, role },
+    });
 
     if (userError) {
       console.error("❌ Erreur création utilisateur Auth:", userError);
       return res.status(500).json({ error: userError.message });
     }
 
-    const user = userData.user;
+    const user = data.user;
     console.log("✅ Utilisateur créé :", user.id);
 
-    console.log("🟡 Insertion du profil...");
+    console.log("🟡 Insertion du profil dans la table profiles...");
     const { error: profileError } = await supabaseAdmin.from("profiles").insert([
       {
         id: user.id,
@@ -65,7 +65,7 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error("🔥 Erreur interne du serveur:", error);
-    // ⚠️ On renvoie toujours une réponse JSON, même en cas d’erreur
+    // ⚠️ Toujours renvoyer une réponse JSON même en cas d’erreur
     return res.status(500).json({ error: error.message || "Erreur serveur" });
   }
 }
