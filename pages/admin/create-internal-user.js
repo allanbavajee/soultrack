@@ -1,3 +1,4 @@
+//admin/create-internal-user.js
 "use client";
 
 import { useState } from "react";
@@ -12,32 +13,47 @@ export default function CreateResponsable() {
     email: "",
     telephone: "",
     password: "",
-    role: "ResponsableIntegration", // par défaut
+    role: "ResponsableIntegration",
   });
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
-  // Gestion du changement des champs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Soumission du formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
 
     try {
+      console.log("🚀 Envoi des données :", formData);
+
       const res = await fetch("/api/create-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
+      console.log("📥 Réponse brute :", res);
+
+      // 👇 On teste avant de faire .json()
+      const text = await res.text();
+      console.log("📦 Contenu brut reçu :", text);
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        console.error("⚠️ Impossible de parser la réponse JSON :", err);
+        setMessage("❌ Réponse invalide du serveur.");
+        return;
+      }
+
+      console.log("✅ Données JSON parsées :", data);
 
       if (!res.ok) throw new Error(data.error || "Erreur inconnue");
 
@@ -51,7 +67,7 @@ export default function CreateResponsable() {
         role: "ResponsableIntegration",
       });
     } catch (err) {
-      console.error("Erreur création responsable :", err);
+      console.error("❌ Erreur création responsable :", err);
       setMessage(`❌ Erreur : ${err.message}`);
     } finally {
       setLoading(false);
@@ -76,7 +92,6 @@ export default function CreateResponsable() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Prénom */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Prénom</label>
             <input
@@ -89,7 +104,6 @@ export default function CreateResponsable() {
             />
           </div>
 
-          {/* Nom */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Nom</label>
             <input
@@ -102,7 +116,6 @@ export default function CreateResponsable() {
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Email</label>
             <input
@@ -115,7 +128,6 @@ export default function CreateResponsable() {
             />
           </div>
 
-          {/* Téléphone */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
             <input
@@ -127,7 +139,6 @@ export default function CreateResponsable() {
             />
           </div>
 
-          {/* Mot de passe */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Mot de passe</label>
             <input
@@ -140,7 +151,6 @@ export default function CreateResponsable() {
             />
           </div>
 
-          {/* Rôle */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">Rôle</label>
             <select
@@ -156,7 +166,6 @@ export default function CreateResponsable() {
             </select>
           </div>
 
-          {/* Bouton */}
           <button
             type="submit"
             disabled={loading}
