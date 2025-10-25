@@ -12,19 +12,17 @@ export default function CreateResponsable() {
     email: "",
     telephone: "",
     password: "",
-    role: "ResponsableIntegration", // rôle par défaut
+    role: "ResponsableIntegration",
   });
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
-  // Gestion du changement des champs
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData({ ...formData, [name]: value });
   };
 
-  // Soumission du formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -37,16 +35,13 @@ export default function CreateResponsable() {
         body: JSON.stringify(formData),
       });
 
-      let data;
-      try {
-        data = await res.json();
-      } catch (err) {
-        throw new Error("❌ Réponse invalide du serveur.");
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Réponse invalide du serveur.");
       }
 
-      if (!res.ok) throw new Error(data.error || "Erreur inconnue");
-
-      setMessage(`✅ ${formData.role} créé avec succès ! ID: ${data.userId}`);
+      setMessage(`✅ ${formData.role} créé avec succès !`);
       setFormData({
         prenom: "",
         nom: "",
@@ -159,9 +154,7 @@ export default function CreateResponsable() {
             type="submit"
             disabled={loading}
             className={`w-full py-3 rounded-2xl text-white font-semibold transition ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700"
+              loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
             }`}
           >
             {loading ? "Création..." : "Créer le responsable"}
