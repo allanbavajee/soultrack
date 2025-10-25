@@ -1,60 +1,77 @@
+// ✅ pages/api/create-user.js
 import { createClient } from "@supabase/supabase-js";
 
-// 🧩 Vérifie que les variables sont bien présentes
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error("❌ Clés Supabase manquantes dans les variables d'environnement.");
-}
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
 export default async function handler(req, res) {
+  console.log("➡️ [API] /api/create-user appelée");
+
   // ✅ Vérifie la méthode
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
-  try {
-    const { email, password, role } = req.body;
+  // ✅ Vérifie la configuration des clés
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("❌ Clés Supabase manquantes !");
+    return res.status(500).json({ error: "Clé Supabase non configurée sur le serveur." });
+  }
 
-    if (!email || !password || !role) {
-      return res.status(400).json({ error: "Champs requis manquants" });
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
+  try {
+    const { email, password, prenom, nom, telephone, role } = req.body;
+
+    if (!email || !password || !prenom || !nom) {
+      return res.status(400).json({ error: "Champs requis manquants." });
     }
 
-    // ✅ Création de l'utilisateur dans Auth
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Le mot de passe doit contenir au moins 6 caractères." });
+    }
+
+    console.log("🟡 Création utilisateur Auth...");
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // confirmation immédiate pour pouvoir se connecter
-      user_metadata: { role },
+      email_confirm: true,
+      user_metadata: { prenom, nom, telephone, role },
     });
 
     if (userError) {
-      console.error("❌ Erreur création user :", userError.message);
-      return res.status(400).json({ error: userError.message });
+      console.error("❌ Erreur création Auth:", userError);
+      return res.status(500).json({ error: userError.message });
     }
 
-    // ✅ Ajout du rôle dans ta table "users" si tu en as une
-    const { error: dbError } = await supabaseAdmin
-      .from("users")
-      .insert([{ email, role }]);
+    const user = userData.user;
+    console.log("✅ Utilisateur créé :", user.id);
 
-    if (dbError) {
-      console.error("⚠️ Erreur insertion base :", dbError.message);
-      // On continue quand même, l'utilisateur Auth est créé
+    console.log("🟡 Insertion du profil...");
+    const { error: profileError } = await supabaseAdmin.from("profiles").insert([
+      {
+        id: user.id,
+        email,
+        prenom,
+        nom,
+        telephone,
+        role,
+        created_at: new Date(),
+      },
+    ]);
+
+    if (profileError) {
+      console.error("❌ Erreur création profil:", profileError);
+      return res.status(500).json({ error: profileError.message });
     }
 
-    console.log("✅ Utilisateur créé avec succès :", userData.user.email);
-
+    console.log("✅ Profil inséré avec succès !");
     return res.status(200).json({
-      message: "Utilisateur créé avec succès",
-      user: userData.user,
+      message: "Utilisateur créé avec succès.",
+      userId: user.id,
     });
-
   } catch (error) {
-    console.error("🔥 Erreur inattendue :", error);
-    return res.status(500).json({ error: "Erreur serveur interne" });
+    console.error("🔥 Erreur interne :", error);
+    return res.status(500).json({ error: error.message || "Erreur serveur." });
   }
 }
