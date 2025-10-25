@@ -12,7 +12,7 @@ export default function CreateResponsable() {
     email: "",
     telephone: "",
     password: "",
-    role: "ResponsableIntegration",
+    role: "ResponsableIntegration", // par défaut
   });
 
   const [loading, setLoading] = useState(false);
@@ -35,13 +35,18 @@ export default function CreateResponsable() {
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        throw new Error(data?.error || "Réponse invalide du serveur.");
+      // ⚠️ Toujours essayer de parser la réponse JSON
+      let data;
+      try {
+        data = await res.json();
+      } catch (err) {
+        console.error("❌ Impossible de parser la réponse JSON :", err);
+        throw new Error("Réponse invalide du serveur.");
       }
 
-      setMessage(`✅ ${formData.role} créé avec succès !`);
+      if (!res.ok) throw new Error(data.error || "Erreur inconnue");
+
+      setMessage(`✅ ${formData.role} créé avec succès ! ID: ${data.userId}`);
       setFormData({
         prenom: "",
         nom: "",
@@ -71,9 +76,7 @@ export default function CreateResponsable() {
         <h1 className="text-3xl font-bold text-center text-indigo-700 mb-2">
           Créer un responsable
         </h1>
-        <p className="text-center text-gray-500 italic mb-6">
-          « Servir, c’est régner » 👑
-        </p>
+        <p className="text-center text-gray-500 italic mb-6">« Servir, c’est régner » 👑</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
