@@ -12,7 +12,7 @@ export default function CreateResponsable() {
     email: "",
     telephone: "",
     password: "",
-    role: "ResponsableIntegration", // par défaut
+    role: "ResponsableIntegration",
   });
 
   const [loading, setLoading] = useState(false);
@@ -20,7 +20,7 @@ export default function CreateResponsable() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -35,18 +35,13 @@ export default function CreateResponsable() {
         body: JSON.stringify(formData),
       });
 
-      // ⚠️ Toujours essayer de parser la réponse JSON
-      let data;
-      try {
-        data = await res.json();
-      } catch (err) {
-        console.error("❌ Impossible de parser la réponse JSON :", err);
-        throw new Error("Réponse invalide du serveur.");
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Réponse invalide du serveur.");
       }
 
-      if (!res.ok) throw new Error(data.error || "Erreur inconnue");
-
-      setMessage(`✅ ${formData.role} créé avec succès ! ID: ${data.userId}`);
+      setMessage(`✅ ${formData.role} créé avec succès !`);
       setFormData({
         prenom: "",
         nom: "",
@@ -76,67 +71,26 @@ export default function CreateResponsable() {
         <h1 className="text-3xl font-bold text-center text-indigo-700 mb-2">
           Créer un responsable
         </h1>
-        <p className="text-center text-gray-500 italic mb-6">« Servir, c’est régner » 👑</p>
+        <p className="text-center text-gray-500 italic mb-6">
+          « Servir, c’est régner » 👑
+        </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Prénom</label>
-            <input
-              type="text"
-              name="prenom"
-              value={formData.prenom}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Nom</label>
-            <input
-              type="text"
-              name="nom"
-              value={formData.nom}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
-            <input
-              type="text"
-              name="telephone"
-              value={formData.telephone}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Mot de passe</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
-            />
-          </div>
+          {["prenom", "nom", "email", "telephone", "password"].map((field) => (
+            <div key={field}>
+              <label className="block text-gray-700 font-medium mb-1">
+                {field.charAt(0).toUpperCase() + field.slice(1)}
+              </label>
+              <input
+                type={field === "password" ? "password" : "text"}
+                name={field}
+                value={formData[field]}
+                onChange={handleChange}
+                required={field !== "telephone"}
+                className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
+              />
+            </div>
+          ))}
 
           <div>
             <label className="block text-gray-700 font-medium mb-1">Rôle</label>
@@ -157,7 +111,9 @@ export default function CreateResponsable() {
             type="submit"
             disabled={loading}
             className={`w-full py-3 rounded-2xl text-white font-semibold transition ${
-              loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700"
             }`}
           >
             {loading ? "Création..." : "Créer le responsable"}
