@@ -1,49 +1,76 @@
 // ✅ pages/api/create-user.js
+// pages/api/create-user.js
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 export default async function handler(req, res) {
+  console.log("➡️ [API] /api/create-user appelée");
+
+  // ✅ Autoriser uniquement POST
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
+  // ✅ Vérifier la clé Supabase Service Role
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error("❌ Clé Supabase manquante !");
+    return res.status(500).json({ error: "Clé Supabase non configurée sur le serveur." });
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+
   try {
-    const { prenom, nom, email, telephone, password, role } = req.body;
+    const { email, password, prenom, nom, telephone, role } = req.body;
 
     if (!email || !password || !prenom || !nom) {
-      return res.status(400).json({ error: "Champs manquants" });
+      console.log("❌ Champs manquants :", req.body);
+      return res.status(400).json({ error: "Champs requis manquants." });
     }
 
-    // Création de l’utilisateur dans Supabase Auth
-    const { data: user, error: authError } = await supabase.auth.admin.createUser({
+    console.log("🟡 Création utilisateur Supabase Auth...");
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
       user_metadata: { prenom, nom, telephone, role },
     });
 
-    if (authError) {
-      console.error("Erreur création utilisateur :", authError);
-      return res.status(400).json({ error: authError.message });
+    if (userError) {
+      console.error("❌ Erreur création Auth:", userError);
+      return res.status(500).json({ error: userError.message });
     }
 
-    // Insertion dans la table "responsables"
-    const { error: insertError } = await supabase
-      .from("responsables")
-      .insert([{ prenom, nom, email, telephone, role, user_id: user.user.id }]);
+    const user = userData.user;
+    console.log("✅ Utilisateur créé :", user.id);
 
-    if (insertError) {
-      console.error("Erreur insertion base :", insertError);
-      return res.status(400).json({ error: insertError.message });
+    console.log("🟡 Insertion profil...");
+    const { error: profileError } = await supabaseAdmin.from("profiles").insert([
+      {
+        id: user.id,
+        email,
+        prenom,
+        nom,
+        telephone,
+        role,
+        created_at: new Date(),
+      },
+    ]);
+
+    if (profileError) {
+      console.error("❌ Erreur création profil:", profileError);
+      return res.status(500).json({ error: profileError.message });
     }
 
-    return res.status(200).json({ message: "Utilisateur créé avec succès !" });
+    console.log("✅ Profil créé avec succès !");
+    return res.status(200).json({
+      message: "Utilisateur créé avec succès.",
+      userId: user.id,
+    });
   } catch (error) {
-    console.error("Erreur serveur :", error);
-    return res.status(500).json({ error: "Erreur interne du serveur" });
+    console.error("🔥 Erreur interne du serveur :", error);
+    return res.status(500).json({ error: error.message || "Erreur serveur interne." });
   }
 }
+
