@@ -44,10 +44,31 @@ export default function IndexPage() {
         onClick={() => handleRedirect("cellules-hub")}
         className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
       >
-        <div className="text-4xl mb-1">🙌</div>
-        <div className="text-lg font-bold text-gray-800">Évangélisation</div>
+        <div className="text-4xl mb-1">🏠</div>
+        <div className="text-lg font-bold text-gray-800">Cellule</div>
       </div>
     </div>
+   <div
+        onClick={() => handleRedirect("Rapport")}
+        className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+      >
+        <div className="text-4xl mb-1">📊</div>
+        <div className="text-lg font-bold text-gray-800">Rapport</div>
+      </div>
+    </div>
+  <div
+        onClick={() => handleRedirect("administrateur")}
+        className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+      >
+        <div className="text-4xl mb-1">🧑‍💻</div>
+        <div className="text-lg font-bold text-gray-800">Admin</div>
+      </div>
+    </div>
+  <div className="text-white text-lg font-handwriting-light max-w-2xl">
+          Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
+          1 Corinthiens 12:14 ❤️
+        </div>
+      </div>
                                       
   );
 }
