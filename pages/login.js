@@ -1,6 +1,5 @@
 // pages/login.js
 
-// pages/login.js
 "use client";
 
 import { useState } from "react";
@@ -20,7 +19,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 🔑 Login Supabase
+      // 🔑 Connexion Supabase
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -32,7 +31,7 @@ export default function LoginPage() {
         return;
       }
 
-      // 🔍 Récupère le profil depuis "profiles"
+      // 🔍 Récupération du profil
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
@@ -45,15 +44,15 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Stocke les rôles sous forme d'array dans localStorage
+      // ✅ Enregistrement du rôle et de l'email
       const roles = Array.isArray(profile.role) ? profile.role : [profile.role];
       localStorage.setItem("userRole", JSON.stringify(roles));
       localStorage.setItem("userEmail", data.user.email);
 
-      console.log("✅ Login réussi, rôles :", roles);
+      console.log("✅ Connexion réussie :", roles);
 
-      // 🔀 Redirection vers index
-      if (router.pathname !== "/index") router.push("/index");
+      // 🔀 Redirection vers la page d'accueil
+      if (router.pathname !== "/") router.push("/");
     } catch (err) {
       console.error("Erreur de connexion :", err);
       setError("❌ Une erreur est survenue lors de la connexion.");
@@ -97,3 +96,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
