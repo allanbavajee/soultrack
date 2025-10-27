@@ -1,4 +1,5 @@
 // pages/login.js
+
 "use client";
 
 import { useState } from "react";
@@ -14,99 +15,49 @@ export default function LoginPage() {
 
   async function handleLogin(e) {
     e.preventDefault();
-    setLoading(true);
-    setError("");
+    setLoading(true); setError("");
 
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
-      if (authError || !data.user) {
-        setError("Email ou mot de passe incorrect ❌");
-        return;
-      }
+      if (authError) { setError("Email ou mot de passe incorrect ❌"); return; }
+      if (!data.user) { setError("Email ou mot de passe incorrect ❌"); return; }
 
-      const user = data.user;
-
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user.id)
+        .eq("id", data.user.id)
         .single();
 
-      if (profileError) {
-        console.error("Erreur récupération profil :", profileError);
-      }
+      localStorage.setItem("userEmail", data.user.email);
+      localStorage.setItem("userName", `${profile?.prenom || ""} ${profile?.nom || ""}`.trim());
+      localStorage.setItem("userRole", JSON.stringify(profile?.role || "Membre"));
 
-      // Normalisation du rôle
-      const normalizedRole = profile?.role
-        ? profile.role.trim().replace(/^./, c => c.toUpperCase())
-        : "Membre";
+      // Redirection
+      const role = profile?.role;
+      let path = "/index";
+      if (role === "ResponsableCellule") path = "/cellules-hub";
+      else if (role === "ResponsableIntegration") path = "/membres-hub";
+      else if (role === "ResponsableEvangelisation") path = "/evangelisation-hub";
 
-      localStorage.setItem("userEmail", user.email);
-      localStorage.setItem(
-        "userName",
-        `${profile?.prenom || ""} ${profile?.nom || ""}`.trim()
-      );
-      localStorage.setItem("userRole", JSON.stringify([normalizedRole]));
-
-      // Redirection selon rôle
-      let redirectPath = "/index";
-      if (normalizedRole === "Admin") redirectPath = "/index";
-      else if (normalizedRole === "ResponsableCellule") redirectPath = "/cellules-hub";
-      else if (normalizedRole === "ResponsableIntegration") redirectPath = "/membres-hub";
-      else if (normalizedRole === "ResponsableEvangelisation")
-        redirectPath = "/evangelisation-hub";
-
-      if (router.pathname !== redirectPath) router.push(redirectPath);
-    } catch (err) {
-      console.error("Erreur de connexion :", err);
-      setError("Erreur interne ❌");
-    } finally {
-      setLoading(false);
-    }
+      router.push(path);
+    } catch (err) { setError("Erreur interne ❌"); }
+    finally { setLoading(false); }
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-blue-900">
+    <div className="flex items-center justify-center min-h-screen bg-blue-900">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-96">
-        <h1 className="text-2xl font-bold mb-6 text-center text-blue-800">
-          Connexion
-        </h1>
+        <h1 className="text-2xl font-bold mb-6 text-center text-blue-800">Connexion</h1>
         <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Mot de passe</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg"
-              required
-            />
-          </div>
+          <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" required className="w-full px-3 py-2 border rounded-lg"/>
+          <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Mot de passe" required className="w-full px-3 py-2 border rounded-lg"/>
           {error && <p className="text-red-600 text-sm text-center">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-700 hover:bg-blue-800 text-white py-2 rounded-lg font-semibold transition"
-          >
-            {loading ? "Connexion..." : "Se connecter"}
-          </button>
+          <button type="submit" disabled={loading} className="w-full bg-blue-700 text-white py-2 rounded-lg">{loading ? "Connexion..." : "Se connecter"}</button>
         </form>
       </div>
     </div>
   );
 }
+
 
