@@ -18,27 +18,18 @@ export default function LoginPage() {
     setError("");
 
     try {
-      console.log("Tentative de login :", email, password);
-
-      // 🔑 Connexion via Supabase Auth
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (authError) {
-        console.error("Erreur de connexion Supabase :", authError);
+      if (authError || !data.user) {
         setError("Email ou mot de passe incorrect ❌");
         return;
       }
 
       const user = data.user;
-      if (!user) {
-        setError("Email ou mot de passe incorrect ❌");
-        return;
-      }
 
-      // ✅ Récupère le profil dans la table "profiles"
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -46,33 +37,37 @@ export default function LoginPage() {
         .single();
 
       if (profileError) {
-        console.error("Erreur récupération profil :", profileError);
+        setError("Erreur récupération profil ❌");
+        return;
       }
 
-      // 🔒 Stockage local pour usage dans l'app
+      // Stockage en tableau JSON
       localStorage.setItem("userEmail", user.email);
       localStorage.setItem(
         "userName",
-        `${profile?.prenom || ""} ${profile?.nom || ""}`.trim()
+        `${profile.prenom || ""} ${profile.nom || ""}`.trim()
       );
-      localStorage.setItem("userRole", profile?.role || "Membre");
+      localStorage.setItem("userRole", JSON.stringify([profile.role || "Membre"]));
 
-      console.log("✅ Profil récupéré :", profile);
+      // Redirection selon rôle
+      let redirectPath = "/index";
+      switch (profile.role) {
+        case "Admin":
+          redirectPath = "/index";
+          break;
+        case "ResponsableCellule":
+          redirectPath = "/cellules-hub";
+          break;
+        case "ResponsableIntegration":
+          redirectPath = "/membres-hub";
+          break;
+        case "ResponsableEvangelisation":
+          redirectPath = "/evangelisation-hub";
+          break;
+      }
 
-      // 🔀 Redirection selon le rôle
-      let redirectPath = "/index"; // défaut
-      if (profile?.role === "Admin") redirectPath = "/index";
-      else if (profile?.role === "ResponsableCellule")
-        redirectPath = "/cellules-hub";
-      else if (profile?.role === "ResponsableIntegration")
-        redirectPath = "/membres-hub";
-      else if (profile?.role === "ResponsableEvangelisation")
-        redirectPath = "/evangelisation-hub";
-
-      console.log("🔀 Redirection vers :", redirectPath);
       router.push(redirectPath);
-    } catch (err) {
-      console.error("Erreur de connexion :", err);
+    } catch {
       setError("Erreur interne ❌");
     } finally {
       setLoading(false);
@@ -85,7 +80,6 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold mb-6 text-center text-blue-800">
           Connexion
         </h1>
-
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Email</label>
@@ -97,7 +91,6 @@ export default function LoginPage() {
               required
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700">Mot de passe</label>
             <input
@@ -108,9 +101,7 @@ export default function LoginPage() {
               required
             />
           </div>
-
           {error && <p className="text-red-600 text-sm text-center">{error}</p>}
-
           <button
             type="submit"
             disabled={loading}
@@ -123,3 +114,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
