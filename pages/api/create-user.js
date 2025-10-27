@@ -1,8 +1,8 @@
 // ✅ pages/api/create-user.js
-
+// pages/api/create-user.js
 import { createClient } from "@supabase/supabase-js";
 
-// ⚙️ Création d’un client ADMIN (avec la clé SERVICE_ROLE)
+// ⚠️ Toujours utiliser la clé SERVICE_ROLE côté serveur
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -20,38 +20,49 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ✅ Crée l’utilisateur dans Supabase Auth
-    const { data: userData, error: userError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { prenom, nom, telephone, role },
-      });
+    // ✅ Crée un utilisateur Supabase Auth
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { prenom, nom, telephone, role },
+    });
 
-    if (userError) throw userError;
+    if (userError) {
+      console.error("Erreur création utilisateur Auth :", userError);
+      return res.status(500).json({ error: userError.message });
+    }
+
     const user = userData.user;
 
-    // ✅ Ajoute son profil dans la table `profiles`
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .insert([
-        {
-          id: user.id,
-          prenom,
-          nom,
-          email,
-          telephone,
-          role,
-          created_at: new Date(),
-        },
-      ]);
+    // ✅ Crée un profil dans la table "profiles"
+    const { error: profileError } = await supabaseAdmin.from("profiles").insert([
+      {
+        id: user.id, // même ID que Auth
+        prenom,
+        nom,
+        email,
+        telephone,
+        role,
+        created_at: new Date(),
+      },
+    ]);
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error("Erreur création profil :", profileError);
+      return res.status(500).json({ error: profileError.message });
+    }
 
-    return res.status(200).json({ message: "Utilisateur créé avec succès ✅" });
-  } catch (error) {
-    console.error("❌ Erreur création utilisateur:", error);
-    return res.status(500).json({ error: error.message });
+    // ✅ Réponse JSON
+    return res.status(200).json({
+      message: "Utilisateur créé avec succès ✅",
+      userId: user.id,
+      email: user.email,
+      role,
+    });
+  } catch (err) {
+    console.error("Erreur interne :", err);
+    return res.status(500).json({ error: err.message || "Erreur serveur" });
   }
 }
+
