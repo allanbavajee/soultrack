@@ -1,37 +1,30 @@
 // pages/index.js
+
 "use client";
 
 import AccessGuard from "../components/AccessGuard";
+import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import Image from "next/image";
 
 export default function HomePage() {
-  const router = useRouter();
   const [roles, setRoles] = useState([]);
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedRoles = localStorage.getItem("userRole");
-
     if (storedRoles) {
       try {
         const parsedRoles = JSON.parse(storedRoles);
-        const normalizedRoles = Array.isArray(parsedRoles)
-          ? parsedRoles.map(r => r.trim())
-          : [parsedRoles.trim()];
-        setRoles(normalizedRoles);
+        setRoles(Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]);
       } catch {
-        setRoles([storedRoles.trim()]);
+        setRoles([storedRoles]);
       }
-    } else {
-      // Si pas de rôle → redirige vers login
-      setTimeout(() => router.push("/login"), 100);
     }
-
     setLoading(false);
-  }, [router]);
+  }, []);
 
   if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
@@ -40,10 +33,8 @@ export default function HomePage() {
 
   return (
     <AccessGuard>
-      <div
-        className="relative min-h-screen flex flex-col items-center justify-center p-6 text-center"
-        style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-      >
+      <div className="relative min-h-screen flex flex-col items-center justify-center p-6 text-center"
+           style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
         <div className="absolute top-4 right-4">
           <LogoutLink />
         </div>
@@ -60,30 +51,21 @@ export default function HomePage() {
 
         <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl mb-10">
           {(hasRole("ResponsableIntegration") || hasRole("Admin")) && (
-            <div
-              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-              onClick={() => handleRedirect("/membres-hub")}
-            >
+            <div onClick={() => handleRedirect("/membres-hub")} className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
               <div className="text-4xl mb-1">👤</div>
               <div className="text-lg font-bold text-gray-800">Suivis des membres</div>
             </div>
           )}
 
           {(hasRole("ResponsableEvangelisation") || hasRole("Admin")) && (
-            <div
-              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-              onClick={() => handleRedirect("/evangelisation-hub")}
-            >
+            <div onClick={() => handleRedirect("/evangelisation-hub")} className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
               <div className="text-4xl mb-1">🙌</div>
               <div className="text-lg font-bold text-gray-800">Évangélisation</div>
             </div>
           )}
 
           {(hasRole("ResponsableCellule") || hasRole("Admin")) && (
-            <div
-              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-              onClick={() => handleRedirect("/cellules-hub")}
-            >
+            <div onClick={() => handleRedirect("/cellules-hub")} className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
               <div className="text-4xl mb-1">🏠</div>
               <div className="text-lg font-bold text-gray-800">Cellule</div>
             </div>
@@ -91,18 +73,12 @@ export default function HomePage() {
 
           {hasRole("Admin") && (
             <>
-              <div
-                className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-                onClick={() => handleRedirect("/rapport")}
-              >
+              <div onClick={() => handleRedirect("/rapport")} className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
                 <div className="text-4xl mb-1">📊</div>
                 <div className="text-lg font-bold text-gray-800">Rapport</div>
               </div>
 
-              <div
-                className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-                onClick={() => handleRedirect("/administrateur")}
-              >
+              <div onClick={() => handleRedirect("/administrateur")} className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer">
                 <div className="text-4xl mb-1">🧑‍💻</div>
                 <div className="text-lg font-bold text-gray-800">Admin</div>
               </div>
@@ -118,3 +94,4 @@ export default function HomePage() {
     </AccessGuard>
   );
 }
+
