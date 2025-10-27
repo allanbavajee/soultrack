@@ -1,10 +1,32 @@
 
 //pages/index.js
 
+// pages/index.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+// 🔹 Mapping des rôles et des pages/cartes autorisées
+const roleCards = {
+  Admin: [
+    { path: "/membres-hub", label: "Suivis des membres", emoji: "👤", color: "blue-500" },
+    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "🙌", color: "green-500" },
+    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "purple-500" },
+    { path: "/rapport", label: "Rapport", emoji: "📊", color: "red-500" },
+    { path: "/administrateur", label: "Admin", emoji: "🧑‍💻", color: "blue-400" },
+  ],
+  ResponsableIntegration: [
+    { path: "/membres-hub", label: "Suivis des membres", emoji: "👤", color: "blue-500" },
+  ],
+  ResponsableEvangelisation: [
+    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "🙌", color: "green-500" },
+  ],
+  ResponsableCellule: [
+    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "purple-500" },
+  ],
+  Membre: [],
+};
 
 export default function IndexPage() {
   const [userEmail, setUserEmail] = useState("");
@@ -30,7 +52,18 @@ export default function IndexPage() {
     router.push(path.startsWith("/") ? path : "/" + path);
   };
 
-  const hasRole = (role) => roles.includes(role);
+  // 🔹 Construit les cartes à afficher selon les rôles
+  const cardsToShow = [];
+  roles.forEach((role) => {
+    const roleKey = role.trim();
+    if (roleCards[roleKey]) {
+      roleCards[roleKey].forEach((card) => {
+        if (!cardsToShow.find((c) => c.path === card.path)) {
+          cardsToShow.push(card);
+        }
+      });
+    }
+  });
 
   return (
     <div
@@ -41,53 +74,16 @@ export default function IndexPage() {
       <p className="text-lg mb-6 text-white">Bienvenue {userEmail}</p>
 
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">
-        {/* Suivis des membres */}
-        <div
-          onClick={() => handleRedirect("/membres-hub")}
-          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-        >
-          <div className="text-4xl mb-1">👤</div>
-          <div className="text-lg font-bold text-gray-800">Suivis des membres</div>
-        </div>
-
-        {/* Évangélisation */}
-        <div
-          onClick={() => handleRedirect("/evangelisation-hub")}
-          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-        >
-          <div className="text-4xl mb-1">🙌</div>
-          <div className="text-lg font-bold text-gray-800">Évangélisation</div>
-        </div>
-
-        {/* Cellules */}
-        <div
-          onClick={() => handleRedirect("/cellules-hub")}
-          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-        >
-          <div className="text-4xl mb-1">🏠</div>
-          <div className="text-lg font-bold text-gray-800">Cellule</div>
-        </div>
-
-        {/* 🔹 Boutons admin uniquement */}
-        {hasRole("Admin") && (
-          <>
-            <div
-              onClick={() => handleRedirect("/rapport")}
-              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-            >
-              <div className="text-4xl mb-1">📊</div>
-              <div className="text-lg font-bold text-gray-800">Rapport</div>
-            </div>
-
-            <div
-              onClick={() => handleRedirect("/administrateur")}
-              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-            >
-              <div className="text-4xl mb-1">🧑‍💻</div>
-              <div className="text-lg font-bold text-gray-800">Admin</div>
-            </div>
-          </>
-        )}
+        {cardsToShow.map((card) => (
+          <div
+            key={card.path}
+            onClick={() => handleRedirect(card.path)}
+            className={`flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-${card.color} p-3 hover:shadow-lg transition-all duration-200 cursor-pointer`}
+          >
+            <div className="text-4xl mb-1">{card.emoji}</div>
+            <div className="text-lg font-bold text-gray-800">{card.label}</div>
+          </div>
+        ))}
       </div>
 
       <div className="text-white text-lg font-handwriting-light max-w-2xl mt-6">
@@ -97,3 +93,4 @@ export default function IndexPage() {
     </div>
   );
 }
+
