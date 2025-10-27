@@ -1,6 +1,4 @@
-// pages/login.js
-
-"use client";
+// pages/login.js"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/router";
@@ -13,51 +11,71 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleLogin(e) {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true); setError("");
+    setLoading(true);
+    setError("");
 
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-
-      if (authError) { setError("Email ou mot de passe incorrect ❌"); return; }
-      if (!data.user) { setError("Email ou mot de passe incorrect ❌"); return; }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", data.user.id)
+      const { data, error: rpcError } = await supabase
+        .rpc("verify_password", { p_email: email, p_password: password })
         .single();
 
-      localStorage.setItem("userEmail", data.user.email);
-      localStorage.setItem("userName", `${profile?.prenom || ""} ${profile?.nom || ""}`.trim());
-      localStorage.setItem("userRole", JSON.stringify(profile?.role || "Membre"));
+      if (rpcError || !data) {
+        setError("Email ou mot de passe incorrect ❌");
+        setLoading(false);
+        return;
+      }
 
-      // Redirection
-      const role = profile?.role;
-      let path = "/index";
-      if (role === "ResponsableCellule") path = "/cellules-hub";
-      else if (role === "ResponsableIntegration") path = "/membres-hub";
-      else if (role === "ResponsableEvangelisation") path = "/evangelisation-hub";
+      // Toujours stocker un array
+      const userRoles = data.roles && data.roles.length > 0
+        ? data.roles
+        : [data.role];
 
-      router.push(path);
-    } catch (err) { setError("Erreur interne ❌"); }
-    finally { setLoading(false); }
-  }
+      localStorage.setItem("userRole", JSON.stringify(userRoles));
+      localStorage.setItem("userEmail", data.email);
+
+      router.push("/index");
+    } catch (err) {
+      console.error("Erreur de connexion :", err);
+      setError("❌ Une erreur est survenue lors de la connexion.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-blue-900">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-96">
-        <h1 className="text-2xl font-bold mb-6 text-center text-blue-800">Connexion</h1>
-        <form onSubmit={handleLogin} className="space-y-4">
-          <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" required className="w-full px-3 py-2 border rounded-lg"/>
-          <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Mot de passe" required className="w-full px-3 py-2 border rounded-lg"/>
-          {error && <p className="text-red-600 text-sm text-center">{error}</p>}
-          <button type="submit" disabled={loading} className="w-full bg-blue-700 text-white py-2 rounded-lg">{loading ? "Connexion..." : "Se connecter"}</button>
-        </form>
-      </div>
+    <div className="min-h-screen flex items-center justify-center p-6 bg-blue-100">
+      <form onSubmit={handleLogin} className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm">
+        <h1 className="text-2xl font-bold mb-6">Se connecter</h1>
+
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full mb-4 p-2 border rounded"
+          required
+        />
+        <input
+          type="password"
+          placeholder="Mot de passe"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full mb-4 p-2 border rounded"
+          required
+        />
+
+        <button
+          type="submit"
+          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+          disabled={loading}
+        >
+          {loading ? "Connexion..." : "Se connecter"}
+        </button>
+
+        {error && <p className="mt-4 text-red-500">{error}</p>}
+      </form>
     </div>
   );
 }
-
-
