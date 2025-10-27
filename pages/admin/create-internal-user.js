@@ -2,200 +2,134 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/router";
 
-export default function CreateResponsable() {
-  const router = useRouter();
-
+export default function CreateInternalUser() {
   const [formData, setFormData] = useState({
     prenom: "",
     nom: "",
     email: "",
     telephone: "",
     password: "",
-    role: "Admin", // rôle par défaut
+    role: "Membre",
   });
-
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null);
+  const [message, setMessage] = useState("");
 
-  // Gestion des champs
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Soumission du formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage(null);
+    setMessage("");
 
     try {
-      console.log("🚀 Envoi vers API :", formData);
-
       const res = await fetch("/api/create-user", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(formData),
       });
 
-      console.log("📥 Réponse brute :", res);
+      const data = await res.json();
 
-      let data = null;
-      try {
-        data = await res.json();
-        console.log("📦 Contenu brut reçu :", data);
-      } catch (err) {
-        console.warn("⚠️ Impossible de parser la réponse JSON :", err);
-      }
+      if (!res.ok) throw new Error(data.error || "Erreur création utilisateur");
 
-      if (!res.ok) throw new Error(data?.error || "Erreur inconnue");
-
-      setMessage(`✅ ${formData.role} créé avec succès !`);
+      setMessage("✅ Utilisateur créé avec succès !");
       setFormData({
         prenom: "",
         nom: "",
         email: "",
         telephone: "",
         password: "",
-        role: "ResponsableIntegration",
+        role: "Membre",
       });
     } catch (err) {
-      console.error("❌ Erreur création utilisateur :", err);
-      setMessage(`❌ Erreur : ${err.message}`);
+      console.error(err);
+      setMessage("❌ " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-100 to-indigo-50 p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
-        <button
-          onClick={() => router.back()}
-          className="text-indigo-600 font-semibold mb-4 hover:text-indigo-800 transition"
-        >
-          ← Retour
-        </button>
-
-        <h1 className="text-3xl font-bold text-center text-indigo-700 mb-2">
-          Créer un responsable
-        </h1>
-        <p className="text-center text-gray-500 italic mb-6">
-          « Servir, c’est régner » 👑
-        </p>
+    <div className="min-h-screen flex justify-center items-center bg-gray-100">
+      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-6 text-center">Créer un utilisateur</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Prénom */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Prénom</label>
-            <input
-              type="text"
-              name="prenom"
-              value={formData.prenom}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
-              placeholder="Ex: Jean"
-            />
-          </div>
+          <input
+            type="text"
+            name="prenom"
+            placeholder="Prénom"
+            value={formData.prenom}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+            required
+          />
+          <input
+            type="text"
+            name="nom"
+            placeholder="Nom"
+            value={formData.nom}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+            required
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+            required
+          />
+          <input
+            type="text"
+            name="telephone"
+            placeholder="Téléphone"
+            value={formData.telephone}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Mot de passe"
+            value={formData.password}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+            required
+          />
+          <select
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+            required
+          >
+            <option value="Admin">Admin</option>
+            <option value="ResponsableIntegration">Responsable Integration</option>
+            <option value="ResponsableEvangelisation">Responsable Evangelisation</option>
+            <option value="ResponsableCellule">Responsable Cellule</option>
+            <option value="Membre">Membre</option>
+          </select>
 
-          {/* Nom */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Nom</label>
-            <input
-              type="text"
-              name="nom"
-              value={formData.nom}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
-              placeholder="Ex: Dupont"
-            />
-          </div>
+          {message && <p className="text-center">{message}</p>}
 
-          {/* Email */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
-              placeholder="exemple@mail.com"
-            />
-          </div>
-
-          {/* Téléphone */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Téléphone</label>
-            <input
-              type="text"
-              name="telephone"
-              value={formData.telephone}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
-              placeholder="Ex: 59000000"
-            />
-          </div>
-
-          {/* Mot de passe */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Mot de passe</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
-              placeholder="********"
-            />
-          </div>
-
-          {/* Rôle */}
-          <div>
-            <label className="block text-gray-700 font-medium mb-1">Rôle</label>
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none"
-            >
-              <option value="ResponsableIntegration">Responsable Intégration</option>
-              <option value="ResponsableEvangelisation">Responsable Évangélisation</option>
-              <option value="ResponsableCellule">Responsable Cellule</option>
-            </select>
-          </div>
-
-          {/* Bouton */}
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 rounded-2xl text-white font-semibold transition ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700"
-            }`}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
           >
-            {loading ? "Création..." : "Créer le responsable"}
+            {loading ? "Création..." : "Créer l'utilisateur"}
           </button>
         </form>
-
-        {message && (
-          <div
-            className={`mt-4 text-center font-semibold ${
-              message.startsWith("✅") ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {message}
-          </div>
-        )}
       </div>
     </div>
   );
 }
+
