@@ -27,8 +27,8 @@ export default function AccessGuard({ children }) {
     if (canAccessPage(roles, router.pathname)) {
       setAuthorized(true);
     } else {
-      // 🔹 Si on est déjà sur index, ne pas rediriger pour éviter boucle
-      if (router.pathname !== "/index") router.push("/index");
+      // 🔹 Si on est déjà sur "/", ne pas rediriger à nouveau
+      if (router.pathname !== "/") router.push("/");
       setAuthorized(false);
     }
   }, [router.pathname]);
@@ -36,3 +36,4 @@ export default function AccessGuard({ children }) {
   if (!authorized) return null;
   return <>{children}</>;
 }
+
