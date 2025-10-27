@@ -32,7 +32,7 @@ export default function LoginPage() {
 
       // 🧭 Redirection test
       console.log("➡️ Tentative de redirection vers / ...");
-      await router.push("/"); // Redirection Next.js
+      await router.push("/index"); // Redirection Next.js
       console.log("🟢 Redirection effectuée avec router.push('/')");
     } catch (err) {
       console.error("Erreur lors du login :", err);
