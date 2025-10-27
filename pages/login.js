@@ -1,5 +1,4 @@
-//pages/login.js
-
+// pages/login.js
 "use client";
 
 import { useState } from "react";
@@ -14,70 +13,78 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   async function handleLogin(e) {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-  try {
-    console.log("Tentative de login :", email, password);
+    try {
+      console.log("Tentative de login :", email, password);
 
-    const { data, error: loginError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+      // 🔑 Connexion via Supabase Auth
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (loginError) {
-      console.error("Erreur de connexion Supabase :", loginError);
-      setError("Email ou mot de passe incorrect ❌");
-      return;
+      if (authError) {
+        console.error("Erreur de connexion Supabase :", authError);
+        setError("Email ou mot de passe incorrect ❌");
+        return;
+      }
+
+      const user = data.user;
+      if (!user) {
+        setError("Email ou mot de passe incorrect ❌");
+        return;
+      }
+
+      // ✅ Récupère le profil dans la table "profiles"
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Erreur récupération profil :", profileError);
+      }
+
+      // 🔒 Stockage local pour usage dans l'app
+      localStorage.setItem("userEmail", user.email);
+      localStorage.setItem(
+        "userName",
+        `${profile?.prenom || ""} ${profile?.nom || ""}`.trim()
+      );
+      localStorage.setItem("userRole", profile?.role || "Membre");
+
+      console.log("✅ Profil récupéré :", profile);
+
+      // 🔀 Redirection selon le rôle
+      let redirectPath = "/index"; // défaut
+      if (profile?.role === "Admin") redirectPath = "/index";
+      else if (profile?.role === "ResponsableCellule")
+        redirectPath = "/cellules-hub";
+      else if (profile?.role === "ResponsableIntegration")
+        redirectPath = "/membres-hub";
+      else if (profile?.role === "ResponsableEvangelisation")
+        redirectPath = "/evangelisation-hub";
+
+      console.log("🔀 Redirection vers :", redirectPath);
+      router.push(redirectPath);
+    } catch (err) {
+      console.error("Erreur de connexion :", err);
+      setError("Erreur interne ❌");
+    } finally {
+      setLoading(false);
     }
-
-    const user = data.user;
-
-    console.log("✅ Connexion réussie :", user);
-
-    // 🔁 Récupère le profil depuis la table "profiles"
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("nom, prenom, roles, role")
-      .eq("id", user.id)
-      .single();
-
-    if (!profileData) {
-      setError("Profil utilisateur introuvable ❌");
-      return;
-    }
-
-    // ✅ Stocke dans localStorage
-    localStorage.setItem("userEmail", user.email);
-    localStorage.setItem("userName", `${profileData.prenom || ""} ${profileData.nom || ""}`.trim());
-    localStorage.setItem("userRole", JSON.stringify(profileData.roles || [profileData.role || "Membre"]));
-
-    console.log("✅ Rôle détecté :", profileData.roles);
-
-    // 🔀 Redirection selon rôle
-    let redirectPath = "/index"; // défaut
-    if (profileData.roles?.includes("Admin")) redirectPath = "/index";
-    else if (profileData.roles?.includes("ResponsableCellule")) redirectPath = "/cellules-hub";
-    else if (profileData.roles?.includes("ResponsableIntegration")) redirectPath = "/membres-hub";
-    else if (profileData.roles?.includes("ResponsableEvangelisation")) redirectPath = "/evangelisation-hub";
-
-    console.log("🔀 Redirection vers :", redirectPath);
-    router.push(redirectPath);
-
-  } catch (err) {
-    console.error("Erreur de connexion :", err);
-    setError("Erreur interne ❌");
-  } finally {
-    setLoading(false);
   }
-}
-
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-blue-900">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-96">
-        <h1 className="text-2xl font-bold mb-6 text-center text-blue-800">Connexion</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center text-blue-800">
+          Connexion
+        </h1>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
@@ -116,5 +123,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-
