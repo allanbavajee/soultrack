@@ -1,6 +1,3 @@
-
-//pages/index.js
-
 // pages/index.js
 "use client";
 
@@ -93,4 +90,3 @@ export default function IndexPage() {
     </div>
   );
 }
-
