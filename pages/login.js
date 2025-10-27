@@ -30,8 +30,8 @@ export default function LoginPage() {
       console.log("✅ Login réussi :", data.user.email);
       localStorage.setItem("userEmail", data.user.email);
 
-      // ✅ Redirection directe
-      window.location.href = "/"; 
+      // ✅ Redirection Next.js
+      router.push("/");
     } catch (err) {
       console.error("Erreur:", err);
       setError("❌ Erreur lors de la connexion");
