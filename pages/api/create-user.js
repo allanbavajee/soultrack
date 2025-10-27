@@ -1,8 +1,7 @@
 // ✅ pages/api/create-user.js
-// pages/api/create-user.js
 import { createClient } from "@supabase/supabase-js";
 
-// ⚠️ Toujours utiliser la clé SERVICE_ROLE côté serveur
+// ✅ Crée le client Supabase avec la clé service role
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -20,7 +19,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ✅ Crée un utilisateur Supabase Auth
+    // 🔹 Crée l'utilisateur Supabase Auth
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -28,17 +27,14 @@ export default async function handler(req, res) {
       user_metadata: { prenom, nom, telephone, role },
     });
 
-    if (userError) {
-      console.error("Erreur création utilisateur Auth :", userError);
-      return res.status(500).json({ error: userError.message });
-    }
+    if (userError) throw userError;
 
     const user = userData.user;
 
-    // ✅ Crée un profil dans la table "profiles"
+    // 🔹 Enregistre dans la table profiles
     const { error: profileError } = await supabaseAdmin.from("profiles").insert([
       {
-        id: user.id, // même ID que Auth
+        id: user.id,
         prenom,
         nom,
         email,
@@ -48,21 +44,14 @@ export default async function handler(req, res) {
       },
     ]);
 
-    if (profileError) {
-      console.error("Erreur création profil :", profileError);
-      return res.status(500).json({ error: profileError.message });
-    }
+    if (profileError) throw profileError;
 
-    // ✅ Réponse JSON
     return res.status(200).json({
       message: "Utilisateur créé avec succès ✅",
       userId: user.id,
-      email: user.email,
-      role,
     });
-  } catch (err) {
-    console.error("Erreur interne :", err);
-    return res.status(500).json({ error: err.message || "Erreur serveur" });
+  } catch (error) {
+    console.error("Erreur création utilisateur :", error);
+    return res.status(500).json({ error: error.message || "Erreur serveur" });
   }
 }
-
