@@ -2,9 +2,10 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
+// ⚙️ Création d’un client ADMIN (avec la clé SERVICE_ROLE)
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // ⚠️ PAS la clé publique
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 export default async function handler(req, res) {
@@ -19,21 +20,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ✅ Créer un vrai utilisateur Supabase Auth
+    // ✅ Crée l’utilisateur dans Supabase Auth
     const { data: userData, error: userError } =
-  await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { prenom, nom, telephone, role },
-  });
+      await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { prenom, nom, telephone, role },
+      });
 
     if (userError) throw userError;
-
     const user = userData.user;
 
-    // ✅ Enregistrer aussi dans ta table "profiles"
-    const { error: profileError } = await supabase
+    // ✅ Ajoute son profil dans la table `profiles`
+    const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .insert([
         {
@@ -51,8 +51,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ message: "Utilisateur créé avec succès ✅" });
   } catch (error) {
-    console.error("Erreur création utilisateur:", error);
+    console.error("❌ Erreur création utilisateur:", error);
     return res.status(500).json({ error: error.message });
   }
 }
-
