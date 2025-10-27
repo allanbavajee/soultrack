@@ -1,4 +1,5 @@
 // /components/AccessGuard.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -11,38 +12,37 @@ export default function AccessGuard({ children }) {
 
   useEffect(() => {
     checkAccess();
-    // Re-vérifie quand le pathname change
   }, [router.pathname]);
 
   const checkAccess = () => {
-    const rolesData = localStorage.getItem("userRole");
-    if (!rolesData) {
-      console.warn("🚫 Aucun rôle trouvé → redirection vers /login");
-      if (router.pathname !== "/login") router.push("/login");
-      return;
-    }
-
-    let roles = [];
     try {
-      roles = JSON.parse(rolesData);
-    } catch {
-      roles = [rolesData]; // si ce n'est pas JSON, transforme en tableau
-    }
+      const rolesData = localStorage.getItem("userRole");
+      if (!rolesData) {
+        router.push("/login");
+        return;
+      }
 
-    // Normalisation des rôles
-    roles = Array.isArray(roles)
-      ? roles.map(r => r.trim().replace(/^./, c => c.toUpperCase()))
-      : [roles.trim().replace(/^./, c => c.toUpperCase())];
+      let roles;
+      try {
+        roles = JSON.parse(rolesData);
+      } catch {
+        roles = [rolesData];
+      }
 
-    if (canAccessPage(roles, router.pathname)) {
-      setAuthorized(true);
-    } else {
-      console.warn("⛔ Accès refusé :", router.pathname, "pour rôle(s)", roles);
-      if (router.pathname !== "/index") router.push("/index"); // redirection safe
+      if (canAccessPage(roles, router.pathname)) {
+        setAuthorized(true);
+      } else {
+        console.warn("⛔ Accès refusé :", router.pathname, "pour rôle(s)", roles);
+        // redirection vers /index uniquement si on n’y est pas déjà
+        if (router.pathname !== "/index") router.push("/index");
+      }
+    } catch (err) {
+      console.error("Erreur AccessGuard :", err);
+      router.push("/login");
     }
   };
 
-  if (!authorized) return null; // rien pendant la vérification
-
+  if (!authorized) return null;
   return <>{children}</>;
 }
+
