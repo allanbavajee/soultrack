@@ -8,12 +8,12 @@ export default function CreateResponsable() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    prenom: "",
-    nom: "",
-    email: "",
-    telephone: "",
-    password: "",
-    role: "ResponsableIntegration", // rôle par défaut
+    prenom: "Admin",
+    nom: "Principal",
+    email: "adminp@soultrack.com",
+    telephone: "12345678",
+    password: "111111",
+    role: "Admin", // rôle par défaut
   });
 
   const [loading, setLoading] = useState(false);
