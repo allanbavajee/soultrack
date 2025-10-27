@@ -9,7 +9,6 @@ import AccessGuard from "../components/AccessGuard";
 export default function HomePage() {
   const router = useRouter();
   const [roles, setRoles] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedRoles = localStorage.getItem("userRole");
@@ -25,18 +24,16 @@ export default function HomePage() {
         setRoles([storedRoles.trim().replace(/^./, c => c.toUpperCase())]);
       }
     } else {
-      router.push("/login");
+      setTimeout(() => router.push("/login"), 100);
     }
-
-    setLoading(false);
   }, [router]);
-
-  if (loading) return <div className="text-center mt-20">Chargement...</div>;
 
   const hasRole = role => roles.includes(role);
 
   const handleRedirect = path => {
-    if (router.pathname !== path) router.push(path);
+    if (router.pathname !== path) {
+      router.push(path);
+    }
   };
 
   return (
