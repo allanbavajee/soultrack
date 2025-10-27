@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
@@ -27,13 +27,33 @@ export default function LoginPage() {
         return;
       }
 
-      console.log("✅ Login réussi :", data.user.email);
+      // ✅ Stockage de l'email et rôle
       localStorage.setItem("userEmail", data.user.email);
+      // Exemple : récupérer le rôle depuis la colonne 'role' de ton profil Supabase
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
 
-      // 🧭 Redirection test
-      console.log("➡️ Tentative de redirection vers / ...");
-      await router.push("/index"); // Redirection Next.js
-      console.log("🟢 Redirection effectuée avec router.push('/')");
+      const role = profile?.role || "Membre";
+      localStorage.setItem("userRole", JSON.stringify([role]));
+
+      console.log("✅ Login réussi :", data.user.email, "| Role :", role);
+
+      // 🧭 Redirection selon rôle
+      if (role === "ResponsableIntegration") {
+        router.push("/membres-hub");
+      } else if (role === "ResponsableEvangelisation") {
+        router.push("/evangelisation-hub");
+      } else if (role === "ResponsableCellule") {
+        router.push("/cellules-hub");
+      } else if (role === "Admin") {
+        router.push("/index");
+      } else {
+        router.push("/index");
+      }
+
     } catch (err) {
       console.error("Erreur lors du login :", err);
       setError("❌ Erreur lors de la connexion");
