@@ -1,3 +1,6 @@
+
+//pages/index.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -10,33 +13,24 @@ export default function IndexPage() {
 
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
-    const storedRoles = localStorage.getItem("userRole");
     setUserEmail(email || "Inconnu");
 
-    let parsedRoles = [];
-    try {
-      parsedRoles = JSON.parse(storedRoles);
-      if (!Array.isArray(parsedRoles)) parsedRoles = [parsedRoles];
-    } catch {
-      parsedRoles = [];
+    const storedRoles = localStorage.getItem("userRole");
+    if (storedRoles) {
+      try {
+        const parsedRoles = JSON.parse(storedRoles);
+        setRoles(Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]);
+      } catch {
+        setRoles([storedRoles]);
+      }
     }
-
-    const normalizedRoles = parsedRoles.map(r => r.trim());
-    setRoles(normalizedRoles);
-
-    // 🔹 Redirection automatique si le rôle n'a pas accès à index
-    if (normalizedRoles.includes("ResponsableIntegration")) {
-      router.push("/membres-hub");
-    } else if (normalizedRoles.includes("ResponsableEvangelisation")) {
-      router.push("/evangelisation-hub");
-    } else if (normalizedRoles.includes("ResponsableCellule")) {
-      router.push("/cellules-hub");
-    }
-  }, [router]);
+  }, []);
 
   const handleRedirect = (path) => {
     router.push(path.startsWith("/") ? path : "/" + path);
   };
+
+  const hasRole = (role) => roles.includes(role);
 
   return (
     <div
@@ -47,6 +41,7 @@ export default function IndexPage() {
       <p className="text-lg mb-6 text-white">Bienvenue {userEmail}</p>
 
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">
+        {/* Suivis des membres */}
         <div
           onClick={() => handleRedirect("/membres-hub")}
           className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
@@ -55,6 +50,7 @@ export default function IndexPage() {
           <div className="text-lg font-bold text-gray-800">Suivis des membres</div>
         </div>
 
+        {/* Évangélisation */}
         <div
           onClick={() => handleRedirect("/evangelisation-hub")}
           className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
@@ -63,6 +59,7 @@ export default function IndexPage() {
           <div className="text-lg font-bold text-gray-800">Évangélisation</div>
         </div>
 
+        {/* Cellules */}
         <div
           onClick={() => handleRedirect("/cellules-hub")}
           className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
@@ -70,6 +67,32 @@ export default function IndexPage() {
           <div className="text-4xl mb-1">🏠</div>
           <div className="text-lg font-bold text-gray-800">Cellule</div>
         </div>
+
+        {/* 🔹 Boutons admin uniquement */}
+        {hasRole("Admin") && (
+          <>
+            <div
+              onClick={() => handleRedirect("/rapport")}
+              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            >
+              <div className="text-4xl mb-1">📊</div>
+              <div className="text-lg font-bold text-gray-800">Rapport</div>
+            </div>
+
+            <div
+              onClick={() => handleRedirect("/administrateur")}
+              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            >
+              <div className="text-4xl mb-1">🧑‍💻</div>
+              <div className="text-lg font-bold text-gray-800">Admin</div>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="text-white text-lg font-handwriting-light max-w-2xl mt-6">
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
+        1 Corinthiens 12:14 ❤️
       </div>
     </div>
   );
