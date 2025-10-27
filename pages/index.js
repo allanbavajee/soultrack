@@ -1,89 +1,20 @@
-// pages/index.js
+
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/router";
-import supabase from "../lib/supabaseClient";
+import AccessGuard from "../components/AccessGuard";
 
-export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleLogin = async e => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (authError || !data.user) {
-        setError("Email ou mot de passe incorrect ❌");
-        setLoading(false);
-        return;
-      }
-
-      const user = data.user;
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      const roles = profile?.role ? [profile.role] : ["Membre"];
-      localStorage.setItem("userRole", JSON.stringify(roles));
-      localStorage.setItem("userEmail", user.email);
-
-      // Redirection par rôle
-      let path = "/index";
-      if (roles.includes("ResponsableIntegration")) path = "/membres-hub";
-      else if (roles.includes("ResponsableEvangelisation")) path = "/evangelisation-hub";
-      else if (roles.includes("ResponsableCellule")) path = "/cellules-hub";
-
-      router.push(path);
-    } catch (err) {
-      console.error(err);
-      setError("❌ Une erreur est survenue lors de la connexion.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function HomePage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-blue-100">
-      <form onSubmit={handleLogin} className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm">
-        <h1 className="text-2xl font-bold mb-6">Se connecter</h1>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          className="w-full mb-4 p-2 border rounded"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Mot de passe"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          className="w-full mb-4 p-2 border rounded"
-          required
-        />
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-          disabled={loading}
-        >
-          {loading ? "Connexion..." : "Se connecter"}
-        </button>
-        {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
-      </form>
-    </div>
+    <AccessGuard>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-4">
+          Bienvenue sur SoulTrack 👋
+        </h1>
+        <p className="text-gray-600">
+          Vous êtes connecté. Sélectionnez un espace selon votre rôle.
+        </p>
+      </div>
+    </AccessGuard>
   );
 }
+
 
