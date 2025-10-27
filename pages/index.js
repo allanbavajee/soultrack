@@ -1,4 +1,3 @@
-
 "use client";
 import AccessGuard from "../components/AccessGuard";
 
@@ -9,12 +8,11 @@ export default function HomePage() {
         <h1 className="text-3xl font-bold text-gray-800 mb-4">
           Bienvenue sur SoulTrack 👋
         </h1>
-        <p className="text-gray-600">
-          Vous êtes connecté. Sélectionnez un espace selon votre rôle.
+        <p className="text-gray-600 text-center max-w-md">
+          Vous êtes connecté en toute sécurité.  
+          Choisissez votre espace selon votre rôle.
         </p>
       </div>
     </AccessGuard>
   );
 }
-
-
