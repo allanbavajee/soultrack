@@ -8,11 +8,11 @@ export default function CreateResponsable() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    prenom: "Admin",
-    nom: "Principal",
-    email: "adminp@soultrack.com",
-    telephone: "12345678",
-    password: "111111",
+    prenom: "",
+    nom: "",
+    email: "",
+    telephone: "",
+    password: "",
     role: "Admin", // rôle par défaut
   });
 
