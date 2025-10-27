@@ -1,6 +1,6 @@
 //pages/admin/create-internal-user.js
-"use client";
 
+"use client";
 import { useState } from "react";
 
 export default function CreateInternalUser() {
@@ -10,16 +10,12 @@ export default function CreateInternalUser() {
     email: "",
     telephone: "",
     password: "",
-    role: "Membre",
+    role: "Admin"
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
@@ -27,27 +23,15 @@ export default function CreateInternalUser() {
     try {
       const res = await fetch("/api/create-user", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur inconnue");
 
-      if (!res.ok) throw new Error(data.error || "Erreur création utilisateur");
-
-      setMessage("✅ Utilisateur créé avec succès !");
-      setFormData({
-        prenom: "",
-        nom: "",
-        email: "",
-        telephone: "",
-        password: "",
-        role: "Membre",
-      });
+      setMessage(data.message);
+      setFormData({ prenom: "", nom: "", email: "", telephone: "", password: "", role: "Admin" });
     } catch (err) {
-      console.error(err);
       setMessage("❌ " + err.message);
     } finally {
       setLoading(false);
@@ -55,80 +39,44 @@ export default function CreateInternalUser() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gray-100">
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">Créer un utilisateur</h1>
+    <div className="min-h-screen flex items-center justify-center bg-blue-100 p-6">
+      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+        <h1 className="text-2xl font-bold mb-6">Créer un utilisateur interne</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {["prenom", "nom", "email", "telephone", "password"].map(field => (
           <input
-            type="text"
-            name="prenom"
-            placeholder="Prénom"
-            value={formData.prenom}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg"
+            key={field}
+            type={field === "password" ? "password" : "text"}
+            placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+            value={formData[field]}
+            onChange={e => setFormData({ ...formData, [field]: e.target.value })}
+            className="w-full mb-4 p-2 border rounded"
             required
           />
-          <input
-            type="text"
-            name="nom"
-            placeholder="Nom"
-            value={formData.nom}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg"
-            required
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg"
-            required
-          />
-          <input
-            type="text"
-            name="telephone"
-            placeholder="Téléphone"
-            value={formData.telephone}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg"
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Mot de passe"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg"
-            required
-          />
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg"
-            required
-          >
-            <option value="Admin">Admin</option>
-            <option value="ResponsableIntegration">Responsable Integration</option>
-            <option value="ResponsableEvangelisation">Responsable Evangelisation</option>
-            <option value="ResponsableCellule">Responsable Cellule</option>
-            <option value="Membre">Membre</option>
-          </select>
+        ))}
 
-          {message && <p className="text-center">{message}</p>}
+        <select
+          value={formData.role}
+          onChange={e => setFormData({ ...formData, role: e.target.value })}
+          className="w-full mb-4 p-2 border rounded"
+        >
+          <option value="Admin">Admin</option>
+          <option value="ResponsableIntegration">Responsable Integration</option>
+          <option value="ResponsableEvangelisation">Responsable Evangelisation</option>
+          <option value="ResponsableCellule">Responsable Cellule</option>
+          <option value="Membre">Membre</option>
+        </select>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            {loading ? "Création..." : "Créer l'utilisateur"}
-          </button>
-        </form>
-      </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+        >
+          {loading ? "Création..." : "Créer l'utilisateur"}
+        </button>
+
+        {message && <p className="mt-4 text-center text-red-600">{message}</p>}
+      </form>
     </div>
   );
 }
