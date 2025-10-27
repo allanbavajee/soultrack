@@ -1,5 +1,3 @@
-// pages/login.js
-
 "use client";
 
 import { useState } from "react";
@@ -25,19 +23,21 @@ export default function LoginPage() {
       });
 
       if (authError || !data.user) {
-        setError("Email ou mot de passe incorrect ❌");
+        setError("❌ Email ou mot de passe incorrect.");
         setLoading(false);
         return;
       }
 
-      console.log("✅ Login réussi");
+      console.log("✅ Login réussi, utilisateur :", data.user.email);
 
-      // Redirection vers index
-      window.location.href = "/"; // fonctionnera même si router.push bloque
+      // ⚡ On force la redirection vers la page d’accueil
+      setTimeout(() => {
+        window.location.replace("/"); // replace = redirection complète, empêche retour login
+      }, 300); // petit délai pour laisser Supabase terminer la session
 
     } catch (err) {
-      console.error(err);
-      setError("❌ Une erreur est survenue lors de la connexion.");
+      console.error("Erreur login:", err);
+      setError("⚠️ Une erreur est survenue.");
     } finally {
       setLoading(false);
     }
@@ -45,8 +45,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-100">
-      <form onSubmit={handleLogin} className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm">
-        <h1 className="text-2xl font-bold mb-6">Se connecter</h1>
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm"
+      >
+        <h1 className="text-2xl font-bold mb-6">Connexion</h1>
 
         <input
           type="email"
