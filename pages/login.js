@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,67 +14,47 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      if (authError || !data.user) {
-        setError("❌ Email ou mot de passe incorrect.");
-        setLoading(false);
-        return;
-      }
-
-      console.log("✅ Login réussi, utilisateur :", data.user.email);
-
-      // ⚡ On force la redirection vers la page d’accueil
-      setTimeout(() => {
-        window.location.replace("/"); // replace = redirection complète, empêche retour login
-      }, 300); // petit délai pour laisser Supabase terminer la session
-
-    } catch (err) {
-      console.error("Erreur login:", err);
-      setError("⚠️ Une erreur est survenue.");
-    } finally {
+    if (authError || !data.user) {
+      setError("❌ Email ou mot de passe incorrect.");
       setLoading(false);
+      return;
     }
+
+    console.log("✅ Login réussi, utilisateur :", data.user.email);
+
+    // ⚡ Redirection brute (aucun routeur, aucun cache)
+    window.location.assign(`${window.location.origin}/`);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-blue-100">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm"
-      >
-        <h1 className="text-2xl font-bold mb-6">Connexion</h1>
-
+    <div style={{ display: "flex", height: "100vh", justifyContent: "center", alignItems: "center" }}>
+      <form onSubmit={handleLogin} style={{ background: "white", padding: 30, borderRadius: 10, boxShadow: "0 0 10px #ccc" }}>
+        <h1>Connexion simple</h1>
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full mb-4 p-2 border rounded"
           required
+          style={{ display: "block", marginBottom: 10, padding: 8 }}
         />
         <input
           type="password"
           placeholder="Mot de passe"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-4 p-2 border rounded"
           required
+          style={{ display: "block", marginBottom: 10, padding: 8 }}
         />
-
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-          disabled={loading}
-        >
+        <button type="submit" disabled={loading} style={{ width: "100%", padding: 8, background: "blue", color: "white" }}>
           {loading ? "Connexion..." : "Se connecter"}
         </button>
-
-        {error && <p className="mt-4 text-red-500">{error}</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
       </form>
     </div>
   );
