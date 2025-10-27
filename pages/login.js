@@ -14,53 +14,65 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   async function handleLogin(e) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      console.log("Tentative de login :", email, password);
+  try {
+    console.log("Tentative de login :", email, password);
 
-      const { data, error: rpcError } = await supabase.rpc("verify_password", {
-        user_email: email,
-        user_password: password,
-      });
+    const { data, error: loginError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-      if (rpcError) {
-        console.error("Erreur Supabase :", rpcError);
-        throw new Error("Erreur interne Supabase");
-      }
-
-      const user = data?.[0];
-      if (!user) {
-        setError("Email ou mot de passe incorrect ❌");
-        return;
-      }
-
-      // ✅ Stocke les infos dans localStorage
-      localStorage.setItem("userEmail", user.email);
-      localStorage.setItem("userName", `${user.prenom || ""} ${user.nom || ""}`.trim());
-      localStorage.setItem("userRole", JSON.stringify(user.roles || [user.role || "Membre"]));
-
-      console.log("✅ Rôle détecté :", user.roles);
-
-      // 🔀 Définir la redirection selon le rôle
-      let redirectPath = "/index"; // défaut
-      if (user.roles.includes("Admin")) redirectPath = "/index";
-      else if (user.roles.includes("ResponsableCellule")) redirectPath = "/cellules-hub";
-      else if (user.roles.includes("ResponsableIntegration")) redirectPath = "/membres-hub";
-      else if (user.roles.includes("ResponsableEvangelisation")) redirectPath = "/evangelisation-hub";
-
-      console.log("🔀 Redirection vers :", redirectPath);
-      router.push(redirectPath);
-
-    } catch (err) {
-      console.error("Erreur de connexion :", err);
-      setError("Erreur interne ❌");
-    } finally {
-      setLoading(false);
+    if (loginError) {
+      console.error("Erreur de connexion Supabase :", loginError);
+      setError("Email ou mot de passe incorrect ❌");
+      return;
     }
+
+    const user = data.user;
+
+    console.log("✅ Connexion réussie :", user);
+
+    // 🔁 Récupère le profil depuis la table "profiles"
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("nom, prenom, roles, role")
+      .eq("id", user.id)
+      .single();
+
+    if (!profileData) {
+      setError("Profil utilisateur introuvable ❌");
+      return;
+    }
+
+    // ✅ Stocke dans localStorage
+    localStorage.setItem("userEmail", user.email);
+    localStorage.setItem("userName", `${profileData.prenom || ""} ${profileData.nom || ""}`.trim());
+    localStorage.setItem("userRole", JSON.stringify(profileData.roles || [profileData.role || "Membre"]));
+
+    console.log("✅ Rôle détecté :", profileData.roles);
+
+    // 🔀 Redirection selon rôle
+    let redirectPath = "/index"; // défaut
+    if (profileData.roles?.includes("Admin")) redirectPath = "/index";
+    else if (profileData.roles?.includes("ResponsableCellule")) redirectPath = "/cellules-hub";
+    else if (profileData.roles?.includes("ResponsableIntegration")) redirectPath = "/membres-hub";
+    else if (profileData.roles?.includes("ResponsableEvangelisation")) redirectPath = "/evangelisation-hub";
+
+    console.log("🔀 Redirection vers :", redirectPath);
+    router.push(redirectPath);
+
+  } catch (err) {
+    console.error("Erreur de connexion :", err);
+    setError("Erreur interne ❌");
+  } finally {
+    setLoading(false);
   }
+}
+
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-blue-900">
