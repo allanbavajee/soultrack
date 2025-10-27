@@ -1,9 +1,13 @@
+// pages/index.js
 "use client";
 
+import Image from "next/image";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
+import LogoutLink from "../components/LogoutLink";
 
-export default function IndexPage() {
+export default function HomePage() {
+  const router = useRouter();
   const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
@@ -11,22 +15,78 @@ export default function IndexPage() {
     setUserEmail(email || "Inconnu");
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
-    window.location.href = "/login";
-  };
+  const handleRedirect = (path) => router.push(path);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-green-100">
-      <h1 className="text-3xl font-bold mb-4">🏠 Page d'accueil</h1>
-      <p className="text-lg mb-6">Bienvenue {userEmail}</p>
-      <button
-        onClick={handleLogout}
-        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-      >
-        Se déconnecter
-      </button>
+    <div
+      className="relative min-h-screen flex flex-col items-center justify-center p-6 text-center"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+    >
+      <div className="absolute top-4 right-4">
+        <LogoutLink />
+      </div>
+
+      <div className="mb-4">
+        <Image src="/logo.png" alt="SoulTrack Logo" width={90} height={90} />
+      </div>
+
+      <h1 className="text-5xl sm:text-5xl font-handwriting text-white mb-2">SoulTrack</h1>
+      <p className="text-white text-lg font-handwriting-light max-w-2xl mb-8">
+        Chaque personne a une valeur infinie. Ensemble, nous avançons, nous grandissons,
+        et nous partageons l’amour de Christ dans chaque action ❤️
+      </p>
+
+      <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl mb-10">
+        {/* Tous les boutons visibles pour l'instant */}
+        <div
+          onClick={() => handleRedirect("/membres-hub")}
+          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+        >
+          <div className="text-4xl mb-1">👤</div>
+          <div className="text-lg font-bold text-gray-800">Suivis des membres</div>
+        </div>
+
+        <div
+          onClick={() => handleRedirect("/evangelisation-hub")}
+          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+        >
+          <div className="text-4xl mb-1">🙌</div>
+          <div className="text-lg font-bold text-gray-800">Évangélisation</div>
+        </div>
+
+        <div
+          onClick={() => handleRedirect("/cellules-hub")}
+          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-purple-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+        >
+          <div className="text-4xl mb-1">🏠</div>
+          <div className="text-lg font-bold text-gray-800">Cellule</div>
+        </div>
+
+        <div
+          onClick={() => handleRedirect("/rapport")}
+          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-red-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+        >
+          <div className="text-4xl mb-1">📊</div>
+          <div className="text-lg font-bold text-gray-800">Rapport</div>
+        </div>
+
+        <div
+          onClick={() => handleRedirect("/administrateur")}
+          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-400 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+        >
+          <div className="text-4xl mb-1">🧑‍💻</div>
+          <div className="text-lg font-bold text-gray-800">Admin</div>
+        </div>
+      </div>
+
+      <div className="text-white text-lg font-handwriting-light max-w-2xl">
+        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
+        1 Corinthiens 12:14 ❤️
+      </div>
+
+      {userEmail && (
+        <div className="text-white text-sm mt-4">Connecté en tant que : {userEmail}</div>
+      )}
     </div>
   );
 }
