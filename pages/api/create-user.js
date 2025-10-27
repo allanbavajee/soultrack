@@ -1,77 +1,57 @@
 // ✅ pages/api/create-user.js
 import { createClient } from "@supabase/supabase-js";
 
-export default async function handler(req, res) {
-  console.log("➡️ [API] /api/create-user appelée");
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY // ⚠️ PAS la clé publique
+);
 
-  // ✅ Vérifie la méthode
+export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
-  // ✅ Vérifie la configuration des clés
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.error("❌ Clés Supabase manquantes !");
-    return res.status(500).json({ error: "Clé Supabase non configurée sur le serveur." });
-  }
+  const { prenom, nom, email, telephone, password, role } = req.body;
 
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  if (!prenom || !nom || !email || !password || !role) {
+    return res.status(400).json({ error: "Champs requis manquants." });
+  }
 
   try {
-    const { email, password, prenom, nom, telephone, role } = req.body;
+    // ✅ Créer un vrai utilisateur Supabase Auth
+    const { data: userData, error: userError } =
+      await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { prenom, nom, telephone, role },
+      });
 
-    if (!email || !password || !prenom || !nom) {
-      return res.status(400).json({ error: "Champs requis manquants." });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ error: "Le mot de passe doit contenir au moins 6 caractères." });
-    }
-
-    console.log("🟡 Création utilisateur Auth...");
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { prenom, nom, telephone, role },
-    });
-
-    if (userError) {
-      console.error("❌ Erreur création Auth:", userError);
-      return res.status(500).json({ error: userError.message });
-    }
+    if (userError) throw userError;
 
     const user = userData.user;
-    console.log("✅ Utilisateur créé :", user.id);
 
-    console.log("🟡 Insertion du profil...");
-    const { error: profileError } = await supabaseAdmin.from("profiles").insert([
-      {
-        id: user.id,
-        email,
-        prenom,
-        nom,
-        telephone,
-        role,
-        created_at: new Date(),
-      },
-    ]);
+    // ✅ Enregistrer aussi dans ta table "profiles"
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .insert([
+        {
+          id: user.id,
+          prenom,
+          nom,
+          email,
+          telephone,
+          role,
+          created_at: new Date(),
+        },
+      ]);
 
-    if (profileError) {
-      console.error("❌ Erreur création profil:", profileError);
-      return res.status(500).json({ error: profileError.message });
-    }
+    if (profileError) throw profileError;
 
-    console.log("✅ Profil inséré avec succès !");
-    return res.status(200).json({
-      message: "Utilisateur créé avec succès.",
-      userId: user.id,
-    });
+    return res.status(200).json({ message: "Utilisateur créé avec succès ✅" });
   } catch (error) {
-    console.error("🔥 Erreur interne :", error);
-    return res.status(500).json({ error: error.message || "Erreur serveur." });
+    console.error("Erreur création utilisateur:", error);
+    return res.status(500).json({ error: error.message });
   }
 }
+
