@@ -1,4 +1,7 @@
-// pages/login.js"use client";
+// pages/login.js
+
+// pages/login.js
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/router";
@@ -17,25 +20,40 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const { data, error: rpcError } = await supabase
-        .rpc("verify_password", { p_email: email, p_password: password })
-        .single();
+      // 🔑 Login Supabase
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (rpcError || !data) {
+      if (authError || !data.user) {
         setError("Email ou mot de passe incorrect ❌");
         setLoading(false);
         return;
       }
 
-      // Toujours stocker un array
-      const userRoles = data.roles && data.roles.length > 0
-        ? data.roles
-        : [data.role];
+      // 🔍 Récupère le profil depuis "profiles"
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
 
-      localStorage.setItem("userRole", JSON.stringify(userRoles));
-      localStorage.setItem("userEmail", data.email);
+      if (profileError || !profile) {
+        setError("Profil introuvable ❌");
+        setLoading(false);
+        return;
+      }
 
-      router.push("/index");
+      // ✅ Stocke les rôles sous forme d'array dans localStorage
+      const roles = Array.isArray(profile.role) ? profile.role : [profile.role];
+      localStorage.setItem("userRole", JSON.stringify(roles));
+      localStorage.setItem("userEmail", data.user.email);
+
+      console.log("✅ Login réussi, rôles :", roles);
+
+      // 🔀 Redirection vers index
+      if (router.pathname !== "/index") router.push("/index");
     } catch (err) {
       console.error("Erreur de connexion :", err);
       setError("❌ Une erreur est survenue lors de la connexion.");
