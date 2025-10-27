@@ -21,12 +21,12 @@ export default async function handler(req, res) {
   try {
     // ✅ Créer un vrai utilisateur Supabase Auth
     const { data: userData, error: userError } =
-      await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { prenom, nom, telephone, role },
-      });
+  await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { prenom, nom, telephone, role },
+  });
 
     if (userError) throw userError;
 
