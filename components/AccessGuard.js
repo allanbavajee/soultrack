@@ -1,5 +1,4 @@
 // /components/AccessGuard.js
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,34 +14,20 @@ export default function AccessGuard({ children }) {
   }, [router.pathname]);
 
   const checkAccess = () => {
-    try {
-      const rolesData = localStorage.getItem("userRole");
-      if (!rolesData) {
-        router.push("/login");
-        return;
-      }
-
-      let roles;
-      try {
-        roles = JSON.parse(rolesData);
-      } catch {
-        roles = [rolesData];
-      }
-
-      if (canAccessPage(roles, router.pathname)) {
-        setAuthorized(true);
-      } else {
-        console.warn("⛔ Accès refusé :", router.pathname, "pour rôle(s)", roles);
-        // redirection vers /index uniquement si on n’y est pas déjà
-        if (router.pathname !== "/index") router.push("/index");
-      }
-    } catch (err) {
-      console.error("Erreur AccessGuard :", err);
+    const rolesData = localStorage.getItem("userRole");
+    if (!rolesData) {
       router.push("/login");
+      return;
     }
+
+    let roles;
+    try { roles = JSON.parse(rolesData); } 
+    catch { roles = [rolesData]; }
+
+    if (canAccessPage(roles, router.pathname)) setAuthorized(true);
+    else if (router.pathname !== "/index") router.push("/index");
   };
 
   if (!authorized) return null;
   return <>{children}</>;
 }
-
