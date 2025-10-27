@@ -1,4 +1,3 @@
-// pages/index.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -19,29 +18,33 @@ export default function HomePage() {
       try {
         const parsedRoles = JSON.parse(storedRoles);
         const normalizedRoles = Array.isArray(parsedRoles)
-          ? parsedRoles.map(r => r.trim())
-          : [parsedRoles.trim()];
+          ? parsedRoles.map(r => r.trim().replace(/^./, c => c.toUpperCase()))
+          : [parsedRoles.trim().replace(/^./, c => c.toUpperCase())];
         setRoles(normalizedRoles);
-        console.log("Roles récupérés :", normalizedRoles);
       } catch {
-        setRoles([storedRoles.trim()]);
+        setRoles([storedRoles.trim().replace(/^./, c => c.toUpperCase())]);
       }
     } else {
-      setTimeout(() => router.push("/login"), 100);
+      router.push("/login");
     }
 
     setLoading(false);
   }, [router]);
 
-  const hasRole = role => roles.includes(role);
-  const handleRedirect = path => router.push(path);
-
   if (loading) return <div className="text-center mt-20">Chargement...</div>;
+
+  const hasRole = role => roles.includes(role);
+
+  const handleRedirect = path => {
+    if (router.pathname !== path) router.push(path);
+  };
 
   return (
     <AccessGuard>
-      <div className="relative min-h-screen flex flex-col items-center justify-center p-6 text-center"
-           style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
+      <div
+        className="relative min-h-screen flex flex-col items-center justify-center p-6 text-center"
+        style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+      >
         <div className="absolute top-4 right-4">
           <LogoutLink />
         </div>
