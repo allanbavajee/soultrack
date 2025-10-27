@@ -19,7 +19,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 🔑 Connexion Supabase
+      // 🔑 Connexion à Supabase
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -31,7 +31,7 @@ export default function LoginPage() {
         return;
       }
 
-      // 🔍 Récupération du profil
+      // 🔍 Récupération du profil utilisateur
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
@@ -44,15 +44,18 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Enregistrement du rôle et de l'email
+      // ✅ Sauvegarde du rôle et de l'email
       const roles = Array.isArray(profile.role) ? profile.role : [profile.role];
       localStorage.setItem("userRole", JSON.stringify(roles));
       localStorage.setItem("userEmail", data.user.email);
 
-      console.log("✅ Connexion réussie :", roles);
+      console.log("✅ Login réussi, rôles :", roles);
 
-      // 🔀 Redirection vers la page d'accueil
-      if (router.pathname !== "/") router.push("/");
+      // ⏳ Petit délai pour laisser le temps à localStorage
+      setTimeout(() => {
+        console.log("🔀 Redirection vers / ...");
+        router.push("/");
+      }, 400);
     } catch (err) {
       console.error("Erreur de connexion :", err);
       setError("❌ Une erreur est survenue lors de la connexion.");
