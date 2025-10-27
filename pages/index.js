@@ -32,6 +32,23 @@ export default function IndexPage() {
         <div className="text-lg font-bold text-gray-800">Suivis des membres</div>
       </div>
     </div>
+   <div
+        onClick={() => handleRedirect("/evangelisation-hub")}
+        className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+      >
+        <div className="text-4xl mb-1">🙌</div>
+        <div className="text-lg font-bold text-gray-800">Évangélisation</div>
+      </div>
+    </div>
+    <div
+        onClick={() => handleRedirect("cellules-hub")}
+        className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+      >
+        <div className="text-4xl mb-1">🙌</div>
+        <div className="text-lg font-bold text-gray-800">Évangélisation</div>
+      </div>
+    </div>
+                                      
   );
 }
 
