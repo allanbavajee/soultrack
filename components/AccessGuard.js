@@ -15,20 +15,24 @@ export default function AccessGuard({ children }) {
 
   const checkAccess = () => {
     try {
-      const rolesData = localStorage.getItem("userRole");
-      if (!rolesData) {
-        router.push("/login");
+      const storedRoles = localStorage.getItem("userRole");
+      if (!storedRoles) {
+        console.warn("🚫 Aucun rôle trouvé → redirection vers /login");
+        if (router.pathname !== "/login") router.push("/login");
         return;
       }
 
-      const roles = JSON.parse(rolesData);
+      const roles = JSON.parse(storedRoles);
+
       if (canAccessPage(roles, router.pathname)) {
         setAuthorized(true);
       } else {
-        router.push("/index");
+        console.warn("⛔ Accès refusé :", router.pathname, "pour rôle(s)", roles);
+        if (router.pathname !== "/index") router.push("/index");
       }
-    } catch {
-      router.push("/login");
+    } catch (err) {
+      console.error("Erreur AccessGuard :", err);
+      if (router.pathname !== "/login") router.push("/login");
     }
   };
 
