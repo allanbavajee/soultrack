@@ -30,10 +30,12 @@ export default function LoginPage() {
       console.log("✅ Login réussi :", data.user.email);
       localStorage.setItem("userEmail", data.user.email);
 
-      // ✅ Redirection Next.js
-      router.push("/");
+      // 🧭 Redirection test
+      console.log("➡️ Tentative de redirection vers / ...");
+      await router.push("/"); // Redirection Next.js
+      console.log("🟢 Redirection effectuée avec router.push('/')");
     } catch (err) {
-      console.error("Erreur:", err);
+      console.error("Erreur lors du login :", err);
       setError("❌ Erreur lors de la connexion");
     } finally {
       setLoading(false);
