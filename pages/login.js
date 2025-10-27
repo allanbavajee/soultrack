@@ -30,12 +30,15 @@ export default function LoginPage() {
         return;
       }
 
+      // Stockage simple
       localStorage.setItem("userEmail", data.user.email);
 
       console.log("✅ Login réussi");
       console.log("🔀 Redirection vers / ...");
 
-      await router.push("/"); // redirection vers index
+      // Redirection vers dashboard
+      window.location.href = "/"; // ⚠️ fonctionne même si router.push bloque
+
     } catch (err) {
       console.error(err);
       setError("❌ Une erreur est survenue lors de la connexion.");
@@ -79,3 +82,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
