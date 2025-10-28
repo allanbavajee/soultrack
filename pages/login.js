@@ -17,6 +17,7 @@ export default function LoginPage() {
     setError("");
 
     try {
+      // 🔹 Authentification
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -27,33 +28,40 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Stockage de l'email et rôle
-      localStorage.setItem("userEmail", data.user.email);
-      // Exemple : récupérer le rôle depuis la colonne 'role' de ton profil Supabase
-      const { data: profile } = await supabase
+      console.log("✅ Login réussi :", data.user.email);
+
+      // 🔹 Récupérer le profil (pour connaître le rôle)
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
-        .eq("id", data.user.id)
+        .eq("email", data.user.email)
         .single();
 
-      const role = profile?.role || "Membre";
-      localStorage.setItem("userRole", JSON.stringify([role]));
+      if (profileError || !profile) {
+        setError("❌ Impossible de récupérer le profil utilisateur");
+        console.error("Erreur profil :", profileError);
+        return;
+      }
 
-      console.log("✅ Login réussi :", data.user.email, "| Role :", role);
+      const role = profile.role;
+      console.log("🎭 Rôle :", role);
 
-      // 🧭 Redirection selon rôle
-      if (role === "ResponsableIntegration") {
+      // 🔹 Stocker infos utilisateur
+      localStorage.setItem("userEmail", data.user.email);
+      localStorage.setItem("userRole", role);
+
+      // 🔹 Redirection selon le rôle
+      if (role === "Administrateur") {
+        router.push("/"); // page index.js
+      } else if (role === "ResponsableIntegration") {
         router.push("/membres-hub");
       } else if (role === "ResponsableEvangelisation") {
         router.push("/evangelisation-hub");
       } else if (role === "ResponsableCellule") {
         router.push("/cellules-hub");
-      } else if (role === "Admin") {
-        router.push("/index");
       } else {
-        router.push("/index");
+        router.push("/"); // par défaut
       }
-
     } catch (err) {
       console.error("Erreur lors du login :", err);
       setError("❌ Erreur lors de la connexion");
@@ -68,7 +76,7 @@ export default function LoginPage() {
         onSubmit={handleLogin}
         className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm"
       >
-        <h1 className="text-2xl font-bold mb-6">Se connecter</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Se connecter</h1>
 
         <input
           type="email"
