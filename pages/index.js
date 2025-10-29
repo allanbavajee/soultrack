@@ -1,17 +1,18 @@
-// pages/index.js
+//pages/index.js
+
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import LogoutLink from "../components/LogoutLink";
 
-// 🔹 Mapping des rôles et des pages/cartes autorisées
 const roleCards = {
-  Admin: [
+  Administrateur: [ 
     { path: "/membres-hub", label: "Suivis des membres", emoji: "👤", color: "blue-500" },
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "🙌", color: "green-500" },
-    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "purple-500" },
+    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "yellow-500" },
     { path: "/rapport", label: "Rapport", emoji: "📊", color: "red-500" },
-    { path: "/administrateur", label: "Admin", emoji: "🧑‍💻", color: "blue-400" },
+    { path: "/administrateur", label: "Admin", emoji: "🧑‍💻", color: "purple-500" },
   ],
   ResponsableIntegration: [
     { path: "/membres-hub", label: "Suivis des membres", emoji: "👤", color: "blue-500" },
@@ -20,19 +21,20 @@ const roleCards = {
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "🙌", color: "green-500" },
   ],
   ResponsableCellule: [
-    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "purple-500" },
+    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "yellow-500" },
   ],
   Membre: [],
 };
 
 export default function IndexPage() {
-  const [userEmail, setUserEmail] = useState("");
+  const [userName, setUserName] = useState("");
   const [roles, setRoles] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
-    const email = localStorage.getItem("userEmail");
-    setUserEmail(email || "Inconnu");
+    const name = localStorage.getItem("userName") || "Utilisateur";
+    const prenom = name.split(" ")[0]; // récupère seulement le prénom
+    setUserName(prenom);
 
     const storedRoles = localStorage.getItem("userRole");
     if (storedRoles) {
@@ -49,27 +51,62 @@ export default function IndexPage() {
     router.push(path.startsWith("/") ? path : "/" + path);
   };
 
-  // 🔹 Construit les cartes à afficher selon les rôles
-  const cardsToShow = [];
-  roles.forEach((role) => {
-    const roleKey = role.trim();
-    if (roleCards[roleKey]) {
-      roleCards[roleKey].forEach((card) => {
+  let cardsToShow = [];
+
+  if (roles.includes("Administrateur")) {
+    Object.values(roleCards).forEach((cards) => {
+      cards.forEach((card) => {
         if (!cardsToShow.find((c) => c.path === card.path)) {
           cardsToShow.push(card);
         }
       });
-    }
-  });
+    });
+  } else {
+    roles.forEach((role) => {
+      const roleKey = role.trim();
+      if (roleCards[roleKey]) {
+        roleCards[roleKey].forEach((card) => {
+          if (!cardsToShow.find((c) => c.path === card.path)) {
+            cardsToShow.push(card);
+          }
+        });
+      }
+    });
+  }
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-6"
+      className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      <h1 className="text-3xl font-bold mb-4 text-white">🏠 Page d'accueil</h1>
-      <p className="text-lg mb-6 text-white">Bienvenue {userEmail}</p>
+      {/* 🔹 Top bar */}
+      <div className="w-full max-w-5xl flex justify-between items-center mb-6">
+        {/* Bouton retour */}
+        <button
+          onClick={() => router.back()}
+          className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
+        >
+          ← Retour
+        </button>
 
+        {/* Déconnexion */}
+        <div className="flex flex-col items-end">
+          <LogoutLink className="text-red-300 hover:text-red-400" />
+          <p className="text-yellow-200 text-sm mt-4">Bienvenue {userName}</p>
+        </div>
+      </div>
+
+      {/* 🔹 Logo centré */}
+      <div className="mb-6">
+        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
+      </div>
+
+      {/* 🔹 Message motivant */}
+      <p className="text-white text-lg italic mb-6 max-w-2xl">
+        "La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté."
+      </p>
+
+      {/* 🔹 Cartes des fonctionnalités */}
       <div className="flex flex-col md:flex-row flex-wrap gap-4 justify-center items-center w-full max-w-4xl">
         {cardsToShow.map((card) => (
           <div
@@ -83,6 +120,7 @@ export default function IndexPage() {
         ))}
       </div>
 
+      {/* 🔹 Verset biblique */}
       <div className="text-white text-lg font-handwriting-light max-w-2xl mt-6">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️
