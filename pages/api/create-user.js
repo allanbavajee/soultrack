@@ -29,6 +29,7 @@ export default async function handler(req, res) {
       id: user.id,
       prenom,
       nom,
+      telephone,
       role,
       email,
     });
