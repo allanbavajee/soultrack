@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Méthode non autorisée" });
 
   try {
-    const { prenom, nom, email, password, role, telephne, cellule_nom, cellule_zone } = req.body;
+    const { prenom, nom, email, password, role, telephone, cellule_nom, cellule_zone } = req.body;
 
     // ✅ Crée un utilisateur dans Auth
     const { data: userData, error: createError } = await supabase.auth.admin.createUser({
