@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     if (role === "ResponsableCellule" && cellule_nom) {
       const { error: celluleError } = await supabase.from("cellules").insert({
         cellule: cellule_nom,
-        zone: ville || null,
+        ville: cellule_zone || null,
         responsable: `${prenom} ${nom}`,
         responsable_id: user.id,
       });
