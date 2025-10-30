@@ -43,6 +43,7 @@ export default async function handler(req, res) {
         ville: cellule_zone || null,
         responsable: `${prenom} ${nom}`,
         responsable_id: user.id,
+        telephone: telephone || "",
       });
 
       if (celluleError) throw celluleError;
