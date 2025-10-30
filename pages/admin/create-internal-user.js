@@ -8,6 +8,7 @@ export default function CreateInternalUser() {
     nom: "",
     email: "",
     password: "",
+    Téléphone: "",
     role: "",
     cellule_nom: "",
     cellule_zone: "",
@@ -44,6 +45,7 @@ export default function CreateInternalUser() {
         <input name="nom" placeholder="Nom" onChange={handleChange} className="input" />
         <input name="email" placeholder="Email" onChange={handleChange} className="input" />
         <input name="password" placeholder="Mot de passe" type="password" onChange={handleChange} className="input" />
+        <input name="telephone" placeholder="Téléphone" onChange={handleChange} className="input" />
 
         <select name="role" onChange={handleChange} className="input">
           <option value="">-- Sélectionne un rôle --</option>
