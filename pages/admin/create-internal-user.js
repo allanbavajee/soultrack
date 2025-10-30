@@ -49,9 +49,11 @@ export default function CreateInternalUser() {
 
         <select name="role" onChange={handleChange} className="input">
           <option value="">-- Sélectionne un rôle --</option>
-          <option value="Admin">Admin</option>
+          <option value="Administrateur">Administrateur</option>
+          <option value="ResponsableIntegration">Responsable Intégration</option>
           <option value="ResponsableCellule">Responsable de Cellule</option>
-          <option value="Membre">Membre</option>
+          <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
+          
         </select>
 
         {/* Champs visibles uniquement si rôle = ResponsableCellule */}
