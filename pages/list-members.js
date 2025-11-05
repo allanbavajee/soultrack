@@ -1,6 +1,6 @@
 // pages/list-members.js
-
 "use client";
+
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
@@ -8,6 +8,7 @@ import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import LogoutLink from "../components/LogoutLink";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import DetailsPopup from "../components/DetailsPopup"; // Assure-toi que ce composant existe
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
@@ -224,7 +225,6 @@ export default function ListMembers() {
                           <div className="text-gray-700 text-sm mt-2 space-y-2 w-full">
                             <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
                             <p> 🏙 Ville : {m.ville || "—"}</p>
-                            <p> 🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                             <p>❓Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
@@ -329,7 +329,6 @@ export default function ListMembers() {
                             <p> 📞 Téléphone : {m.telephone || "—"}</p>
                             <p> 💬 WhatsApp : {m.is_whatsapp || "—"}</p>
                             <p> 🏙 Ville : {m.ville || "—"}</p>
-                            <p> 🕊 Statut : {m.statut || "—"}</p>
                             <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
                             <p>❓ Besoin : {m.besoin || "—"}</p>
                             <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
@@ -407,7 +406,7 @@ export default function ListMembers() {
                   </td>
                 </tr>
               )}
-              {/* Nouveaux membres */}
+
               {nouveauxFiltres.map((m) => (
                 <tr
                   key={m.id}
@@ -418,46 +417,22 @@ export default function ListMembers() {
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     {m.prenom} {m.nom}
-                    {m.star && <span className="text-yellow-400 ml-1">⭐</span>}  
+                    {m.star && <span className="text-yellow-400 ml-1">⭐</span>}
                     <span className="bg-blue-500 text-white text-xs px-1 rounded">Nouveau</span>
                   </td>
                   <td className="px-4 py-2">{m.telephone || "—"}</td>
                   <td className="px-4 py-2">{m.statut || "—"}</td>
                   <td className="px-4 py-2">
                     <button
-                      onClick={() => toggleDetails(m.id)}
+                      onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
                       className="text-orange-500 underline text-sm"
                     >
-                      {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
                     </button>
-
-                    {detailsOpen[m.id] && (
-                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-all duration-200">
-                        <div className="bg-white text-black p-6 rounded-lg w-80 max-h-[90vh] overflow-y-auto relative">
-                          <button
-                            onClick={() => toggleDetails(m.id)}
-                            className="absolute top-2 right-2 text-red-500 font-bold"
-                          >
-                            ✕
-                          </button>
-                          <h3 className="text-lg font-semibold">
-                            {m.prenom} {m.nom}
-                          </h3>
-                          <p>📱 {m.telephone || "—"}</p>
-                          <p>💬 WhatsApp : {m.is_whatsapp || "—"}</p>
-                          <p>🏙 Ville : {m.ville || "—"}</p>
-                          <p>🕊 Statut : {m.statut || "—"}</p>
-                          <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-                          <p>❓Besoin : {m.besoin || "—"}</p>
-                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                        </div>
-                      </div>
-                    )}
                   </td>
                 </tr>
               ))}
 
-              {/* Membres existants */}
               {anciensFiltres.length > 0 && (
                 <>
                   <tr>
@@ -473,7 +448,7 @@ export default function ListMembers() {
                       </span>
                     </td>
                   </tr>
-              
+
                   {anciensFiltres.map((m) => (
                     <tr
                       key={m.id}
@@ -490,19 +465,25 @@ export default function ListMembers() {
                       <td className="px-4 py-2">{m.statut || "—"}</td>
                       <td className="px-4 py-2">
                         <button
-                          onClick={() => toggleDetails(m.id)}
+                          onClick={() => setPopupMember(popupMember?.id === m.id ? null : m)}
                           className="text-orange-500 underline text-sm"
                         >
-                          {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+                          {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
                         </button>
                       </td>
                     </tr>
                   ))}
                 </>
               )}
-
             </tbody>
           </table>
+
+          {popupMember && (
+            <DetailsPopup
+              member={popupMember}
+              onClose={() => setPopupMember(null)}
+            />
+          )}
         </div>
       )}
     </div>
