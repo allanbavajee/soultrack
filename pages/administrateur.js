@@ -1,98 +1,124 @@
-// pages/administrateur.js
-
+/* ✅ pages/administrateur.js */
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
+import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import SendLinkPopup from "../components/SendLinkPopup";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
-export default function AdministrateurPage() {
+export default function Administrateur() {
   const router = useRouter();
-  const [userEmail, setUserEmail] = useState("");
+  const [userName, setUserName] = useState("Utilisateur");
 
   useEffect(() => {
-    const email = localStorage.getItem("userEmail");
-    setUserEmail(email || "Inconnu");
+    const storedName = localStorage.getItem("userName");
+    if (storedName) setUserName(storedName.split(" ")[0]);
   }, []);
 
   return (
     <div
-      className="relative min-h-screen flex flex-col items-center justify-center p-6"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
+      className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      <div className="absolute top-4 left-4">
-        <button
-          onClick={() => router.back()}
-          className="text-white font-semibold hover:text-gray-200 transition"
-        >
-          ← Retour
-        </button>
+      {/* 🔹 Top bar */}
+      <div className="w-full max-w-5xl mb-4">
+        {/* Ligne principale : Retour à gauche, Déconnexion à droite */}
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center text-white hover:text-gray-200 transition-colors"
+          >
+            ← Retour
+          </button>
+
+          <LogoutLink />
+        </div>
+
+        {/* Ligne du dessous : Bienvenue aligné à droite */}
+        <div className="flex justify-end mt-2">
+          <p className="text-orange-200 text-sm">
+            👋 Bienvenue {userName}
+          </p>
+        </div>
       </div>
 
-      <div className="absolute top-4 right-4">
-        <LogoutLink />
+      {/* 🔹 Logo centré */}
+      <div className="mb-6">
+        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
-      <div className="mb-4">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={90} height={90} />
-      </div>
-
-      <h1 className="text-4xl font-handwriting text-white mb-6 text-center">
-        Espace Administrateur
+      {/* 🔹 Titre */}
+      <h1 className="text-3xl font-bold text-white mb-6">
+        Espace Admin
       </h1>
 
-      {/* 🔹 Boutons principaux */}
-      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-4xl mb-8">
+      {/* 🔹 Cartes principales */}
+      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6 flex-wrap">
+        {/* Liste des utilisateurs */}
         <Link
-          href="/admin/create-responsable-cellule"
-          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+          href="/admin/list-users"
+          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+          style={{ borderTopColor: "#0E7490" }}
         >
-          <div className="text-5xl mb-2">👤</div>
+          <div className="text-4xl mb-1">👤</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Liste des Utilisateurs
+          </div>
+        </Link>
+
+        {/* Liste des Cellules */}
+        <Link
+          href="/admin/list-cellules"
+          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+          style={{ borderTopColor: "#10B981" }}
+        >
+          <div className="text-4xl mb-1">🏠</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Liste des Cellules
+          </div>
+        </Link>
+
+        {/* Créer une Cellule */}
+        <Link
+          href="/admin/create-cellule"
+          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+          style={{ borderTopColor: "#F97316" }}
+        >
+          <div className="text-4xl mb-1">🛠️</div>
           <div className="text-lg font-bold text-gray-800 text-center">
             Créer une Cellule
           </div>
         </Link>
 
+        {/* Créer un Responsable */}
         <Link
           href="/admin/create-internal-user"
-          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#4285F4] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
+          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+          style={{ borderTopColor: "#0EA5E9" }}
         >
-          <div className="text-5xl mb-2">🧑‍💻</div>
+          <div className="text-4xl mb-1">🧑‍💻</div>
           <div className="text-lg font-bold text-gray-800 text-center">
             Créer un Responsable
           </div>
         </Link>
-            <Link
-          href="/admin/user-management"
-          className="flex-1 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-5xl mb-2">👤</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            List de Utilisateur
-          </div>
-        </Link>
-
       </div>
 
-      <div className="flex flex-col gap-4 items-center justify-center w-full max-w-sm">
+      {/* 🔹 Bouton popup sous les cartes */}
+      <div className="w-full max-w-md mb-10">
         <SendLinkPopup
-          label="Voir / Copier liens…"
-          type="voir_copier"
-          buttonColor="from-[#005AA7] to-[#FFFDE4]"
+          label="Envoyer l'appli – Nouveau membre"
+          type="ajouter_membre"
+          buttonColor="from-[#09203F] to-[#537895]"
         />
       </div>
 
-      <div className="mt-10 text-center text-white text-lg font-handwriting-light max-w-2xl">
+      {/* 🔹 Verset biblique */}
+      <div className="mt-auto mb-4 text-center text-white text-lg italic max-w-2xl leading-relaxed tracking-wide font-light">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️
       </div>
-
-      <p className="mt-4 text-white text-lg">Connecté en tant que : {userEmail}</p>
     </div>
   );
 }
