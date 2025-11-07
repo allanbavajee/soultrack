@@ -1,4 +1,5 @@
 //pages/suivis-evangelisation.js
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -18,7 +19,6 @@ export default function SuivisEvangelisation() {
     fetchSuivis();
   }, []);
 
-  // ✅ Nouvelle version avec filtrage par rôle (Admin / ResponsableCellule)
   const fetchSuivis = async () => {
     setLoading(true);
 
@@ -40,32 +40,25 @@ export default function SuivisEvangelisation() {
 
       let query = supabase
         .from("suivis_des_evangelises")
-        .select(`
-          *,
-          cellules:cellule_id (id, cellule, responsable)
-        `)
-        .or(
-          'status_suivis_evangelises.is.null,status_suivis_evangelises.eq.,and(status_suivis_evangelises.neq.Integrer,status_suivis_evangelises.neq."Venu à l’église")'
-        )
+        .select(`*, cellules:cellule_id (id, cellule, responsable)`)
         .order("date_suivi", { ascending: false });
 
-      // 🔸 Si ResponsableCellule → filtrer par la cellule dont il est responsable
+      // 🔸 Si ResponsableCellule → filtrer par toutes ses cellules
       if (userRole.includes("ResponsableCellule")) {
-        const { data: celluleData, error: celluleError } = await supabase
+        const { data: cellulesData, error: celluleError } = await supabase
           .from("cellules")
           .select("id")
-          .eq("responsable_id", responsableId)
-          .single();
+          .eq("responsable_id", responsableId);
 
         if (celluleError) throw celluleError;
-        if (!celluleData) {
+        if (!cellulesData || cellulesData.length === 0) {
           setSuivis([]);
           setLoading(false);
-          console.warn("Aucune cellule trouvée pour ce responsable.");
           return;
         }
 
-        query = query.eq("cellule_id", celluleData.id);
+        const celluleIds = cellulesData.map((c) => c.id);
+        query = query.in("cellule_id", celluleIds);
       }
 
       const { data, error } = await query;
@@ -91,7 +84,7 @@ export default function SuivisEvangelisation() {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
   };
 
-  // ✅ Transfert vers table membres si statut = "Integrer" ou "Venu à l’église"
+  // Transfert vers table membres si statut = "Integrer" ou "Venu à l’église"
   const updateStatus = async (id) => {
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
@@ -100,7 +93,6 @@ export default function SuivisEvangelisation() {
 
     setUpdating((prev) => ({ ...prev, [id]: true }));
 
-    // Récupérer les infos actuelles
     const { data: currentData, error: fetchError } = await supabase
       .from("suivis_des_evangelises")
       .select("*")
@@ -128,7 +120,7 @@ export default function SuivisEvangelisation() {
       return;
     }
 
-    // ✅ Si statut = "Integrer" ou "Venu à l’église" → transfert vers membres
+    // Transfert vers membres si statut = "Integrer" ou "Venu à l’église"
     if (["Integrer", "Venu à l’église"].includes(newStatus)) {
       const { error: insertError } = await supabase.from("membres").insert([
         {
@@ -144,6 +136,7 @@ export default function SuivisEvangelisation() {
           evangeliste_nom: currentData.evangeliste_nom,
           comment: newComment || currentData.commentaire_evangelises,
           responsable_suivi: currentData.responsable_cellule,
+          cellule_id: currentData.cellule_id, // ✅ On ajoute la cellule !!
         },
       ]);
 
@@ -156,12 +149,11 @@ export default function SuivisEvangelisation() {
     }
 
     setUpdating((prev) => ({ ...prev, [id]: false }));
-    fetchSuivis(); // Rafraîchit la liste après MAJ
+    fetchSuivis();
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-br from-purple-700 to-indigo-500">
-      {/* Retour */}
       <button
         onClick={() => window.history.back()}
         className="self-start mb-4 text-white font-semibold hover:text-gray-200"
@@ -169,7 +161,6 @@ export default function SuivisEvangelisation() {
         ← Retour
       </button>
 
-      {/* Logo */}
       <Image src="/logo.png" alt="Logo" width={80} height={80} className="mb-3" />
 
       <h1 className="text-4xl font-handwriting text-white text-center mb-3">
@@ -180,7 +171,6 @@ export default function SuivisEvangelisation() {
         Voici les personnes confiées pour le suivi spirituel 🌱
       </p>
 
-      {/* Contenu */}
       {loading ? (
         <p className="text-white">Chargement en cours...</p>
       ) : suivis.length === 0 ? (
@@ -212,7 +202,6 @@ export default function SuivisEvangelisation() {
                   👑 Responsable : {item.responsable_cellule || "—"}
                 </p>
 
-                {/* Détails */}
                 <button
                   onClick={() => toggleDetails(item.id)}
                   className="text-blue-500 underline text-sm mt-1"
@@ -226,14 +215,11 @@ export default function SuivisEvangelisation() {
                     <p>🙏 Besoin : {item.besoin || "—"}</p>
                     <p>📝 Infos : {item.infos_supplementaires || "—"}</p>
 
-                    {/* Commentaire */}
                     <div className="mt-2">
                       <label className="text-gray-700 text-sm">💬 Commentaire :</label>
                       <textarea
                         value={
-                          commentChanges[item.id] ??
-                          item.commentaire_evangelises ??
-                          ""
+                          commentChanges[item.id] ?? item.commentaire_evangelises ?? ""
                         }
                         onChange={(e) =>
                           handleCommentChange(item.id, e.target.value)
@@ -244,17 +230,12 @@ export default function SuivisEvangelisation() {
                       ></textarea>
                     </div>
 
-                    {/* Statut */}
                     <div className="mt-2">
                       <label className="text-gray-700 text-sm">
                         📋 Statut du suivi :
                       </label>
                       <select
-                        value={
-                          statusChanges[item.id] ??
-                          item.status_suivis_evangelises ??
-                          ""
-                        }
+                        value={statusChanges[item.id] ?? item.status_suivis_evangelises ?? ""}
                         onChange={(e) =>
                           handleStatusChange(item.id, e.target.value)
                         }
@@ -274,7 +255,6 @@ export default function SuivisEvangelisation() {
                       </select>
                     </div>
 
-                    {/* Date */}
                     <p className="mt-2">
                       📅 Date du suivi :{" "}
                       {new Date(item.date_suivi).toLocaleDateString("fr-FR", {
@@ -284,7 +264,6 @@ export default function SuivisEvangelisation() {
                       })}
                     </p>
 
-                    {/* Bouton mise à jour */}
                     <button
                       onClick={() => updateStatus(item.id)}
                       disabled={updating[item.id]}
