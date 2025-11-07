@@ -1,4 +1,4 @@
-//pages/index.js
+//✅/pages/index.js
 
 "use client";
 
@@ -7,21 +7,21 @@ import { useRouter } from "next/navigation";
 import LogoutLink from "../components/LogoutLink";
 
 const roleCards = {
-  Administrateur: [ 
-    { path: "/membres-hub", label: "Suivis des membres", emoji: "👤", color: "blue-500" },
-    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "🙌", color: "green-500" },
-    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "yellow-500" },
-    { path: "/rapport", label: "Rapport", emoji: "📊", color: "red-500" },
-    { path: "/administrateur", label: "Admin", emoji: "🧑‍💻", color: "purple-500" },
+  Administrateur: [
+    { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0E7490" },
+    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#F97316" },
+    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#10B981" },
+    { path: "/rapport", label: "Rapport", emoji: "📈", color: "#FBBF24" },
+    { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" },
   ],
   ResponsableIntegration: [
-    { path: "/membres-hub", label: "Suivis des membres", emoji: "👤", color: "blue-500" },
+    { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0284C7" },
   ],
   ResponsableEvangelisation: [
-    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "🙌", color: "green-500" },
+    { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" },
   ],
   ResponsableCellule: [
-    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "yellow-500" },
+    { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
   ],
   Membre: [],
 };
@@ -33,7 +33,7 @@ export default function IndexPage() {
 
   useEffect(() => {
     const name = localStorage.getItem("userName") || "Utilisateur";
-    const prenom = name.split(" ")[0]; // récupère seulement le prénom
+    const prenom = name.split(" ")[0];
     setUserName(prenom);
 
     const storedRoles = localStorage.getItem("userRole");
@@ -52,7 +52,6 @@ export default function IndexPage() {
   };
 
   let cardsToShow = [];
-
   if (roles.includes("Administrateur")) {
     Object.values(roleCards).forEach((cards) => {
       cards.forEach((card) => {
@@ -80,19 +79,24 @@ export default function IndexPage() {
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       {/* 🔹 Top bar */}
-      <div className="w-full max-w-5xl flex justify-between items-center mb-6">
-        {/* Bouton retour */}
-        <button
-          onClick={() => router.back()}
-          className="flex items-center text-white font-semibold hover:text-gray-200 transition-colors"
-        >
-          ← Retour
-        </button>
+      <div className="w-full max-w-5xl mb-6">
+        {/* Ligne principale : Retour à gauche, Déconnexion à droite */}
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center text-white hover:text-gray-200 transition-colors"
+          >
+            ← Retour
+          </button>
 
-        {/* Déconnexion */}
-        <div className="flex flex-col items-end">
-          <LogoutLink className="text-red-300 hover:text-red-400" />
-          <p className="text-yellow-200 text-sm mt-4">Bienvenue {userName}</p>
+          <LogoutLink />
+        </div>
+
+        {/* Ligne du dessous : Bienvenue aligné à droite */}
+        <div className="flex justify-end mt-2">
+          <p className="text-orange-200 text-sm">
+            👋 Bienvenue {userName}
+          </p>
         </div>
       </div>
 
@@ -100,10 +104,14 @@ export default function IndexPage() {
       <div className="mb-6">
         <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
       </div>
+      {/* 🔹 Titre */}
+      <h1 className="text-3xl font-login text-white mb-6 text-center font-bold">
+        Tableau De Bord
+      </h1>
 
       {/* 🔹 Message motivant */}
-      <p className="text-white text-lg italic mb-6 max-w-2xl">
-        "La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté."
+      <p className="text-white text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">
+        La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.
       </p>
 
       {/* 🔹 Cartes des fonctionnalités */}
@@ -112,7 +120,8 @@ export default function IndexPage() {
           <div
             key={card.path}
             onClick={() => handleRedirect(card.path)}
-            className={`flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-${card.color} p-3 hover:shadow-lg transition-all duration-200 cursor-pointer`}
+            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            style={{ borderTopColor: card.color }}
           >
             <div className="text-4xl mb-1">{card.emoji}</div>
             <div className="text-lg font-bold text-gray-800">{card.label}</div>
@@ -120,8 +129,8 @@ export default function IndexPage() {
         ))}
       </div>
 
-      {/* 🔹 Verset biblique */}
-      <div className="text-white text-lg font-handwriting-light max-w-2xl mt-6">
+      {/* 🔹 Verset biblique sous les cartes */}
+      <div className="text-white text-lg italic max-w-2xl mt-6 leading-relaxed tracking-wide font-light">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️
       </div>
