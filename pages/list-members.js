@@ -8,7 +8,7 @@ import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import LogoutLink from "../components/LogoutLink";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import DetailsPopup from "../components/DetailsPopup"; // Assure-toi que ce composant existe
+import DetailsPopup from "../components/DetailsPopup";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
@@ -20,17 +20,31 @@ export default function ListMembers() {
   const [view, setView] = useState("card");
   const [popupMember, setPopupMember] = useState(null);
   const [session, setSession] = useState(null);
+  const [prenom, setPrenom] = useState("");
 
+  // 🔹 Charge session, prénom et membres
   useEffect(() => {
-    getSession();
+    const fetchSessionAndProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+
+      if (session?.user) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("prenom")
+          .eq("id", session.user.id)
+          .single();
+
+        if (!error && data) {
+          setPrenom(data.prenom);
+        }
+      }
+    };
+
+    fetchSessionAndProfile();
     fetchMembers();
     fetchCellules();
   }, []);
-
-  const getSession = async () => {
-    const { data } = await supabase.auth.getSession();
-    setSession(data?.session || null);
-  };
 
   const fetchMembers = async () => {
     const { data, error } = await supabase
@@ -66,8 +80,7 @@ export default function ListMembers() {
     if (m.statut === "a déjà mon église") return "#EA4335";
     if (m.statut === "Integrer") return "#FFA500";
     if (m.statut === "ancien") return "#999999";
-    if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur")
-      return "#34A853";
+    if (m.statut === "veut rejoindre ICC" || m.statut === "visiteur") return "#34A853";
     return "#ccc";
   };
 
@@ -125,27 +138,43 @@ export default function ListMembers() {
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       {/* ==================== HEADER ==================== */}
-      <div className="flex justify-between w-full max-w-5xl items-center mb-4">
-        <button
-          onClick={() => window.history.back()}
-          className="flex items-center text-white hover:text-gray-200"
-        >
-          ← Retour
-        </button>
-        <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+      <div className="w-full max-w-5xl mb-6">
+        {/* 🔹 Top bar : bouton retour + logout */}
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center text-white hover:text-gray-200 transition-colors"
+          >
+            ← Retour
+          </button>
+
+          <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
+        </div>
+
+        {/* 🔹 Message de bienvenue avec prénom */}
+        <div className="flex justify-end mt-2">
+          <p className="text-orange-200 text-sm">
+            👋 Bienvenue {prenom || "cher membre"}
+          </p>
+        </div>
       </div>
 
       {/* ==================== LOGO ==================== */}
-      <div className="mt-2 mb-2">
-        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
+      <div className="mb-4">
+        <Image
+          src="/logo.png"
+          alt="SoulTrack Logo"
+          className="w-20 h-18 mx-auto"
+        />
       </div>
 
-      <h1 className="text-5xl sm:text-6xl font-handwriting text-white text-center mb-3">
-        Liste de Membres
-      </h1>
-      <p className="text-center text-white text-lg mb-2 font-handwriting-light">
-        Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
-      </p>
+      {/* ==================== TITRE + MESSAGE MOTIVANT ==================== */}
+      <div className="text-center mb-4">
+        <h1 className="text-3xl font-bold text-white mb-2">Liste des Membres</h1>
+        <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
+          Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
+        </p>
+      </div>
 
       {/* ==================== FILTRE + RECHERCHE + TOGGLE ==================== */}
       <div className="flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mb-4">
@@ -183,7 +212,7 @@ export default function ListMembers() {
       {/* ==================== VUE CARTE ==================== */}
       {view === "card" && (
         <div className="w-full max-w-5xl space-y-8 transition-all duration-200">
-          {/* -------- Nouveaux membres -------- */}
+          {/* ----------------- Nouveaux membres ----------------- */}
           {nouveauxFiltres.length > 0 && (
             <div>
               <p className="text-white text-lg mb-2 ml-1">
@@ -281,7 +310,7 @@ export default function ListMembers() {
             </div>
           )}
 
-          {/* -------- Membres existants -------- */}
+          {/* ----------------- Membres existants ----------------- */}
           {anciensFiltres.length > 0 && (
             <div className="mt-8">
               <h3 className="text-white text-lg mb-3 font-semibold">
@@ -478,10 +507,18 @@ export default function ListMembers() {
             </tbody>
           </table>
 
+          {/* ✅ POPUP DÉTAILS CORRIGÉE */}
           {popupMember && (
             <DetailsPopup
               member={popupMember}
               onClose={() => setPopupMember(null)}
+              statusOptions={statusOptions}
+              cellules={cellules}
+              selectedCellules={selectedCellules}
+              setSelectedCellules={setSelectedCellules}
+              handleChangeStatus={handleChangeStatus}
+              handleStatusUpdateFromEnvoyer={handleStatusUpdateFromEnvoyer}
+              session={session}
             />
           )}
         </div>
