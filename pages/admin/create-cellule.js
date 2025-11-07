@@ -1,143 +1,172 @@
-//pages/admin/create-cellule.js
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
-import AccessGuard from "../../components/AccessGuard";
 
-export default function CreateUser() {
+export default function CreateCellule() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    prenom: "",
     nom: "",
-    email: "",
-    password: "",
-    role: "ResponsableIntegration",
+    zone: "",
+    responsable_id: "",
+    responsable_nom: "",
+    telephone: "",
   });
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [responsables, setResponsables] = useState([]);
 
   useEffect(() => {
-    const role = localStorage.getItem("role");
-    if (role !== "Admin") router.push("/login");
-  }, [router]);
+    const fetchResponsables = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, telephone")
+        .in("role", ["ResponsableCellule"]);
+      if (!error) setResponsables(data);
+    };
+    fetchResponsables();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 🔥 ICI on appelle la fonction SQL create_user
+  const handleResponsableChange = (e) => {
+    const selected = responsables.find(r => r.id === e.target.value);
+    setFormData({
+      ...formData,
+      responsable_id: e.target.value,
+      responsable_nom: selected ? `${selected.prenom} ${selected.nom}` : "",
+      telephone: selected ? selected.telephone || "" : "",
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
+    setLoading(true);
+    setMessage("⏳ Création en cours...");
 
-    const { data, error } = await supabase.rpc("create_user", {
-      p_email: formData.email,
-      p_password: formData.password,
-      p_prenom: formData.prenom,
-      p_nom: formData.nom,
-      p_role: formData.role,
-    });
-
-    if (error) {
-      console.error(error);
-      setMessage("❌ Erreur : " + error.message);
-    } else {
-      setMessage(data); // la fonction renvoie le message du SQL
-      setFormData({
-        prenom: "",
-        nom: "",
-        email: "",
-        password: "",
-        role: "ResponsableIntegration",
+    try {
+      const res = await fetch("/api/create-cellule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
+
+      const data = await res.json().catch(() => null);
+
+      if (res.ok) {
+        setMessage("✅ Cellule créée avec succès !");
+        setFormData({ nom: "", zone: "", responsable_id: "", responsable_nom: "", telephone: "" });
+      } else {
+        setMessage(`❌ Erreur: ${data?.error || "Réponse vide du serveur"}`);
+      }
+    } catch (err) {
+      setMessage("❌ Erreur serveur: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleCancel = () => {
+    setFormData({ nom: "", zone: "", responsable_id: "", responsable_nom: "", telephone: "" });
+    setMessage("");
+  };
+
   return (
-    <div
-      className="min-h-screen flex flex-col justify-center items-center p-6"
-      style={{
-        background: "linear-gradient(135deg, #09203F 0%, #537895 100%)",
-      }}
-    >
-      <h1 className="text-3xl text-white font-bold mb-6">
-        Créer un utilisateur
-      </h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
+      <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-lg relative">
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-2xl shadow-md w-96 flex flex-col gap-4"
-      >
-        <input
-          name="prenom"
-          placeholder="Prénom"
-          value={formData.prenom}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 rounded-lg px-3 py-2"
-        />
-
-        <input
-          name="nom"
-          placeholder="Nom"
-          value={formData.nom}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 rounded-lg px-3 py-2"
-        />
-
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 rounded-lg px-3 py-2"
-        />
-
-        <input
-          name="password"
-          type="password"
-          placeholder="Mot de passe"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          className="border border-gray-300 rounded-lg px-3 py-2"
-        />
-
-        <select
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-          className="border border-gray-300 rounded-lg px-3 py-2"
+        {/* Flèche retour */}
+        <button
+          onClick={() => router.back()}
+          className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900 transition-colors"
         >
-          <option value="ResponsableIntegration">
-            Responsable Intégration
-          </option>
-          <option value="ResponsableEvangelisation">
-            Responsable Évangélisation
-          </option>
-          <option value="Admin">Admin</option>
-        </select>
+          ← Retour
+        </button>
+
+        {/* Logo centré */}
+        <div className="flex justify-center mb-6">
+          <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
+        </div>
+
+        {/* Titre */}
+        <h1 className="text-3xl font-bold text-center mb-6">Créer une cellule</h1>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            name="nom"
+            placeholder="Nom de la cellule"
+            value={formData.nom}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-gray-300 p-3 text-black"
+            required
+          />
+          <input
+            name="zone"
+            placeholder="Zone / Localisation"
+            value={formData.zone}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-gray-300 p-3 text-black"
+            required
+          />
+
+          <select
+            name="responsable_id"
+            value={formData.responsable_id}
+            onChange={handleResponsableChange}
+            className="w-full rounded-xl border border-gray-300 p-3 text-black"
+            required
+          >
+            <option value="">-- Sélectionnez un responsable --</option>
+            {responsables.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.prenom} {r.nom}
+              </option>
+            ))}
+          </select>
+
+          {formData.responsable_id && (
+            <input
+              name="telephone"
+              placeholder="Téléphone du responsable"
+              value={formData.telephone}
+              readOnly
+              className="w-full rounded-xl border border-gray-300 p-3 text-black bg-gray-100 cursor-not-allowed"
+            />
+          )}
+
+          {/* Boutons côte à côte */}
+          <div className="flex gap-4 mt-2">
+            {/* Annuler à gauche */}
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 text-white py-2 rounded-2xl hover:from-gray-500 hover:to-gray-600 transition-all"
+            >
+              Annuler
+            </button>
+
+            {/* Créer à droite */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white py-2 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition-all"
+            >
+              {loading ? "Création..." : "Créer"}
+            </button>
+          </div>
+        </form>
 
         {message && (
           <p
-            className={`text-center text-sm ${
-              message.startsWith("✅") ? "text-green-600" : "text-red-500"
-            }`}
+            className={`mt-4 text-center text-sm ${message.startsWith("✅") ? "text-green-600" : "text-red-600"}`}
           >
             {message}
           </p>
         )}
-
-        <button
-          type="submit"
-          className="bg-gradient-to-r from-green-600 to-lime-400 text-white py-2 rounded-xl font-semibold hover:shadow-lg transition-all"
-        >
-          Créer
-        </button>
-      </form>
+      </div>
     </div>
   );
 }
