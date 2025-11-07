@@ -1,4 +1,4 @@
-//components/BoutonEnvoyer.js //
+// components/BoutonEnvoyer.js
 
 "use client";
 import { useState } from "react";
@@ -23,6 +23,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
     try {
       const now = new Date().toISOString();
 
+      // ✅ Champs correspondant aux colonnes existantes
       const suiviData = {
         prenom: membre.prenom,
         nom: membre.nom,
@@ -32,12 +33,12 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         besoin: membre.besoin,
         infos_supplementaires: membre.infos_supplementaires,
         cellule_id: cellule.id,
-        responsable_cellule: cellule.responsable,
-        date_suivi: now,
+        cellule_nom: cellule.cellule,
+        responsable: cellule.responsable, // colonne existante dans suivis_membres
       };
 
       const { error: insertError } = await supabase
-        .from("suivis_des_membres")
+        .from("suivis_membres")
         .insert([suiviData]);
 
       if (insertError) {
@@ -47,6 +48,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         return;
       }
 
+      // Création du message WhatsApp
       let message = `👋 Salut ${cellule.responsable},\n\n🙏 Nous avons un nouveau membre à suivre :\n\n`;
       message += `- 👤 Nom : ${membre.prenom || ""} ${membre.nom || ""}\n`;
       message += `- 📱 Téléphone : ${membre.telephone || "—"}\n`;
@@ -62,6 +64,7 @@ export default function BoutonEnvoyer({ membre, cellule, onStatusUpdate, session
         "_blank"
       );
 
+      // Mise à jour du statut si callback fourni
       if (onStatusUpdate) {
         onStatusUpdate(membre.id, membre.statut);
       }
