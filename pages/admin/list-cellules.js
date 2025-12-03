@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 
 export default function ListCellules() {
+  const router = useRouter();
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -40,10 +43,16 @@ export default function ListCellules() {
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
+      {/* Bouton retour */}
+      <button onClick={() => router.back()} className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700">← Retour</button>
+
+      {/* Logo + Titre */}
       <div className="flex flex-col items-center mb-6">
-        <h2 className="text-3xl font-bold text-center text-purple-700 mb-6">🏠 Liste des cellules</h2>
+        <Image src="/logo.png" alt="Logo" width={80} height={80} />
+        <h1 className="text-3xl font-bold text-center mt-2 text-purple-700">🏠 Liste des cellules</h1>
       </div>
 
+      {/* Table */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xl">
         <div className="grid grid-cols-[2fr_2fr_2fr_2fr] gap-4 px-4 py-2 bg-purple-600 text-white font-semibold">
           <span>Nom de la cellule</span>
