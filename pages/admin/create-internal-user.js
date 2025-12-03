@@ -1,5 +1,3 @@
-// pages/admin/create-internal-user.js
-
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -12,6 +10,7 @@ export default function CreateInternalUser() {
     nom: "",
     email: "",
     password: "",
+    confirmPassword: "",
     telephone: "",
     role: "",
     cellule_nom: "",
@@ -25,6 +24,13 @@ export default function CreateInternalUser() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ Vérification mot de passe
+    if (formData.password !== formData.confirmPassword) {
+      setMessage("❌ Les mots de passe ne correspondent pas.");
+      return;
+    }
+
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
@@ -44,6 +50,7 @@ export default function CreateInternalUser() {
           nom: "",
           email: "",
           password: "",
+          confirmPassword: "",
           telephone: "",
           role: "",
           cellule_nom: "",
@@ -116,6 +123,15 @@ export default function CreateInternalUser() {
             required
           />
           <input
+            name="confirmPassword"
+            placeholder="Confirmer le mot de passe"
+            type="password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            className="input"
+            required
+          />
+          <input
             name="telephone"
             placeholder="Téléphone"
             value={formData.telephone}
@@ -135,8 +151,10 @@ export default function CreateInternalUser() {
             <option value="ResponsableIntegration">Responsable Intégration</option>
             <option value="ResponsableCellule">Responsable de Cellule</option>
             <option value="ResponsableEvangelisation">Responsable Evangélisation</option>
+            <option value="Conseiller">Conseiller</option>
           </select>
 
+          {/* Bloc spécifique pour Responsable de cellule */}
           {formData.role === "ResponsableCellule" && (
             <div className="space-y-3 border-t pt-3">
               <input
@@ -156,7 +174,15 @@ export default function CreateInternalUser() {
             </div>
           )}
 
-          {/* Boutons côte à côte: Annuler à gauche, Créer à droite */}
+          {/* Bloc spécifique pour Conseiller */}
+          {formData.role === "Conseiller" && (
+            <div className="space-y-3 border-t pt-3">
+              {/* Ici tu peux ajouter des champs spécifiques pour Conseiller si besoin */}
+              <p className="text-sm text-gray-600">Aucune information supplémentaire requise pour le rôle Conseiller.</p>
+            </div>
+          )}
+
+          {/* Boutons côte à côte */}
           <div className="flex gap-4 mt-4">
             <button
               type="button"
