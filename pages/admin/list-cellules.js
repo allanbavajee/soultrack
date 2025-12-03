@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 
@@ -43,13 +43,38 @@ export default function ListCellules() {
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
+
       {/* Bouton retour */}
-      <button onClick={() => router.back()} className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700">← Retour</button>
+      <button
+        onClick={() => router.back()}
+        className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700"
+      >
+        ← Retour
+      </button>
 
       {/* Logo + Titre */}
       <div className="flex flex-col items-center mb-6">
         <Image src="/logo.png" alt="Logo" width={80} height={80} />
-        <h1 className="text-3xl font-bold text-center mt-2 text-purple-700">🏠 Liste des cellules</h1>
+        <h1 className="text-3xl font-bold text-center mt-2 text-purple-700">
+          🏠 Liste des cellules
+        </h1>
+      </div>
+
+      {/* 🔹 Boutons d'action */}
+      <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
+        <button
+          onClick={() => router.push("/admin/create-internal-user")}
+          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl shadow-md transition"
+        >
+          ➕ Créer un responsable
+        </button>
+
+        <button
+          onClick={() => router.push("/admin/create-cellule")}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl shadow-md transition"
+        >
+          ➕ Créer une cellule
+        </button>
       </div>
 
       {/* Table */}
@@ -62,7 +87,10 @@ export default function ListCellules() {
         </div>
 
         {cellules.map((c) => (
-          <div key={c.id} className="grid grid-cols-[2fr_2fr_2fr_2fr] gap-4 px-4 py-3 border-b border-gray-200 hover:bg-purple-50 transition-all">
+          <div
+            key={c.id}
+            className="grid grid-cols-[2fr_2fr_2fr_2fr] gap-4 px-4 py-3 border-b border-gray-200 hover:bg-purple-50 transition-all"
+          >
             <span className="font-semibold text-gray-700">{c.cellule}</span>
             <span className="text-gray-700">{c.ville}</span>
             <span className="font-medium text-purple-700">{c.responsable}</span>
