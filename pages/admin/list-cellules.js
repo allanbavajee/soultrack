@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
+import EditCelluleModal from "../../components/EditCelluleModal";
 
 export default function ListCellules() {
   const router = useRouter();
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [selectedCellule, setSelectedCellule] = useState(null);
 
   useEffect(() => {
     const fetchCellules = async () => {
@@ -38,6 +40,13 @@ export default function ListCellules() {
     fetchCellules();
   }, []);
 
+  // Mise à jour instantanée
+  const handleUpdated = (updated) => {
+    setCellules(prev =>
+      prev.map(c => (c.id === updated.id ? updated : c))
+    );
+  };
+
   if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
   if (message) return <p className="text-center text-red-600 mt-10">{message}</p>;
 
@@ -60,7 +69,7 @@ export default function ListCellules() {
         </h1>
       </div>
 
-      {/* 🔹 Boutons d'action */}
+      {/* Boutons */}
       <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
         <button
           onClick={() => router.push("/admin/create-internal-user")}
@@ -79,25 +88,44 @@ export default function ListCellules() {
 
       {/* Table */}
       <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xl">
-        <div className="grid grid-cols-[2fr_2fr_2fr_2fr] gap-4 px-4 py-2 bg-purple-600 text-white font-semibold">
+        <div className="grid grid-cols-[2fr_2fr_2fr_2fr_auto] gap-4 px-4 py-2 bg-purple-600 text-white font-semibold">
           <span>Nom de la cellule</span>
           <span>Zone / Ville</span>
           <span>Responsable</span>
           <span>Téléphone</span>
+          <span className="text-center">Actions</span>
         </div>
 
         {cellules.map((c) => (
           <div
             key={c.id}
-            className="grid grid-cols-[2fr_2fr_2fr_2fr] gap-4 px-4 py-3 border-b border-gray-200 hover:bg-purple-50 transition-all"
+            className="grid grid-cols-[2fr_2fr_2fr_2fr_auto] gap-4 px-4 py-3 border-b border-gray-200 hover:bg-purple-50 transition-all"
           >
             <span className="font-semibold text-gray-700">{c.cellule}</span>
-            <span className="text-gray-700">{c.ville}</span>
-            <span className="font-medium text-purple-700">{c.responsable}</span>
-            <span className="text-gray-700">{c.telephone}</span>
+            <span>{c.ville}</span>
+            <span className="text-purple-700 font-medium">{c.responsable}</span>
+            <span>{c.telephone}</span>
+
+            <div className="flex justify-center">
+              <button
+                onClick={() => setSelectedCellule(c)}
+                className="text-blue-600 hover:text-blue-800 text-xl"
+              >
+                ✏️
+              </button>
+            </div>
           </div>
         ))}
       </div>
+
+      {/* Popup */}
+      {selectedCellule && (
+        <EditCelluleModal
+          cellule={selectedCellule}
+          onClose={() => setSelectedCellule(null)}
+          onUpdated={handleUpdated}
+        />
+      )}
     </div>
   );
 }
