@@ -1,15 +1,55 @@
-// components/SendLinkPopup.js
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import supabase from "../lib/supabaseClient";
+import { v4 as uuidv4 } from "uuid";
 
-export default function SendLinkPopup({ label, type, buttonColor, token }) {
+export default function SendLinkPopup({ label, type, buttonColor }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [token, setToken] = useState("");
 
-  // Détermine le lien selon le type
+  // ✅ Récupérer ou créer token
+  useEffect(() => {
+    const fetchOrCreateToken = async () => {
+      const now = new Date().toISOString();
+
+      // Vérifier s’il existe un token actif
+      let { data, error } = await supabase
+        .from("access_tokens")
+        .select("*")
+        .eq("access_type", type)
+        .gte("expires_at", now)
+        .order("expires_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!error && data) {
+        setToken(data.token);
+      } else {
+        // Créer un nouveau token avec expiration 7 jours
+        const newToken = uuidv4();
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+        const { error: insertError } = await supabase
+          .from("access_tokens")
+          .insert([{ token: newToken, access_type: type, expires_at: expiresAt }]);
+
+        if (insertError) {
+          console.error("Erreur création token :", insertError.message);
+          return;
+        }
+
+        setToken(newToken);
+      }
+    };
+
+    fetchOrCreateToken();
+  }, [type]);
+
   const getLink = () => {
     const base = window.location.origin;
+    if (!token) return base;
     if (type === "ajouter_membre") return `${base}/add-member?token=${token}`;
     if (type === "ajouter_evangelise") return `${base}/add-evangelise?token=${token}`;
     return base;
@@ -17,17 +57,11 @@ export default function SendLinkPopup({ label, type, buttonColor, token }) {
 
   const handleSend = () => {
     const link = getLink();
+    const whatsappLink = phoneNumber
+      ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(link)}`
+      : `https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`;
 
-    if (!phoneNumber) {
-      // Si aucun numéro saisi, ouvrir WhatsApp pour choisir un contact
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`, "_blank");
-    } else {
-      // Si numéro saisi manuellement, envoyer directement au numéro
-      window.open(
-        `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(link)}`,
-        "_blank"
-      );
-    }
+    window.open(whatsappLink, "_blank");
 
     setShowPopup(false);
     setPhoneNumber("");
