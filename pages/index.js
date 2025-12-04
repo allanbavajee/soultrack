@@ -1,9 +1,9 @@
-//✅/pages/index.js
-
+//✅ /pages/index.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import supabase from "../lib/supabaseClient";
 import LogoutLink from "../components/LogoutLink";
 
 const roleCards = {
@@ -23,28 +23,55 @@ const roleCards = {
   ResponsableCellule: [
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
   ],
+ 
   Membre: [],
 };
 
 export default function IndexPage() {
   const [userName, setUserName] = useState("");
+  const [prenom, setPrenom] = useState("");
   const [roles, setRoles] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
-    const name = localStorage.getItem("userName") || "Utilisateur";
-    const prenom = name.split(" ")[0];
-    setUserName(prenom);
-
-    const storedRoles = localStorage.getItem("userRole");
-    if (storedRoles) {
+    const fetchUser = async () => {
       try {
-        const parsedRoles = JSON.parse(storedRoles);
-        setRoles(Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]);
-      } catch {
-        setRoles([storedRoles]);
+        const userEmail = localStorage.getItem("userEmail");
+        if (!userEmail) {
+          setPrenom("cher membre");
+          return;
+        }
+
+        // 🔹 Récupération du profil connecté
+        const { data: profileData, error } = await supabase
+          .from("profiles")
+          .select("nom, prenom")
+          .eq("email", userEmail)
+          .single();
+
+        if (error) throw error;
+
+        const fullName = profileData?.nom ? `${profileData.nom} ${profileData.prenom}` : "Utilisateur";
+        setUserName(fullName);
+        setPrenom(profileData?.prenom || "cher membre");
+
+        // 🔹 Récupération des rôles depuis le localStorage
+        const storedRoles = localStorage.getItem("userRole");
+        if (storedRoles) {
+          try {
+            const parsedRoles = JSON.parse(storedRoles);
+            setRoles(Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]);
+          } catch {
+            setRoles([storedRoles]);
+          }
+        }
+      } catch (err) {
+        console.error("Erreur récupération utilisateur :", err);
+        setPrenom("cher membre");
       }
-    }
+    };
+
+    fetchUser();
   }, []);
 
   const handleRedirect = (path) => {
@@ -80,7 +107,6 @@ export default function IndexPage() {
     >
       {/* 🔹 Top bar */}
       <div className="w-full max-w-5xl mb-6">
-        {/* Ligne principale : Retour à gauche, Déconnexion à droite */}
         <div className="flex justify-between items-center">
           <button
             onClick={() => router.back()}
@@ -88,15 +114,11 @@ export default function IndexPage() {
           >
             ← Retour
           </button>
-
           <LogoutLink />
         </div>
 
-        {/* Ligne du dessous : Bienvenue aligné à droite */}
         <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">
-            👋 Bienvenue {userName}
-          </p>
+          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
         </div>
       </div>
 
@@ -104,6 +126,7 @@ export default function IndexPage() {
       <div className="mb-6">
         <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-18 mx-auto" />
       </div>
+
       {/* 🔹 Titre */}
       <h1 className="text-3xl font-login text-white mb-6 text-center font-bold">
         Tableau De Bord
@@ -111,7 +134,8 @@ export default function IndexPage() {
 
       {/* 🔹 Message motivant */}
       <p className="text-white text-lg italic mb-6 max-w-2xl leading-relaxed tracking-wide font-light">
-        La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.
+        La famille est le premier lieu où l'amour, le soutien et la foi se transmettent. 
+        Prenez soin de ceux qui vous entourent et soyez un exemple d'unité et de bonté.
       </p>
 
       {/* 🔹 Cartes des fonctionnalités */}
