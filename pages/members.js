@@ -7,7 +7,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import MemberCard from "../components/MemberCard";
-import AccessGuard from "../components/AccessGuard";
 
 export default function ListMembers() {
   const [members, setMembers] = useState([]);
