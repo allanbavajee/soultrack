@@ -1,5 +1,3 @@
-//* ✅ pages/membres-hub.js
-
 "use client";
 
 import Link from "next/link";
@@ -26,7 +24,6 @@ export default function MembresHub() {
     >
       {/* 🔹 Top bar */}
       <div className="w-full max-w-5xl mb-6">
-        {/* Ligne principale : Retour à gauche, Déconnexion à droite */}
         <div className="flex justify-between items-center">
           <button
             onClick={() => router.back()}
@@ -38,7 +35,6 @@ export default function MembresHub() {
           <LogoutLink />
         </div>
 
-        {/* Ligne du dessous : Bienvenue aligné à droite */}
         <div className="flex justify-end mt-2">
           <p className="text-orange-200 text-sm">
             👋 Bienvenue {userName}
@@ -62,46 +58,37 @@ export default function MembresHub() {
       </div>
 
       {/* 🔹 Cartes principales */}
-      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6">
-        <Link
-          href="/add-member"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0EA5E9] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-4xl mb-2">➕</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Ajouter un membre
-          </div>
-        </Link>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-5xl mb-6">
+          <Link href="/list-members" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
+            <div className="text-4xl mb-2">👥</div>
+            <div className="text-lg font-bold text-gray-800 text-center">Liste des membres</div>
+          </Link>
+        
+          <Link href="/suivis-membres" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#FBBF24] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
+            <div className="text-4xl mb-2">📋</div>
+            <div className="text-lg font-bold text-gray-800 text-center">Suivis des membres</div>
+          </Link>
+        
+          <Link href="/create-conseiller" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#FBBF24] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
+            <div className="text-4xl mb-2">➕</div>
+            <div className="text-lg font-bold text-gray-800 text-center">Créer un Conseiller</div>
+          </Link>
+        
+          <Link href="/list-conseillers" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#10B981] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
+            <div className="text-4xl mb-2">👔</div>
+            <div className="text-lg font-bold text-gray-800 text-center">Liste des Conseillers</div>
+          </Link>
+        </div>
+        
+        {/* 🔹 Bouton popup ajouté sous les cartes */}
+        <div className="w-full max-w-md mb-10">
+          <SendLinkPopup
+            label="Envoyer l'appli – Nouveau membre"
+            type="ajouter_membre"
+            buttonColor="from-[#09203F] to-[#537895]"
+          />
+</div>
 
-        <Link
-          href="/list-members"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-4xl mb-2">👥</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Liste des membres
-          </div>
-        </Link>
-
-        <Link
-          href="/suivis-membres"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#FBBF24] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-4xl mb-2">📋</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Suivis des membres
-          </div>
-        </Link>
-      </div>
-
-      {/* 🔹 Bouton popup ajouté sous les cartes */}
-      <div className="w-full max-w-md mb-10">
-        <SendLinkPopup
-          label="Envoyer l'appli – Nouveau membre"
-          type="ajouter_membre"
-          buttonColor="from-[#09203F] to-[#537895]"
-        />
-      </div>
 
       {/* 🔹 Verset biblique sous les cartes */}
       <div className="mt-auto mb-4 text-center text-white text-lg italic max-w-2xl leading-relaxed tracking-wide font-light">
