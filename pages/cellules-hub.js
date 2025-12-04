@@ -9,14 +9,33 @@ import SendLinkPopup from "../components/SendLinkPopup";
 import LogoutLink from "../components/LogoutLink";
 import AccessGuard from "../components/AccessGuard";
 import { useEffect, useState } from "react";
+import supabase from "../lib/supabaseClient";
 
 export default function CellulesHub() {
   const router = useRouter();
-  const [userName, setUserName] = useState("Utilisateur");
+  const [prenom, setPrenom] = useState("cher membre");
 
   useEffect(() => {
-    const storedName = localStorage.getItem("userName"); // stocké lors du login
-    if (storedName) setUserName(storedName.split(" ")[0]); // prend le prénom
+    const fetchPrenom = async () => {
+      try {
+        const userEmail = localStorage.getItem("userEmail");
+        if (!userEmail) return;
+
+        const { data: profileData, error } = await supabase
+          .from("profiles")
+          .select("prenom")
+          .eq("email", userEmail)
+          .single();
+
+        if (error) throw error;
+        setPrenom(profileData?.prenom || "cher membre");
+      } catch (err) {
+        console.error("Erreur récupération prénom :", err);
+        setPrenom("cher membre");
+      }
+    };
+
+    fetchPrenom();
   }, []);
 
   return (
@@ -38,9 +57,9 @@ export default function CellulesHub() {
         </div>
 
         {/* 🔹 Prénom utilisateur sous déconnexion */}
-        <p className="text-left w-full max-w-5xl mb-6 text-gray-200 italic">
-          Bienvenue {userName} !
-        </p>
+        <div className="flex justify-end mt-2">
+          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
+        </div>
 
         {/* 🔹 Logo centré */}
         <div className="mb-6">
