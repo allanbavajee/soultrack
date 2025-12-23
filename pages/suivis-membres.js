@@ -121,6 +121,15 @@ export default function SuivisMembres() {
   const handleCommentChange = (id, value) =>
     setCommentChanges(prev => ({ ...prev, [id]: value }));
 
+  const getBorderColor = (m) => {
+    if (!m) return "#ccc";
+    if (m.statut_suivis === statutIds["en attente"]) return "#FFA500";
+    if (m.statut_suivis === statutIds["integrer"]) return "#34A853";
+    if (m.statut_suivis === statutIds["refus"]) return "#FF4B5C";
+    if (m.statut_suivis === statutIds["envoye"]) return "#3B82F6";
+    return "#ccc";
+  };
+
   const updateSuivi = async (id) => {
     const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
@@ -164,7 +173,7 @@ export default function SuivisMembres() {
   const handleAfterSend = async () => {
     try {
       const { data, error } = await supabase.from("suivis_membres").select("*").order("created_at", { ascending: false });
-      if (!error) setSuivis(data);
+      if (!error) setAllMembers(data);
     } catch (err) {
       console.error("Erreur rafraîchissement suivis :", err);
     }
@@ -200,6 +209,13 @@ export default function SuivisMembres() {
     }, [commentChanges[m.id]]);
 
     return (
+      <div className="text-black text-sm space-y-2 w-full">
+        {/* Contenu du popup */}
+      </div>
+    );
+  };
+
+  return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>🏙 Ville : {m.ville || "—"}</p>
         <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
