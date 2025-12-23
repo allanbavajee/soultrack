@@ -7,26 +7,31 @@ import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditMemberPopup from "../components/EditMemberPopup";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";
+import DetailsModal from "../components/DetailsModal";
+import { useMembers } from "../context/MembersContext";
 
 export default function SuivisMembres() {
-  const [suivis, setSuivis] = useState([]);
+  const { members, setAllMembers, updateMember } = useMembers(); // ✅ Une seule extraction
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
   const [role, setRole] = useState([]);
-  const [detailsOpen, setDetailsOpen] = useState(null);
+  const [detailsModalMember, setDetailsModalMember] = useState(null);
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
   const [view, setView] = useState("card");
   const [editMember, setEditMember] = useState(null);
   const [showRefus, setShowRefus] = useState(false);
-  contacts.forEach(c => console.log(c.prenom, c.nom, c.telephone));
+  const [detailsOpen, setDetailsOpen] = useState(null);
 
+  const toggleDetails = (id) =>
+    setDetailsOpen((prev) => (prev === id ? null : id));
 
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
+  // 🔹 Fetch unique et mise à jour contexte
   useEffect(() => {
     const fetchSuivis = async () => {
       setLoading(true);
@@ -44,54 +49,77 @@ export default function SuivisMembres() {
         setPrenom(profileData.prenom || "cher membre");
         setRole(profileData.role);
 
-        const tableName = "suivis_membres";
+        const tableName = "suivis_membres_view";
         let suivisData = [];
 
         if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
-          const { data, error } = await supabase.from(tableName).select("*").order("created_at", { ascending: false });
+          const { data, error } = await supabase
+            .from(tableName)
+            .select("*")
+            .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
         } else if (profileData.role === "Conseiller") {
-          const { data, error } = await supabase.from(tableName).select("*").eq("conseiller_id", profileData.id).order("created_at", { ascending: false });
+          const { data, error } = await supabase
+            .from(tableName)
+            .select("*")
+            .eq("conseiller_id", profileData.id)
+            .order("created_at", { ascending: false });
           if (error) throw error;
           suivisData = data;
         } else if (profileData.role === "ResponsableCellule") {
-          const { data: cellulesData, error: cellulesError } = await supabase.from("cellules").select("id").eq("responsable_id", profileData.id);
+          const { data: cellulesData, error: cellulesError } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", profileData.id);
           if (cellulesError) throw cellulesError;
 
           const celluleIds = cellulesData?.map(c => c.id) || [];
           if (celluleIds.length > 0) {
-            const { data, error } = await supabase.from(tableName).select("*").in("cellule_id", celluleIds).order("created_at", { ascending: false });
+            const { data, error } = await supabase
+              .from(tableName)
+              .select("*")
+              .in("cellule_id", celluleIds)
+              .order("created_at", { ascending: false });
             if (error) throw error;
             suivisData = data;
           }
         }
 
-        setSuivis(suivisData || []);
-        if (!suivisData || suivisData.length === 0) setMessage("Aucun membre à afficher.");
+        const membresIds = suivisData.map(s => s.membre_id);
+        const { data: membresData } = await supabase
+          .from("membres")
+          .select("id, sexe, venu, statut")
+          .in("id", membresIds);
+
+        const merged = suivisData.map(s => ({
+          ...s,
+          membre: membresData.find(m => m.id === s.membre_id) || {}
+        }));
+
+        // Mise à jour du contexte pour chaque membre
+        merged.forEach(s => updateMember(s.membre_id, s));
+
+        // Mettre à jour tous les membres dans le contexte
+        setAllMembers(merged);
+
+        if (!merged || merged.length === 0) setMessage("Aucun membre à afficher.");
       } catch (err) {
         console.error("❌ Erreur:", err.message || err);
         setMessage("Erreur lors de la récupération des suivis.");
-        setSuivis([]);
       } finally {
         setLoading(false);
       }
     };
+
     fetchSuivis();
-  }, []);
+  }, [updateMember, setAllMembers]);
 
-  const toggleDetails = (id) => setDetailsOpen(prev => (prev === id ? null : id));
-
-  const handleStatusChange = (id, value) => setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
-  const handleCommentChange = (id, value) => setCommentChanges(prev => ({ ...prev, [id]: value }));
-
-  const getBorderColor = (m) => {
-    if (m.statut_suivis === statutIds["en attente"]) return "#FFA500";
-    if (m.statut_suivis === statutIds["integrer"]) return "#34A853";
-    if (m.statut_suivis === statutIds["refus"]) return "#FF4B5C";
-    if (m.statut_suivis === statutIds["envoye"]) return "#3B82F6";
-    return "#ccc";
-  };
+  // ✅ Fonctions de mise à jour
+  const handleStatusChange = (id, value) =>
+    setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
+  const handleCommentChange = (id, value) =>
+    setCommentChanges(prev => ({ ...prev, [id]: value }));
 
   const updateSuivi = async (id) => {
     const newStatus = statusChanges[id];
@@ -106,10 +134,17 @@ export default function SuivisMembres() {
       if (newStatus) payload.statut_suivis = newStatus;
       if (newComment) payload.commentaire_suivis = newComment;
 
-      const { data: updatedSuivi, error: updateError } = await supabase.from("suivis_membres").update(payload).eq("id", id).select().single();
+      const { data: updatedSuivi, error: updateError } = await supabase
+        .from("suivis_membres")
+        .update(payload)
+        .eq("id", id)
+        .select()
+        .single();
       if (updateError) throw updateError;
 
-      setSuivis(prev => prev.map(s => s.id === id ? updatedSuivi : s));
+      updateMember(updatedSuivi.membre_id, updatedSuivi);
+
+      setMessage({ type: "success", text: "Mise à jour effectuée." });
     } catch (err) {
       console.error("Exception updateSuivi:", err);
       setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
@@ -118,7 +153,7 @@ export default function SuivisMembres() {
     }
   };
 
-  const filteredSuivis = suivis.filter(s => {
+  const filteredSuivis = members.filter(s => {
     if (s.statut_suivis === statutIds["integrer"]) return false;
     if (showRefus) return s.statut_suivis === statutIds["refus"];
     return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
