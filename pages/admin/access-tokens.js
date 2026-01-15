@@ -1,6 +1,6 @@
 // pages/admin/access-tokens.js
 import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
+import supabase from "../lib/supabaseClient";
 import SendWhatsappButtons from "../../components/SendWhatsappButtons";
 
 export default function AccessTokens() {
