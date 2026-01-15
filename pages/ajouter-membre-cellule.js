@@ -131,9 +131,10 @@ export default function AjouterMembreCellule() {
 
         {/* Logo centré */}
         <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+        {/* Correct */}
+        <Image src="/path/to/image.png" alt="description" width={50} height={50} />
         </div>
-
+          
         <h1 className="text-3xl font-bold text-center mb-2">Ajouter un membre à ma cellule</h1>
         <p className="text-center text-gray-500 italic mb-6">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
