@@ -1,9 +1,9 @@
-// pages/login.js
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
+import bcrypt from "bcryptjs";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,26 +18,55 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // 1️⃣ Tentative connexion via Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (authError || !authData.user) {
-        setError("❌ Email ou mot de passe incorrect");
+        // Vérifier si c'est un admin dans profiles
+        const { data: adminProfile, error: adminError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("email", email)
+          .eq("role", "Administrateur")
+          .single();
+
+        if (adminError || !adminProfile) {
+          setError("❌ Email ou mot de passe incorrect");
+          setLoading(false);
+          return;
+        }
+
+        // Vérifier mot de passe via bcrypt
+        const isValid = await bcrypt.compare(password, adminProfile.password_hash);
+        if (!isValid) {
+          setError("❌ Email ou mot de passe incorrect");
+          setLoading(false);
+          return;
+        }
+
+        // ✅ Admin validé → stocker infos
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("userId", adminProfile.id);
+        localStorage.setItem("userRole", JSON.stringify([adminProfile.role]));
+        localStorage.setItem("profile", JSON.stringify(adminProfile));
+
+        // Redirection admin
+        router.push("/"); // page admin ou tableau de bord principal
         setLoading(false);
         return;
       }
 
-      // Connexion réussie, stocker userId et info de base
+      // 2️⃣ Si utilisateur normal connecté via Auth
       const user = authData.user;
       localStorage.setItem("userEmail", email);
       localStorage.setItem("userId", user.id);
 
-      // Récupérer le profil pour redirection selon rôle
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, role, prenom, nom, telephone")
+        .select("*")
         .eq("id", user.id)
         .single();
 
