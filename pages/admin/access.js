@@ -1,6 +1,6 @@
 // pages/admin/access.js
 import { useState, useEffect } from "react";
-import { supabase } from "../../lib/supabaseClient";
+import supabase from "../lib/supabaseClient";
 
 export default function AdminAccess() {
   const [tokens, setTokens] = useState({});
