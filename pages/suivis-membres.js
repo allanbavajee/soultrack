@@ -1,5 +1,3 @@
-//pages/suivis-membres.js
-
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -7,13 +5,13 @@ import React from "react";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
-import EditMemberPopup from "../components/EditMemberPopup";
-import BoutonEnvoyer from "../components/BoutonEnvoyer";
+import EditMemberSuivisPopup from "../components/EditMemberSuivisPopup";
 import DetailsModal from "../components/DetailsModal";
 import { useMembers } from "../context/MembersContext";
+import { useRouter } from "next/navigation"; // ✅ pour navigation
 
 export default function SuivisMembres() {
-  // ✅ Une seule déclaration du contexte
+  const router = useRouter(); // ✅ pour handleAfterStatusUpdate
   const { members, setAllMembers, updateMember } = useMembers();
 
   const [loading, setLoading] = useState(true);
@@ -29,15 +27,32 @@ export default function SuivisMembres() {
   const [showRefus, setShowRefus] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(null);
 
+  const [cellules, setCellules] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
+
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
+  const phoneMenuRef = useRef(null);
+
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => (prev === id ? null : id));
 
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
-  // 🔹 Fetch et initialisation des suivis
+  // 🔹 Fermer menu téléphone si clic en dehors
   useEffect(() => {
-    const fetchSuivis = async () => {
+    const handleClickOutside = (event) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(event.target)) {
+        setOpenPhoneMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // 🔹 Fetch membres_complets et cellules/conseillers
+  useEffect(() => {
+    const fetchMembresComplets = async () => {
       setLoading(true);
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -53,149 +68,149 @@ export default function SuivisMembres() {
         setPrenom(profileData.prenom || "cher membre");
         setRole(profileData.role);
 
-        const tableName = "suivis_membres_view";
-        let suivisData = [];
+        let query = supabase.from("membres_complets").select("*").order("created_at", { ascending: false });
 
-        if (["Administrateur", "ResponsableIntegration"].includes(profileData.role)) {
-          const { data, error } = await supabase
-            .from(tableName)
-            .select("*")
-            .order("created_at", { ascending: false });
-          if (error) throw error;
-          suivisData = data;
-        } else if (profileData.role === "Conseiller") {
-          const { data, error } = await supabase
-            .from(tableName)
-            .select("*")
-            .eq("conseiller_id", profileData.id)
-            .order("created_at", { ascending: false });
-          if (error) throw error;
-          suivisData = data;
+        if (profileData.role === "Conseiller") {
+          query = query.eq("conseiller_id", profileData.id);
         } else if (profileData.role === "ResponsableCellule") {
-          const { data: cellulesData, error: cellulesError } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", profileData.id);
-          if (cellulesError) throw cellulesError;
-
+          const { data: cellulesData } = await supabase.from("cellules").select("id").eq("responsable_id", profileData.id);
           const celluleIds = cellulesData?.map(c => c.id) || [];
           if (celluleIds.length > 0) {
-            const { data, error } = await supabase
-              .from(tableName)
-              .select("*")
-              .in("cellule_id", celluleIds)
-              .order("created_at", { ascending: false });
-            if (error) throw error;
-            suivisData = data;
+            query = query.in("cellule_id", celluleIds);
+          } else {
+            query = query.eq("id", -1);
           }
         }
 
-        const membresIds = suivisData.map(s => s.membre_id);
-        const { data: membresData } = await supabase
-          .from("membres")
-          .select("id, sexe, venu, statut")
-          .in("id", membresIds);
+        const { data, error } = await query;
+        if (error) throw error;
 
-        const merged = suivisData.map(s => ({
-          ...s,
-          membre: membresData.find(m => m.id === s.membre_id) || {}
-        }));
-
-        // 🔹 Mise à jour du contexte pour chaque membre
-        setAllMembers(merged);
-
-        if (!merged || merged.length === 0) setMessage("Aucun membre à afficher.");
+        setAllMembers(data || []);
+        if (!data || data.length === 0) setMessage("Aucun membre à afficher.");
       } catch (err) {
-        console.error("❌ Erreur:", err.message || err);
-        setMessage("Erreur lors de la récupération des suivis.");
+        console.error("❌ Erreur fetchMembresComplets:", err.message || err);
+        setMessage("Erreur lors de la récupération des membres.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSuivis();
+    const fetchCellulesConseillers = async () => {
+      try {
+        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
+        const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom").eq("role", "Conseiller");
+        setCellules(cellulesData || []);
+        setConseillers(conseillersData || []);
+      } catch (err) {
+        console.error("Erreur chargement cellules/conseillers :", err);
+      }
+    };
+
+    fetchMembresComplets();
+    fetchCellulesConseillers();
   }, [setAllMembers]);
 
-  const handleStatusChange = (id, value) =>
-    setStatusChanges(prev => ({ ...prev, [id]: parseInt(value, 10) }));
-  const handleCommentChange = (id, value) =>
+  // 🔹 Changement commentaire
+  const handleCommentChange = (id, value) => {
     setCommentChanges(prev => ({ ...prev, [id]: value }));
+    const member = members.find(m => m.id === id);
+    if (member) {
+      updateMember(id, { ...member, commentaire_suivis: value });
+    }
+  };
 
   const getBorderColor = (m) => {
     if (!m) return "#ccc";
-    if (m.statut_suivis === statutIds["en attente"]) return "#FFA500";
-    if (m.statut_suivis === statutIds["integrer"]) return "#34A853";
-    if (m.statut_suivis === statutIds["refus"]) return "#FF4B5C";
-    if (m.statut_suivis === statutIds["envoye"]) return "#3B82F6";
+    const status = m.statut_suivis ?? m.suivi_statut;
+    if (status === statutIds["en attente"]) return "#FFA500";
+    if (status === statutIds["integrer"]) return "#34A853";
+    if (status === statutIds["refus"]) return "#FF4B5C";
+    if (status === statutIds["envoye"]) return "#3B82F6";
     return "#ccc";
   };
 
+  // 🔹 Mettre à jour statut/commentaire
   const updateSuivi = async (id) => {
-    const newStatus = statusChanges[id];
     const newComment = commentChanges[id];
-    if (!newStatus && !newComment) {
-      setMessage({ type: "info", text: "Aucun changement détecté." });
-      return;
-    }
+    const newStatus = statusChanges[id];
+
+    if (newComment === undefined && newStatus === undefined) return;
+
     setUpdating(prev => ({ ...prev, [id]: true }));
+
     try {
       const payload = { updated_at: new Date() };
-      if (newStatus) payload.statut_suivis = newStatus;
-      if (newComment) payload.commentaire_suivis = newComment;
+      if (newComment !== undefined) payload.commentaire_suivis = newComment;
+      if (newStatus !== undefined) payload.statut_suivis = Number(newStatus);
 
-      const { data: updatedSuivi, error: updateError } = await supabase
-        .from("suivis_membres")
+      const { data: updatedMember, error } = await supabase
+        .from("membres_complets")
         .update(payload)
         .eq("id", id)
         .select()
         .single();
-      if (updateError) throw updateError;
 
-      // 🔹 Mise à jour du contexte pour ce suivi
-      updateMember(updatedSuivi.membre_id, updatedSuivi);
+      if (error) throw error;
 
-      setMessage({ type: "success", text: "Mise à jour effectuée." });
+      setAllMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
     } catch (err) {
-      console.error("Exception updateSuivi:", err);
-      setMessage({ type: "error", text: `Erreur durant la mise à jour : ${err.message}` });
+      console.error(err);
     } finally {
       setUpdating(prev => ({ ...prev, [id]: false }));
     }
   };
 
-  const filteredSuivis = members.filter(s => {
-    if (s.statut_suivis === statutIds["integrer"]) return false;
-    if (showRefus) return s.statut_suivis === statutIds["refus"];
-    return s.statut_suivis === statutIds["envoye"] || s.statut_suivis === statutIds["en attente"];
-  });
-
-  const uniqueSuivis = Array.from(new Map(filteredSuivis.map(item => [item.id, item])).values());
-
-  const handleAfterSend = (updatedMember) => {
-    updateMember(updatedMember);
+  // 🔹 Réactiver un contact refusé
+  const reactivateMember = async (id) => {
+    setUpdating(prev => ({ ...prev, [id]: true }));
+    try {
+      const { data: updatedMember, error } = await supabase
+        .from("membres_complets")
+        .update({ statut_suivis: statutIds["en attente"], updated_at: new Date() })
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      setAllMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUpdating(prev => ({ ...prev, [id]: false }));
+    }
   };
 
-  // 🔹 DetailsPopup reste inchangé
-  const DetailsPopup = ({ m }) => {
-    const [cellules, setCellules] = useState([]);
-    const [conseillers, setConseillers] = useState([]);
-    const [typeEnvoi, setTypeEnvoi] = useState("");
-    const [cible, setCible] = useState(null);
-    const commentRef = useRef(null);
+  // 🔹 Fonction handleAfterStatusUpdate
+  const handleAfterStatusUpdate = (statut) => {
+    // 2 = En attente → rien
+    if (statut === 2) return;
 
-    useEffect(() => {
-      const loadData = async () => {
-        try {
-          const { data: cellulesData } = await supabase.from("cellules").select("id, cellule, responsable, telephone");
-          const { data: conseillersData } = await supabase.from("profiles").select("id, prenom, nom, telephone").eq("role", "Conseiller");
-          setCellules(cellulesData || []);
-          setConseillers(conseillersData || []);
-        } catch (err) {
-          console.error("Erreur chargement cellules/conseillers :", err);
-        }
-      };
-      loadData();
-    }, []);
+    // 4 = Refus → aller vers la page "voir les refus"
+    if (statut === 4) {
+      router.push("/suivis/refus");
+      return;
+    }
+
+    // 3 = Intégré → sortir de la page
+    if (statut === 3) {
+      router.back();
+      return;
+    }
+  };
+    // 🔹 Filtrage membres
+  const filteredMembers = members.filter(m => {
+    const status = m.statut_suivis ?? 0;
+    if (showRefus) return status === 4;       // Refus
+    return status === 1 || status === 2;       // Vue normale
+  });
+
+  const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
+
+  const handleAfterSend = (updatedMember) => {
+    updateMember(updatedMember.id, updatedMember);
+  };
+
+  const DetailsPopup = ({ m }) => {
+    const commentRef = useRef(null);
 
     useEffect(() => {
       if (commentRef.current) {
@@ -204,38 +219,20 @@ export default function SuivisMembres() {
       }
     }, [commentChanges[m.id]]);
 
-    const handleSelectCible = (id) => {
-      if (typeEnvoi === "cellule") setCible(cellules.find(c => c.id === id) || null);
-      else if (typeEnvoi === "conseiller") setCible(conseillers.find(c => c.id === id) || null);
-    };
+    const celluleNom = m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—";
+    const conseillerNom = m.conseiller_id
+      ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
+      : "—";
 
     return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-        <p>🏙 Ville : {m.ville || "—"}</p>
-        <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-        <p>⚥ Sexe : {m.sexe || "—"}</p>
-        <p>📋 Statut initial : {m.statut_initial ?? m.statut_membre ?? "—"}</p>
-        <p>❓Besoin : {
-          !m.besoin ? "—" :
-          Array.isArray(m.besoin) ? m.besoin.join(", ") :
-          (() => { try { const arr = JSON.parse(m.besoin); return Array.isArray(arr) ? arr.join(", ") : m.besoin; } catch { return m.besoin; } })()
-        }</p>
-        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-
-        <label className="text-black text-sm mt-4 block">📋 Statut Suivis :</label>
-        <select value={statusChanges[m.id] ?? m.statut_suivis ?? ""} onChange={(e) => handleStatusChange(m.id, e.target.value)} className="w-full border rounded-md px-2 py-1">
-          <option value="">-- Choisir un statut --</option>
-          <option value={1}>🕓 En Cours</option>
-          <option value={3}>✅ Intégrer</option>
-          <option value={4}>❌ Refus</option>
-        </select>
-
-        <textarea ref={commentRef} value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""} onChange={(e) => handleCommentChange(m.id, e.target.value)} rows={2} className="w-full border rounded-md px-2 py-1 mt-2 resize-none" placeholder="Ajouter un commentaire..." />
-
-        <button onClick={() => updateSuivi(m.id)} disabled={updating[m.id]} className={`mt-3 w-full text-white font-semibold py-1 rounded-md transition ${updating[m.id] ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}>
-          {updating[m.id] ? "Mise à jour..." : "Mettre à jour"}
-        </button>
+        <p>🏙 Ville : {m.ville || ""}</p>
+        <p>🧩 Comment est-il venu : {m.venu || ""}</p>
+        <p>⚥ Sexe : {m.sexe || ""}</p>
+        <p>📋 Statut initial : {m.statut_initial ?? m.statut ?? ""}</p>
+        <p>❓Besoin : {!m.besoin ? "" : Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin}</p>
+        <p>📝 Infos : {m.infos_supplementaires || ""}</p>       
 
         <div className="mt-4 flex justify-center">
           <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-4">✏️ Modifier le contact</button>
@@ -246,7 +243,7 @@ export default function SuivisMembres() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      {/* 🔹 Header */}
+      {/* Header */}
       <div className="w-full max-w-5xl mb-6">
         <div className="flex justify-between items-center">
           <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200 transition-colors">← Retour</button>
@@ -257,114 +254,163 @@ export default function SuivisMembres() {
         </div>
       </div>
 
-      {/* 🔹 Logo */}
+      {/* Logo */}
       <div className="mb-4">
         <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
       </div>
 
-      {/* 🔹 Titre */}
+      {/* Title */}
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-white mb-2">📋 Suivis des Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto italic">Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️</p>
       </div>
 
-      {/* 🔹 Contrôles */}
+      {/* View & Filter Buttons */}
       <div className="mb-4 flex justify-between w-full max-w-6xl">
         <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-white text-sm underline hover:text-black-200">{view === "card" ? "Vue Table" : "Vue Carte"}</button>
-        <button onClick={() => setShowRefus(!showRefus)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tout les suivis" : "Voir les refus"}</button>
+        <button onClick={() => setShowRefus(prev => !prev)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tous les suivis" : "Voir les refus"}</button>
       </div>
 
-      {/* 🔹 Message */}
       {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}
 
-      {/* 🔹 Vue cartes */}
+      {/* Cards View */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
-          {uniqueSuivis.map(item => (
-            <div key={item.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4" style={{ borderLeftColor: getBorderColor(item) }}>
+          {uniqueMembers.map(m => (
+            <div key={m.id} className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
               <div className="flex flex-col items-center">
-                <h2 className="font-bold text-black text-base text-center mb-1">{item.prenom} {item.nom}</h2>
-                <p className="text-sm text-black-700 mb-1">📞 {item.telephone || "—"}</p>
-                <p className="text-sm text-black-700 mb-1">📋 Statut Suivis : {statutLabels[item.statut_suivis] || "—"}</p>              
-                <p className="text-sm text-black-700 mb-1">🏠 Cellule : {item.cellule_full || "—"}</p>
-                {!item.cellule_full && (
-                  <p className="text-sm text-black-700 mb-1">👤 Conseiller : {item.responsable || "—"}</p>
+                <h2 className="font-bold text-black text-base text-center mb-1">{m.prenom} {m.nom}</h2>
+
+                {/* Phone menu */}
+                <p
+                  className="text-orange-500 underline font-semibold mb-1 cursor-pointer"
+                  onClick={() => setOpenPhoneMenuId(openPhoneMenuId === m.id ? null : m.id)}
+                >
+                  {m.telephone || "—"}
+                </p>
+
+                {openPhoneMenuId === m.id && (
+                  <div ref={phoneMenuRef} className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52" onClick={(e) => e.stopPropagation()}>
+                    <a href={m.telephone ? `tel:${m.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>📞 Appeler</a>
+                    <a href={m.telephone ? `sms:${m.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>✉️ SMS</a>
+                    <a href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>📱 Appel WhatsApp</a>
+                    <a href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>💬 Message WhatsApp</a>
+                  </div>
                 )}
 
-                <button
-                  onClick={() => toggleDetails(item.id)}
-                  className="text-orange-500 underline text-sm mt-1"
-                >
-                  {detailsOpen === item.id ? "Fermer détails" : "Détails"}
-                </button>
+                <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</p>
+                <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
+
+                {/* Commentaire & Statut */}
+                <div className="flex flex-col w-full mt-2">
+                  <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
+
+                  {showRefus ? (
+                    <textarea value={m.commentaire_suivis ?? ""} readOnly className="w-full border rounded-lg p-2 bg-gray-100 text-gray-600 cursor-not-allowed" rows={2}/>
+                  ) : (
+                    <textarea value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""} onChange={(e) => handleCommentChange(m.id, e.target.value)} className="w-full border rounded-lg p-2" rows={2}/>
+                  )}
+
+                  <label className="font-semibold mb-1 text-center mt-2">Statut Intégration</label>
+
+                  {showRefus ? (
+                    <select value="4" disabled className="w-full border rounded-lg p-2 text-red-600 bg-gray-100 cursor-not-allowed">
+                      <option value="4">Refus</option>
+                    </select>
+                  ) : (
+                    <select value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")} onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))} className="w-full border rounded-lg p-2 mb-2">
+                      <option value="">-- Sélectionner un statut --</option>
+                      <option value="2">En Attente</option>
+                      <option value="3">Intégrer</option>
+                      <option value="4">Refus</option>
+                    </select>
+                  )}
+
+                  {showRefus ? (
+                    <button onClick={() => reactivateMember(m.id)} disabled={updating[m.id]} className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"}`}>
+                      {updating[m.id] ? "Réactivation..." : "Réactiver"}
+                    </button>
+                  ) : (
+                    <button onClick={() => updateSuivi(m.id)} disabled={updating[m.id]} className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 text-white"}`}>
+                      {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+                    </button>
+                  )}
+                </div>
+
+                <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">{detailsOpen === m.id ? "Fermer détails" : "Détails"}</button>
               </div>
 
-              <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === item.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
-                {detailsOpen === item.id && <div className="pt-2"><DetailsPopup m={item} /></div>}
+              <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
+                {detailsOpen === m.id && <div className="pt-2"><DetailsPopup m={m} /></div>}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* 🔹 Vue table */}
+      {/* Table View */}
       {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto flex justify-center">
-          <table className="w-full text-sm text-left text-white border-separate border-spacing-0">
-            <thead className="bg-gray-200 text-black-800 text-sm uppercase rounded-t-md">
-              <tr>
-                <th className="px-4 py-2 rounded-tl-lg">Nom complet</th>
-                <th className="px-4 py-2">Téléphone</th>
-                <th className="px-4 py-2">Statut Suivis</th>
-                <th className="px-4 py-2">Attribué à</th>
-                <th className="px-4 py-2 rounded-tr-lg">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {uniqueSuivis.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-2 text-white text-center">Aucun membre en suivi</td>
-                </tr>
-              ) : (
-                uniqueSuivis.map(m => (
-                  <tr key={m.id} className="hover:bg-white/10 transition duration-150 border-b border-gray-300">
-                    <td className="px-4 py-2 border-l-4 rounded-l-md flex items-center gap-2" style={{ borderLeftColor: getBorderColor(m) }}>{m.prenom} {m.nom}</td>
-                    <td className="px-4 py-2">{m.telephone || "—"}</td>
-                    <td className="px-4 py-2">{statutLabels[m.statut_suivis] || "—"}</td>
-                    <td className="px-4 py-2">{m.cellule_full || m.responsable || "—"}</td>
-                    <td className="px-4 py-2 flex items-center gap-2">
-                      <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm">Détails</button>
-                      <button onClick={() => setEditMember(m)} className="text-blue-600 underline text-sm">Modifier</button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="w-full max-w-6xl overflow-x-auto py-2">
+          <div className="min-w-[700px] space-y-2">
+            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+              <div className="flex-[2]">Nom complet</div>
+              <div className="flex-[1]">Téléphone</div>
+              <div className="flex-[1]">Statut Suivis</div>
+              <div className="flex-[2]">Attribué à</div>
+              <div className="flex-[1]">Actions</div>
+            </div>
+
+            {uniqueMembers.length === 0 && <div className="px-2 py-2 text-white text-center bg-gray-600 rounded">Aucun membre en suivi</div>}
+
+            {uniqueMembers.map(m => {
+              const attribue = m.conseiller_id
+                ? `👤 ${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
+                : m.cellule_id
+                ? `🏠 ${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}`
+                : "—";
+
+              return (
+                <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+                  <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
+                  <div className="flex-[1] text-white">{m.telephone || "—"}</div>
+                  <div className="flex-[1] text-white">{statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}</div>
+                  <div className="flex-[2] text-white">{attribue}</div>
+                  <div className="flex-[1]">
+                    <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm whitespace-nowrap">Détails</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      {/* 🔹 Modals */}
       {detailsModalMember && (
-        <DetailsModal
-          m={detailsModalMember}
-          onClose={() => setDetailsModalMember(null)}
-          handleStatusChange={handleStatusChange}
-          handleCommentChange={handleCommentChange}
-          statusChanges={statusChanges}
-          commentChanges={commentChanges}
-          updating={updating}
-          updateSuivi={updateSuivi}
-        />
-      )}
-      
+  <DetailsModal
+    m={detailsModalMember}
+    onClose={() => setDetailsModalMember(null)}
+    handleCommentChange={handleCommentChange}
+    handleStatusChange={(id, value) =>
+      setStatusChanges(prev => ({ ...prev, [id]: value }))
+    }
+    commentChanges={commentChanges}
+    statusChanges={statusChanges}
+    updating={updating}
+    updateSuivi={updateSuivi}      // ✅ AJOUT
+    reactivateMember={reactivateMember}
+    showRefus={showRefus}          // ✅
+  />
+)}
+
+
+      {/* Edit Member Popup */}
       {editMember && (
-        <EditMemberPopup
+        <EditMemberSuivisPopup
           member={editMember}
-          cellules={[]}
-          conseillers={[]}
+          cellules={cellules}
+          conseillers={conseillers}
           onClose={() => setEditMember(null)}
-          onUpdateMember={updateMember} // 🔹 mise à jour contexte
+          onUpdateMember={updateMember}
         />
       )}
     </div>
