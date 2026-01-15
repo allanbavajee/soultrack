@@ -23,7 +23,9 @@ export default function EditEvangelisePopup({
     besoin: initialBesoin,
     autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
-    statut: member.statut || "",
+    priere_salut: member.priere_salut || false,
+    type_conversion: member.type_conversion || "",
+    is_whatsapp: member.is_whatsapp || false,
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -53,8 +55,11 @@ export default function EditEvangelisePopup({
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSubmit = async () => {
@@ -66,11 +71,13 @@ export default function EditEvangelisePopup({
       telephone: formData.telephone,
       ville: formData.ville,
       infos_supplementaires: formData.infos_supplementaires || null,
-      statut: formData.statut || null,
       besoin:
         formData.autreBesoin && showAutre
           ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
           : formData.besoin,
+      priere_salut: formData.priere_salut,
+      type_conversion: formData.type_conversion,
+      is_whatsapp: formData.is_whatsapp,
     };
 
     const { error, data } = await supabase
@@ -87,6 +94,7 @@ export default function EditEvangelisePopup({
       setMessage("✅ Changement enregistré !");
       setTimeout(() => {
         setMessage("");
+        // Fermer les deux popups
         onClose();
       }, 1200);
     }
@@ -97,11 +105,13 @@ export default function EditEvangelisePopup({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto shadow-xl relative">
+
+        {/* Croix fermer */}
         <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-red-500 font-bold hover:text-red-700"
+          onClick={onClose} // Annuler => ferme les deux popups
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 font-bold text-lg"
         >
-          ✕
+          ×
         </button>
 
         <h2 className="text-lg font-bold text-gray-800 text-center mb-4">
@@ -109,7 +119,7 @@ export default function EditEvangelisePopup({
         </h2>
 
         <div className="flex flex-col space-y-3 text-sm">
-
+          {/* Prénom / Nom */}
           <label className="font-semibold">Prénom</label>
           <input
             name="prenom"
@@ -138,6 +148,36 @@ export default function EditEvangelisePopup({
           <input
             name="telephone"
             value={formData.telephone}
+            onChange={handleChange}
+            className="border rounded px-2 py-1"
+          />
+
+          {/* WhatsApp / Prière du salut */}
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="is_whatsapp"
+              checked={formData.is_whatsapp}
+              onChange={handleChange}
+            />
+            WhatsApp
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="priere_salut"
+              checked={formData.priere_salut}
+              onChange={handleChange}
+            />
+            Prière du salut
+          </label>
+
+          {/* Type de conversion */}
+          <label className="font-semibold">Type de conversion</label>
+          <input
+            name="type_conversion"
+            value={formData.type_conversion}
             onChange={handleChange}
             className="border rounded px-2 py-1"
           />
@@ -182,6 +222,7 @@ export default function EditEvangelisePopup({
             )}
           </div>
 
+          {/* Infos supplémentaires */}
           <label className="font-semibold">Infos supplémentaires</label>
           <textarea
             name="infos_supplementaires"
@@ -191,35 +232,29 @@ export default function EditEvangelisePopup({
             rows={3}
           />
 
-          <label className="font-semibold">Statut</label>
-          <select
-            name="statut"
-            value={formData.statut}
-            onChange={handleChange}
-            className="border rounded px-2 py-1"
-          >
-            <option value="">-- Sélectionner --</option>
-            <option value="actif">actif</option>
-            <option value="Integrer">Integrer</option>
-            <option value="ancien">ancien</option>
-            <option value="veut rejoindre ICC">veut rejoindre ICC</option>
-            <option value="visiteur">visiteur</option>
-            <option value="a déjà mon église">a déjà mon église</option>
-          </select>
-
           {message && (
             <p className="text-green-600 text-center font-semibold">{message}</p>
           )}
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className={`mt-3 w-full text-white py-2 rounded font-bold ${
-              loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {loading ? "Enregistrement..." : "Enregistrer"}
-          </button>
+          {/* Boutons */}
+          <div className="flex justify-between mt-4">
+            <button
+              onClick={onClose} // Annuler
+              className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400"
+            >
+              Annuler
+            </button>
+
+            <button
+              onClick={handleSubmit} // Enregistrer
+              disabled={loading}
+              className={`px-4 py-2 rounded-md text-white font-bold ${
+                loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {loading ? "Enregistrement..." : "Enregistrer"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
