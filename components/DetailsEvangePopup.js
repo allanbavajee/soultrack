@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient"; // ⚠️ chemin relatif à adapter si besoin
+import supabase from "../lib/supabaseClient";
 
 export default function DetailsEvangePopup({ member, onClose, onEdit }) {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
