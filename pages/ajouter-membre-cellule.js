@@ -3,13 +3,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import supabase from "../lib/supabaseClient";
-import Image from "next/image";
+import supabase from "../lib/supabaseClient"; // ✅ import par défaut
 import { useMembers } from "../context/MembersContext"; // pour mise à jour instantanée
 
 export default function AjouterMembreCellule() {
   const router = useRouter();
-  const { setAllMembers } = useMembers(); // context pour mettre à jour la liste
+  const { setAllMembers } = useMembers(); // context pour mise à jour instantanée
   const [cellules, setCellules] = useState([]);
   const [formData, setFormData] = useState({
     nom: "",
@@ -57,7 +56,6 @@ export default function AjouterMembreCellule() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // ✅ Préparer les données avec les colonnes correctes
       const newMemberData = {
         nom: formData.nom,
         prenom: formData.prenom,
@@ -65,14 +63,13 @@ export default function AjouterMembreCellule() {
         ville: formData.ville,
         venu: formData.venu,
         cellule_id: formData.cellule_id,
-        statut_suivis: 3, // Intégrer
+        statut_suivis: 3,
         is_whatsapp: formData.is_whatsapp,
         infos_supplementaires: formData.infos_supplementaires,
-        besoin: formData.besoin.join(", "), // convertir tableau en string
+        besoin: formData.besoin.join(", "),
         autrebesoin: formData.autreBesoin || null,
       };
 
-      // Insertion dans Supabase et récupération du membre inséré
       const { data: newMember, error } = await supabase
         .from("membres_complets")
         .insert([newMemberData])
@@ -81,7 +78,7 @@ export default function AjouterMembreCellule() {
 
       if (error) throw error;
 
-      // ✅ Mise à jour instantanée du contexte
+      // Mise à jour instantanée du contexte
       setAllMembers((prev) => [...prev, newMember]);
 
       setSuccess(true);
