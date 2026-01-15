@@ -1,7 +1,7 @@
 // pages/suivi-evangelise-details/[id].js
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
+import supabase from "../../lib/supabaseClient";
 
 export default function SuiviEvangeliseDetails() {
   const router = useRouter();
