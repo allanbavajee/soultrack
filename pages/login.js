@@ -13,70 +13,36 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  setError(null);
-  setLoading(true);
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-  try {
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (authError || !authData.user) {
-      setError("❌ Email ou mot de passe incorrect");
-      setLoading(false);
-      return;
-    }
+      if (authError || !authData.user) {
+        setError("❌ Email ou mot de passe incorrect");
+        setLoading(false);
+        return;
+      }
 
-    const user = authData.user;
-    localStorage.setItem("userEmail", email);
-    localStorage.setItem("userId", user.id);
+      const user = authData.user;
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userId", user.id);
 
-    // 🔹 Utiliser profile_id au lieu de id
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("profile_id, role, prenom, nom, telephone")
-      .eq("profile_id", user.id)
-      .single();
+      // 🔹 Utiliser profile_id au lieu de id
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("profile_id, role, prenom, nom, telephone")
+        .eq("profile_id", user.id)
+        .single();
 
-    if (profileError) {
-      setError("❌ Impossible de récupérer le profil");
-      setLoading(false);
-      return;
-    }
-
-    localStorage.setItem("userRole", JSON.stringify([profile.role]));
-    localStorage.setItem("profile", JSON.stringify(profile));
-
-    // Redirection selon rôle
-    switch (profile.role) {
-      case "Administrateur":
-        router.push("/"); // page d'accueil pour admin
-        break;
-      case "ResponsableIntegration":
-        router.push("/membres-hub");
-        break;
-      case "ResponsableEvangelisation":
-        router.push("/evangelisation-hub");
-        break;
-      case "ResponsableCellule":
-        router.push("/cellules-hub");
-        break;
-      case "Conseiller":
-        router.push("/conseiller-hub");
-        break;
-      default:
-        router.push("/");
-    }
-  } catch (err) {
-    console.error(err);
-    setError("❌ Erreur lors de la connexion");
-  } finally {
-    setLoading(false);
-  }
-};
-
+      if (profileError) {
+        setError("❌ Impossible de récupérer le profil");
+        setLoading(false);
         return;
       }
 
@@ -86,7 +52,7 @@ export default function LoginPage() {
       // Redirection selon rôle
       switch (profile.role) {
         case "Administrateur":
-          router.push("/");
+          router.push("/"); // page d'accueil pour admin
           break;
         case "ResponsableIntegration":
           router.push("/membres-hub");
