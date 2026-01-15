@@ -1,6 +1,6 @@
-// _app.js
+// pages/_app.js
 import "../styles/globals.css";
-import { MembersProvider } from "../context/MembersContext"; // ⚠️ Assure-toi que le chemin est correct
+import { MembersProvider } from "../context/MembersContext"; // chemin correct
 
 function MyApp({ Component, pageProps }) {
   return (
