@@ -130,10 +130,10 @@ export default function AjouterMembreCellule() {
         </button>
 
         {/* Logo centré */}
-        <div className="flex justify-center mb-6">
-        {/* Correct */}
-        <Image src="/path/to/image.png" alt="description" width={50} height={50} />
-        </div>
+          <div className="flex justify-center mb-6">
+            <img src="/path/to/image.png" alt="description" width={50} height={50} />
+          </div>
+
           
         <h1 className="text-3xl font-bold text-center mb-2">Ajouter un membre à ma cellule</h1>
         <p className="text-center text-gray-500 italic mb-6">
