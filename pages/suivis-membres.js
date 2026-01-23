@@ -6,19 +6,20 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditMemberSuivisPopup from "../components/EditMemberSuivisPopup";
-import DetailsModal from "../components/DetailsModal";
+import DetailsSuivisPopup from "../components/DetailsSuivisPopup";
 import { useMembers } from "../context/MembersContext";
-import { useRouter } from "next/navigation"; // ✅ pour navigation
+import { useRouter } from "next/navigation";
+import HeaderPages from "../components/HeaderPages";
 
 export default function SuivisMembres() {
-  const router = useRouter(); // ✅ pour handleAfterStatusUpdate
+  const router = useRouter();
   const { members, setAllMembers, updateMember } = useMembers();
 
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
   const [role, setRole] = useState([]);
-  const [detailsModalMember, setDetailsModalMember] = useState(null);
+  const [DetailsSuivisPopupMember, setDetailsSuivisPopupMember] = useState(null);
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -39,7 +40,6 @@ export default function SuivisMembres() {
   const statutIds = { envoye: 1, "en attente": 2, integrer: 3, refus: 4 };
   const statutLabels = { 1: "Envoyé", 2: "En attente", 3: "Intégrer", 4: "Refus" };
 
-  // 🔹 Fermer menu téléphone si clic en dehors
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (phoneMenuRef.current && !phoneMenuRef.current.contains(event.target)) {
@@ -50,7 +50,6 @@ export default function SuivisMembres() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 🔹 Fetch membres_complets et cellules/conseillers
   useEffect(() => {
     const fetchMembresComplets = async () => {
       setLoading(true);
@@ -75,11 +74,8 @@ export default function SuivisMembres() {
         } else if (profileData.role === "ResponsableCellule") {
           const { data: cellulesData } = await supabase.from("cellules").select("id").eq("responsable_id", profileData.id);
           const celluleIds = cellulesData?.map(c => c.id) || [];
-          if (celluleIds.length > 0) {
-            query = query.in("cellule_id", celluleIds);
-          } else {
-            query = query.eq("id", -1);
-          }
+          if (celluleIds.length > 0) query = query.in("cellule_id", celluleIds);
+          else query = query.eq("id", -1);
         }
 
         const { data, error } = await query;
@@ -88,7 +84,7 @@ export default function SuivisMembres() {
         setAllMembers(data || []);
         if (!data || data.length === 0) setMessage("Aucun membre à afficher.");
       } catch (err) {
-        console.error("❌ Erreur fetchMembresComplets:", err.message || err);
+        console.error("❌ Erreur fetchMembresComplets:", err);
         setMessage("Erreur lors de la récupération des membres.");
       } finally {
         setLoading(false);
@@ -110,30 +106,28 @@ export default function SuivisMembres() {
     fetchCellulesConseillers();
   }, [setAllMembers]);
 
-  // 🔹 Changement commentaire
   const handleCommentChange = (id, value) => {
     setCommentChanges(prev => ({ ...prev, [id]: value }));
     const member = members.find(m => m.id === id);
-    if (member) {
-      updateMember(id, { ...member, commentaire_suivis: value });
-    }
+    if (member) updateMember(id, { ...member, commentaire_suivis: value });
   };
 
   const getBorderColor = (m) => {
     if (!m) return "#ccc";
     const status = m.statut_suivis ?? m.suivi_statut;
-    if (status === statutIds["en attente"]) return "#FFA500";
-    if (status === statutIds["integrer"]) return "#34A853";
-    if (status === statutIds["refus"]) return "#FF4B5C";
-    if (status === statutIds["envoye"]) return "#3B82F6";
+    //const status = m.suivi_statut;
+    if (status === 2) return "#FFA500";
+    if (status === 3) return "#34A853";
+    if (status === 4) return "#FF4B5C";
+    if (status === 1) return "#3B82F6";
     return "#ccc";
   };
+
 
   // 🔹 Mettre à jour statut/commentaire
   const updateSuivi = async (id) => {
     const newComment = commentChanges[id];
     const newStatus = statusChanges[id];
-
     if (newComment === undefined && newStatus === undefined) return;
 
     setUpdating(prev => ({ ...prev, [id]: true }));
@@ -141,7 +135,9 @@ export default function SuivisMembres() {
     try {
       const payload = { updated_at: new Date() };
       if (newComment !== undefined) payload.commentaire_suivis = newComment;
-      if (newStatus !== undefined) payload.statut_suivis = Number(newStatus);
+      //if (newStatus !== undefined) payload.statut_suivis = Number(newStatus); - ancien statut
+      if (newStatus !== undefined) payload.suivi_statut = Number(newStatus);
+
 
       const { data: updatedMember, error } = await supabase
         .from("membres_complets")
@@ -160,13 +156,13 @@ export default function SuivisMembres() {
     }
   };
 
-  // 🔹 Réactiver un contact refusé
   const reactivateMember = async (id) => {
     setUpdating(prev => ({ ...prev, [id]: true }));
     try {
       const { data: updatedMember, error } = await supabase
         .from("membres_complets")
-        .update({ statut_suivis: statutIds["en attente"], updated_at: new Date() })
+        //.update({ statut_suivis: 2, updated_at: new Date() }) - ancien statut
+        .update({ suivi_statut: 2, updated_at: new Date() })
         .eq("id", id)
         .select()
         .single();
@@ -179,35 +175,14 @@ export default function SuivisMembres() {
     }
   };
 
-  // 🔹 Fonction handleAfterStatusUpdate
-  const handleAfterStatusUpdate = (statut) => {
-    // 2 = En attente → rien
-    if (statut === 2) return;
-
-    // 4 = Refus → aller vers la page "voir les refus"
-    if (statut === 4) {
-      router.push("/suivis/refus");
-      return;
-    }
-
-    // 3 = Intégré → sortir de la page
-    if (statut === 3) {
-      router.back();
-      return;
-    }
-  };
-    // 🔹 Filtrage membres
   const filteredMembers = members.filter(m => {
     const status = m.statut_suivis ?? 0;
-    if (showRefus) return status === 4;       // Refus
-    return status === 1 || status === 2;       // Vue normale
+    //const status = m.suivi_statut ?? 0;
+    if (showRefus) return status === 4;
+    return status === 1 || status === 2;
   });
 
-  const uniqueMembers = Array.from(new Map(filteredMembers.map(item => [item.id, item])).values());
-
-  const handleAfterSend = (updatedMember) => {
-    updateMember(updatedMember.id, updatedMember);
-  };
+  const uniqueMembers = Array.from(new Map(filteredMembers.map(i => [i.id, i])).values());
 
   const DetailsPopup = ({ m }) => {
     const commentRef = useRef(null);
@@ -219,23 +194,45 @@ export default function SuivisMembres() {
       }
     }, [commentChanges[m.id]]);
 
-    const celluleNom = m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—";
-    const conseillerNom = m.conseiller_id
-      ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim()
-      : "—";
+    //  HELPERS  //
+    const formatMinistere = (ministere) => {
+      if (!ministere) return "—";
+      try {
+        const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere;
+        return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+      } catch {
+        return "—";
+      }
+    };  
+
+    const formatArrayField = (field) => {
+      if (!field) return "—";
+      try {
+        const parsed = typeof field === "string" ? JSON.parse(field) : field;
+        return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+      } catch {
+        return "—";
+      }
+    };  
 
     return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-        <p>🏙 Ville : {m.ville || ""}</p>
+        <p>🎗️ Sexe : {m.sexe || ""}</p>
+        <p>💧 Baptême d'Eau : {m.bapteme_eau ? "Oui" : "Non"}</p>
+        <p>🔥 Baptême de Feu : {m.bapteme_esprit ? "Oui" : "Non"}</p>
+        <p>✒️ Formation : {m.Formation || "—"}</p>  
+        <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || "—"}</p>      
+        <p>❓ Besoin : {formatArrayField(m.besoin)}</p>
+        <p>📝 Infos : {m.infos_supplementaires || ""}</p>
         <p>🧩 Comment est-il venu : {m.venu || ""}</p>
-        <p>⚥ Sexe : {m.sexe || ""}</p>
-        <p>📋 Statut initial : {m.statut_initial ?? m.statut ?? ""}</p>
-        <p>❓Besoin : {!m.besoin ? "" : Array.isArray(m.besoin) ? m.besoin.join(", ") : m.besoin}</p>
-        <p>📝 Infos : {m.infos_supplementaires || ""}</p>       
+        <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>
+        <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
+        <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
 
         <div className="mt-4 flex justify-center">
-          <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-4">✏️ Modifier le contact</button>
+          <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-4">
+            ✏️ Modifier le contact</button>
         </div>
       </div>
     );
@@ -243,21 +240,9 @@ export default function SuivisMembres() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-      {/* Header */}
-      <div className="w-full max-w-5xl mb-6">
-        <div className="flex justify-between items-center">
-          <button onClick={() => window.history.back()} className="flex items-center text-white hover:text-black-200 transition-colors">← Retour</button>
-          <LogoutLink className="bg-white/10 text-white px-4 py-2 rounded-lg hover:bg-white/20 transition" />
-        </div>
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">👋 Bienvenue {prenom}</p>
-        </div>
-      </div>
 
-      {/* Logo */}
-      <div className="mb-4">
-        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
-      </div>
+      {/* Header avec logo et infos */}
+      <HeaderPages />
 
       {/* Title */}
       <div className="text-center mb-6">
@@ -300,7 +285,7 @@ export default function SuivisMembres() {
 
                 <p className="text-sm text-black-700 mb-1">🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}</p>
                 <p className="text-sm text-black-700 mb-1">👤 Conseiller : {m.conseiller_id ? `${conseillers.find(c => c.id === m.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === m.conseiller_id)?.nom || ""}`.trim() : "—"}</p>
-
+                <p className="text-sm text-black-700 mb-1">🏙️ Ville : {m.ville || ""}</p>    
                 {/* Commentaire & Statut */}
                 <div className="flex flex-col w-full mt-2">
                   <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
@@ -318,7 +303,7 @@ export default function SuivisMembres() {
                       <option value="4">Refus</option>
                     </select>
                   ) : (
-                    <select value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")} onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))} className="w-full border rounded-lg p-2 mb-2">
+                    <select value={statusChanges[m.id] ?? String(m.suivi_statut ?? "")} onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))} className="w-full border rounded-lg p-2 mb-2">
                       <option value="">-- Sélectionner un statut --</option>
                       <option value="2">En Attente</option>
                       <option value="3">Intégrer</option>
@@ -376,7 +361,7 @@ export default function SuivisMembres() {
                   <div className="flex-[1] text-white">{statutLabels[m.statut_suivis ?? m.suivi_statut] || "—"}</div>
                   <div className="flex-[2] text-white">{attribue}</div>
                   <div className="flex-[1]">
-                    <button onClick={() => setDetailsModalMember(m)} className="text-orange-500 underline text-sm whitespace-nowrap">Détails</button>
+                    <button onClick={() => setDetailsSuivisPopupMember(m)} className="text-orange-500 underline text-sm whitespace-nowrap">Détails</button>
                   </div>
                 </div>
               );
@@ -385,10 +370,10 @@ export default function SuivisMembres() {
         </div>
       )}
 
-      {detailsModalMember && (
-  <DetailsModal
-    m={detailsModalMember}
-    onClose={() => setDetailsModalMember(null)}
+      {DetailsSuivisPopupMember && (
+  <DetailsSuivisPopup
+    m={DetailsSuivisPopupMember}
+    onClose={() => setDetailsSuivisPopupMember(null)}
     handleCommentChange={handleCommentChange}
     handleStatusChange={(id, value) =>
       setStatusChanges(prev => ({ ...prev, [id]: value }))
@@ -416,3 +401,4 @@ export default function SuivisMembres() {
     </div>
   );
 }
+
