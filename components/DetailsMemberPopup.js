@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import BoutonEnvoyer from "./BoutonEnvoyer";
 import EditMemberPopup from "./EditMemberPopup";
+import supabase from "../lib/supabaseClient";
 
 export default function DetailsMemberPopup({
   membre,
@@ -12,12 +13,9 @@ export default function DetailsMemberPopup({
   session,
   handleAfterSend,
   showToast,
-  commentChanges = {},
-  handleCommentChange = () => {},
-  statusChanges = {},
-  setStatusChanges = () => {},
-  updateSuivi = () => {},
-  updating = {},
+  updateSuivi,
+  setAllMembers,
+  onDelete,
 }) {
   if (!membre || !membre.id) return null;
 
@@ -28,173 +26,263 @@ export default function DetailsMemberPopup({
   const [editMember, setEditMember] = useState(null);
   const phoneMenuRef = useRef(null);
 
-  // Fermer menu téléphone en cliquant dehors
+  // Bloquer le scroll de la page derrière
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
+  // Fermer menu téléphone si clic en dehors
+  useEffect(() => {
+    const close = (e) => {
       if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
         setOpenPhoneMenu(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
   }, []);
+
+  const statutSuiviLabels = {
+    1: "Envoyé",
+    2: "En attente",
+    3: "Intégré",
+    4: "Refus",
+  };
+
+  const formatArrayField = (field) => {
+    if (!field) return "—";
+    try {
+      const parsed = typeof field === "string" ? JSON.parse(field) : field;
+      return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+    } catch {
+      return "—";
+    }
+  };
+
+  const formatMinistere = (ministereJson, autreMinistere) => {
+    let list = [];
+    if (ministereJson) {
+      try {
+        const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
+        list = Array.isArray(parsed) ? parsed : [parsed];
+        list = list.filter(m => m.toLowerCase() !== "autre");
+      } catch {
+        if (ministereJson.toLowerCase() !== "autre") list = [ministereJson];
+      }
+    }
+    if (autreMinistere?.trim()) list.push(autreMinistere.trim());
+    return list.join(", ") || "—";
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative">
-
-        {/* Fermer */}
+      {/* Popup scrollable */}
+      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        
+        {/* Bouton fermer */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+          className="absolute top-3 right-3 text-gray-500 text-lg font-bold"
         >
           ✖
         </button>
 
-        {/* ================= CENTRÉ ================= */}
-        <div className="flex flex-col items-center text-center w-full">
-          <h2 className="text-xl font-bold">{membre.prenom} {membre.nom} {membre.star && "⭐"}</h2>
+        {/* Header */}
+        <div className="flex flex-col items-center text-center">
+          <h2 className="text-lg font-bold">
+            {membre.prenom} {membre.nom} {membre.star && "⭐"}
+          </h2>
 
           {/* Téléphone */}
           {membre.telephone && (
             <div className="relative mt-1" ref={phoneMenuRef}>
               <button
                 onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
-                className="text-orange-500 underline font-semibold"
+                className="text-lg text-orange-500 underline font-semibold"
               >
                 {membre.telephone}
               </button>
+
               {openPhoneMenu && (
                 <div className="absolute top-full mt-2 bg-white border rounded-lg shadow w-56 z-50">
-                  <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
-                  <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
-                  <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 WhatsApp</a>
-                  <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}?text=Bonjour`} target="_blank" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Message WhatsApp</a>
+                  <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100">📞 Appeler</a>
+                  <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100">✉️ SMS</a>
+                  <a
+                    href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`}
+                    target="_blank"
+                    className="block px-4 py-2 hover:bg-gray-100"
+                  >
+                    💬 WhatsApp
+                  </a>
                 </div>
               )}
             </div>
           )}
+        </div>
 
-          <p className="mt-2">🏙 Ville : {membre.ville || "—"}</p>
-          <p>
-            🏠 Cellule :{" "}
-            {membre.cellule_id
-              ? cellules.find(c => c.id === membre.cellule_id)?.cellule_full || "—"
-              : "—"}
+        {/* Infos principales */}
+        <div className="mt-4 text-sm space-y-1">
+          <p className="text-center">🏙️ Ville : {membre.ville || ""}</p>
+          <p className="text-center">🕊 Etat Contact : {membre.etat_contact || ""}</p>
+          <p className="text-right text-[11px] text-gray-400">
+            Créé le {new Date(membre.created_at).toLocaleDateString("fr-FR")}
           </p>
-          
+          <p>🏠 Cellule : {cellules.find(c => c.id === membre.cellule_id)?.cellule_full || "—"}</p>
           <p>
             👤 Conseiller :{" "}
             {membre.conseiller_id
-              ? `${conseillers.find(c => c.id === membre.conseiller_id)?.prenom || ""} ${
-                  conseillers.find(c => c.id === membre.conseiller_id)?.nom || ""
-                }`.trim() || "—"
+              ? `${conseillers.find(c => c.id === membre.conseiller_id)?.prenom || ""} ${conseillers.find(c => c.id === membre.conseiller_id)?.nom || ""}`
               : "—"}
           </p>
-
-
-
-          {/* ================= Envoyer à ================= */}
-          <div className="mt-3 w-full">
-            <label className="font-semibold text-sm">Envoyer à :</label>
-            <select
-              value={selectedTargetType}
-              onChange={(e) => {
-                setSelectedTargetType(e.target.value);
-                setSelectedTarget(null);
-                setCibleComplete(null);
-              }}
-              className="mt-1 w-full border rounded px-2 py-1 text-sm"
-            >
-              <option value="">-- Choisir --</option>
-              <option value="cellule">Une Cellule</option>
-              <option value="conseiller">Un Conseiller</option>
-            </select>
-
-            {selectedTargetType && (
-              <select
-                value={selectedTarget || ""}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  setSelectedTarget(id);
-                  if (selectedTargetType === "cellule") setCibleComplete(cellules.find(c => c.id === id));
-                  else if (selectedTargetType === "conseiller") setCibleComplete(conseillers.find(c => c.id === id));
-                }}
-                className="mt-2 w-full border rounded px-2 py-1 text-sm"
-              >
-                <option value="">-- Sélectionner --</option>
-                {selectedTargetType === "cellule" && cellules.map(c => (
-                  <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>
-                ))}
-                {selectedTargetType === "conseiller" && conseillers.map(c => (
-                  <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>
-                ))}
-              </select>
-            )}
-
-            {cibleComplete && (
-              <div className="mt-3">
-                <BoutonEnvoyer
-                  membre={membre}
-                  type={selectedTargetType}
-                  cible={cibleComplete}
-                  session={session}
-                  onEnvoyer={(data) => handleAfterSend && handleAfterSend(data, selectedTargetType, cibleComplete)}
-                  showToast={showToast}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* ================= ALIGNÉ À GAUCHE ================= */}
-          <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
-            <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
-            <p>🎗️ Sexe : {membre.sexe || "—"}</p>
-            <p>💧 Bapteme d' Eau: {membre.bapteme_eau === null ? "" : membre.bapteme_eau ? "Oui" : "Non"}</p>
-            <p>🔥 Bapteme de Feu: {membre.bapteme_esprit === null ? "" : membre.bapteme_esprit ? "Oui" : "Non"}</p> 
-            <p>
-              ❓ Besoin : {
-                membre.besoin 
-                  ? (() => {
-                      try {
-                        // Si c'est une string JSON, on parse
-                        const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
-                        // On transforme en texte séparé par des virgules
-                        return Array.isArray(besoins) ? besoins.join(", ") : besoins;
-                      } catch (e) {
-                        // fallback si ce n'est pas du JSON
-                        return membre.besoin;
-                      }
-                    })()
-                  : "—"
-              }
-            </p>
-            <p>📝 Infos : {membre.infos_supplementaires || "—"}</p>
-            <p>🧩 Comment est-il venu : {membre.comment_est_il_venu || "—"}</p>
-            <p>✨ Raison de la venue : {membre.statut_initial || "—"}</p>
-            <p>📝 Commentaire Suivis : {membre.commentaire_suivis || "—"}</p>
-          </div>
-
-          {/* ✏️ Modifier le contact */}
-          <div className="mt-4 flex justify-center w-full">            
-            <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm w-full">
-              ✏️ Modifier le contact
-            </button>
-          </div>
         </div>
 
-        {/* ================= POPUP EDIT MEMBER ================= */}
+        {/* Envoyer pour suivi */}
+        <div className="mt-4">
+          <label className="font-semibold text-sm">Envoyer pour suivi :</label>
+          <select
+            value={selectedTargetType}
+            onChange={(e) => {
+              setSelectedTargetType(e.target.value);
+              setSelectedTarget(null);
+              setCibleComplete(null);
+            }}
+            className="mt-1 w-full border rounded px-2 py-1 text-sm"
+          >
+            <option value="">-- Choisir --</option>
+            <option value="cellule">Une Cellule</option>
+            <option value="conseiller">Un Conseiller</option>
+          </select>
+
+          {selectedTargetType && (
+            <select
+              className="mt-2 w-full border rounded px-2 py-1 text-sm"
+              onChange={(e) => {
+                const id = e.target.value;
+                setSelectedTarget(id);
+                setCibleComplete(
+                  selectedTargetType === "cellule"
+                    ? cellules.find(c => c.id === id)
+                    : conseillers.find(c => c.id === id)
+                );
+              }}
+            >
+              <option value="">-- Sélectionner --</option>
+              {(selectedTargetType === "cellule" ? cellules : conseillers).map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.cellule_full || `${c.prenom || ""} ${c.nom || ""}`}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {cibleComplete && (
+            <div className="mt-3">
+              <BoutonEnvoyer
+                membre={membre}
+                type={selectedTargetType}
+                cible={cibleComplete}
+                session={session}
+                onEnvoyer={handleAfterSend}
+                showToast={showToast}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Bouton Marquer comme membre */}
+        {membre.etat_contact?.trim().toLowerCase() === "nouveau" && (
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={async () => {
+                const confirmMove = window.confirm(
+                  "⚠️ Confirmation\n\nCe contact n’a plus besoin d’être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?"
+                );
+                if (!confirmMove) return;
+
+                try {
+                  const { error } = await supabase
+                    .from("membres_complets")
+                    .update({ etat_contact: "existant" })
+                    .eq("id", membre.id);
+
+                  if (error) throw error;
+
+                  setAllMembers(prev =>
+                    prev.map(mem =>
+                      mem.id === membre.id
+                        ? { ...mem, etat_contact: "existant" }
+                        : mem
+                    )
+                  );
+
+                  onClose();
+
+                  showToast(
+                    <span className="inline-block bg-white text-green-600 px-2 py-1 rounded shadow text-xs font-semibold">
+                      ✅ Contact déplacé dans membres existants
+                    </span>
+                  );
+                } catch (err) {
+                  console.error("Erreur marquer membre :", err);
+                  showToast("❌ Erreur lors du déplacement");
+                }
+              }}
+              className="ml-auto bg-white text-green-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
+            >
+              ✅ Marquer comme membre
+            </button>
+          </div>
+        )}
+
+        {/* Détails */}
+        <div className="mt-5 text-sm space-y-1">
+          <p className="font-semibold text-center text-blue-700">
+            💡 Statut Suivi : {statutSuiviLabels[membre.statut_suivis] || ""}
+          </p>
+          <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
+          <p>🎗️ Sexe : {membre.sexe || ""}</p>
+          <p>💧 Baptême d’Eau : {membre.bapteme_eau ? "Oui" : "Non"}</p>
+          <p>🔥 Baptême de Feu : {membre.bapteme_esprit ? "Oui" : "Non"}</p>
+          <p>✒️ Formation : {membre.Formation || ""}</p>
+          <p>❤️‍🩹 Soin Pastoral : {membre.Soin_Pastoral || ""}</p>
+          <p>💢 Ministère : {formatMinistere(membre.Ministere, membre.Autre_Ministere)}</p>
+          <p>❓ Besoin : {formatArrayField(membre.besoin)}</p>
+          <p>📝 Infos : {membre.infos_supplementaires || ""}</p>
+          <p>🧩 Comment est-il venu : {membre.venu || ""}</p>
+          <p>✨ Raison de la venue : {membre.statut_initial || ""}</p>
+          <p>🙏 Prière du salut : {membre.priere_salut || ""}</p>
+          <p>☀️ Type de conversion : {membre.type_conversion || ""}</p>
+          <p>📝 Commentaire Suivis : {membre.commentaire_suivis || ""}</p>
+          <p>📑 Commentaire Suivis Evangelisation : {membre.Commentaire_Suivi_Evangelisation || ""}</p>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-5 flex flex-col gap-2">
+          <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm">
+            ✏️ Modifier le contact
+          </button>
+
+          <button
+            onClick={() => {
+              if (window.confirm("Supprimer définitivement ce contact ?")) {
+                onDelete(membre.id);
+                onClose();
+              }
+            }}
+            className="text-red-600 text-sm"
+          >
+            🗑️ Supprimer le contact
+          </button>
+        </div>
+
         {editMember && (
           <EditMemberPopup
             member={editMember}
-            onClose={() => {
-              setEditMember(null);
-              onClose();
-            }}
-            onUpdateMember={() => {
-              setEditMember(null);
-              onClose();
-            }}
+            onClose={() => setEditMember(null)}
+            onUpdateMember={onClose}
           />
         )}
       </div>
