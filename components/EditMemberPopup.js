@@ -6,7 +6,8 @@ import supabase from "../lib/supabaseClient";
 export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   if (!member) return null;
 
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
+  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
   const [autreMinistere, setAutreMinistere] = useState("");
 
   const parseBesoin = (b) => {
@@ -82,10 +83,10 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     const loadData = async () => {
       try {
         const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
-        const { data: conseillersData } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom")
-          .eq("role", "Conseiller");
+        const { data: conseillersData, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .or('role.eq.Conseiller,roles.cs.{"Conseiller"}');
         if (!mounted) return;
         setCellules(cellulesData || []);
         setConseillers(conseillersData || []);
@@ -122,7 +123,6 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   }
 };
 
-
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
     if (value === "Autre") {
@@ -142,78 +142,84 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
   // -------------------- SUBMIT --------------------
   const handleSubmit = async () => {
-    setMessage("");
-    if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
-    if (!formData.nom.trim()) return setMessage("❌ Le nom est obligatoire.");
+  setMessage("");
+  if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
+  if (!formData.nom.trim()) return setMessage("❌ Le nom est obligatoire.");
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      let finalBesoin = [...formData.besoin];
-      if (showAutre && formData.autreBesoin.trim()) {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
-        finalBesoin.push(formData.autreBesoin.trim());
-      } else {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
-      }
-      let finalMinistere = [...formData.Ministere];
-
-if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
-  finalMinistere = finalMinistere.filter(m => m !== "Autre");
-  finalMinistere.push(autreMinistere.trim());
-}
-
-
-      const payload = {
-        prenom: formData.prenom,
-        nom: formData.nom,
-        telephone: formData.telephone || null,
-        ville: formData.ville || null,
-        sexe: formData.sexe || null,
-        star: !!formData.star,
-        etat_contact: formData.etat_contact || "Nouveau",
-        bapteme_eau: formData.bapteme_eau,
-        bapteme_esprit: formData.bapteme_esprit,
-        priere_salut: formData.priere_salut || null,
-        type_conversion: formData.type_conversion || null,
-        cellule_id: formData.cellule_id || null,
-        conseiller_id: formData.conseiller_id || null,
-        besoin: JSON.stringify(finalBesoin),
-        venu: formData.venu || null,
-        infos_supplementaires: formData.infos_supplementaires || null,
-        statut_initial: formData.statut_initial || null,
-        suivi_statut: formData.suivi_statut || null,
-        commentaire_suivis: formData.commentaire_suivis || null,
-        is_whatsapp: !!formData.is_whatsapp,
-        Formation: formData.Formation || null,        
-        Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
-        Soin_Pastoral: formData.Soin_Pastoral || null,        
-        Ministere: formData.star? JSON.stringify(finalMinistere): null,
-      };
-
-      const { error } = await supabase
-        .from("membres_complets")
-        .update(payload)
-        .eq("id", member.id);
-
-      if (error) throw error;
-
-      const { data } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("id", member.id)
-        .single();
-
-      onUpdateMember(data);
-      onClose();
-      
-    } catch (err) {
-      console.error(err);
-      setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
-    } finally {
-      setLoading(false);
+  try {
+    let finalBesoin = [...formData.besoin];
+    if (showAutre && formData.autreBesoin.trim()) {
+      finalBesoin = finalBesoin.filter(b => b !== "Autre");
+      finalBesoin.push(formData.autreBesoin.trim());
+    } else {
+      finalBesoin = finalBesoin.filter(b => b !== "Autre");
     }
-  };
+
+    let finalMinistere = [...formData.Ministere];
+    if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
+      finalMinistere = finalMinistere.filter(m => m !== "Autre");
+      finalMinistere.push(autreMinistere.trim());
+    }
+
+    const payload = {
+      prenom: formData.prenom,
+      nom: formData.nom,
+      telephone: formData.telephone || null,
+      ville: formData.ville || null,
+      sexe: formData.sexe || null,
+      star: !!formData.star,
+      etat_contact: formData.etat_contact || "Nouveau",
+      bapteme_eau: formData.bapteme_eau,
+      bapteme_esprit: formData.bapteme_esprit,
+      priere_salut: formData.priere_salut || null,
+      type_conversion: formData.type_conversion || null,
+      cellule_id: formData.cellule_id || null,
+      conseiller_id: formData.conseiller_id || null,
+      besoin: JSON.stringify(finalBesoin),
+      venu: formData.venu || null,
+      infos_supplementaires: formData.infos_supplementaires || null,
+      statut_initial: formData.statut_initial || null,
+      suivi_statut: formData.suivi_statut || null,
+      commentaire_suivis: formData.commentaire_suivis || null,
+      is_whatsapp: !!formData.is_whatsapp,
+      Formation: formData.Formation || null,
+      Soin_Pastoral: formData.Soin_Pastoral || null,
+      Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
+      Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
+    };
+
+    // 1️⃣ Update
+    const { error } = await supabase
+      .from("membres_complets")
+      .update(payload)
+      .eq("id", member.id);
+
+    if (error) throw error;
+
+    // 2️⃣ Récupérer le membre exact depuis Supabase
+    const { data: updatedMember, error: selectError } = await supabase
+      .from("membres_complets")
+      .select("*")
+      .eq("id", member.id)
+      .single();
+
+    if (selectError) throw selectError;
+
+    // 3️⃣ Passer au parent → mise à jour instantanée de la table
+    onUpdateMember(updatedMember);
+    onClose();
+
+  } catch (err) {
+    console.error(err);
+    setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
   // -------------------- UI --------------------
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">
@@ -378,8 +384,6 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
               </select>
             </div>
 
-
-
            {/* Formation*/}
           <div className="flex flex-col">
             <label className="font-medium">Formation</label>
@@ -466,7 +470,7 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
 
           {/* Besoins */}
           <div className="flex flex-col">
-            <label className="font-medium">Besoins</label>
+            <label className="font-medium">Difficultés / Besoins</label>
             {besoinsOptions.map(b => (
               <label key={b} className="flex items-center gap-2">
                 <input type="checkbox" value={b} checked={formData.besoin.includes(b)} onChange={handleBesoinChange} className="accent-[#25297e]" />
