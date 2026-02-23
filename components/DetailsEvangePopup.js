@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
+import { supabase } from "../lib/supabaseClient"; // ⚠️ chemin relatif à adapter si besoin
 
 export default function DetailsEvangePopup({ member, onClose, onEdit }) {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
@@ -11,6 +11,16 @@ export default function DetailsEvangePopup({ member, onClose, onEdit }) {
 
   const phoneMenuRef = useRef(null);
   const popupRef = useRef(null);
+
+   const formatDateFr = (dateString) => {
+  if (!dateString) return "—";
+  const d = new Date(dateString);
+
+  const day = d.getDate().toString().padStart(2, "0");
+  const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+
+  return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+};
 
   const formatBesoin = (b) => {
     if (!b) return "—";
@@ -164,10 +174,11 @@ export default function DetailsEvangePopup({ member, onClose, onEdit }) {
               </a>
             </div>
           )}
-        </div>    
+        </div>            
           <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
+          <p className="text-[11px] text-gray-400 text-right mb-1">Crée le {formatDateFr(member.created_at)}</p>
           <p>🏙️ Ville : {member.ville || "—"}</p>    
-          <p>🎗️ Sexe : {member.sexe || "—"}</p>
+          <p>🎗️ Sexe : {member.sexe || "—"}</p> 
           <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
           <p>☀️ Type : {member.type_conversion || "—"}</p>
           <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
@@ -175,10 +186,10 @@ export default function DetailsEvangePopup({ member, onClose, onEdit }) {
         </div>
 
         {/* ====== CENTRÉ ====== */}
-        <div className="mt-6 flex justify-center">
+        <div className="mt-4 rounded-xl w-full p-4 bg-white">
           <button
             onClick={() => onEdit(member)}
-            className="text-blue-600 text-sm font-semibold hover:underline"
+            className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
           >
             ✏️ Modifier le contact
           </button>
