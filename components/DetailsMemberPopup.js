@@ -11,6 +11,7 @@ export default function DetailsMemberPopup({
   cellules = [],
   conseillers = [],
   session,
+  userRole,
   handleAfterSend,
   showToast,
   updateSuivi,
@@ -46,7 +47,7 @@ export default function DetailsMemberPopup({
   }, []);
 
   const statutSuiviLabels = {
-    1: "Envoyé",
+    1: "En Suivis",
     2: "En attente",
     3: "Intégré",
     4: "Refus",
@@ -92,8 +93,12 @@ export default function DetailsMemberPopup({
 
         {/* Header */}
         <div className="flex flex-col items-center text-center">
-          <h2 className="text-lg font-bold">
-            {membre.prenom} {membre.nom} {membre.star && "⭐"}
+          <h2 className="text-lg font-bold flex items-center justify-center gap-1">
+            <span>{membre.prenom} {membre.nom}</span>
+            {membre.star === true &&
+              membre.etat_contact?.trim().toLowerCase() === "existant" && (
+                <span className="text-yellow-400">⭐</span>
+            )}
           </h2>
 
           {/* Téléphone */}
@@ -110,13 +115,8 @@ export default function DetailsMemberPopup({
                 <div className="absolute top-full mt-2 bg-white border rounded-lg shadow w-56 z-50">
                   <a href={`tel:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100">📞 Appeler</a>
                   <a href={`sms:${membre.telephone}`} className="block px-4 py-2 hover:bg-gray-100">✉️ SMS</a>
-                  <a
-                    href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`}
-                    target="_blank"
-                    className="block px-4 py-2 hover:bg-gray-100"
-                  >
-                    💬 WhatsApp
-                  </a>
+                  <a href={`https://wa.me/${membre.telephone?.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100"> 📱 Appel WhatsApp </a>
+                  <a href={`https://wa.me/${membre.telephone.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100"> 💬 WhatsApp </a>                    
                 </div>
               )}
             </div>
@@ -249,7 +249,7 @@ export default function DetailsMemberPopup({
           <p>✒️ Formation : {membre.Formation || ""}</p>
           <p>❤️‍🩹 Soin Pastoral : {membre.Soin_Pastoral || ""}</p>
           <p>💢 Ministère : {formatMinistere(membre.Ministere, membre.Autre_Ministere)}</p>
-          <p>❓ Besoin : {formatArrayField(membre.besoin)}</p>
+          <p>❓ Difficultés / Besoins : {formatArrayField(membre.besoin)}</p>
           <p>📝 Infos : {membre.infos_supplementaires || ""}</p>
           <p>🧩 Comment est-il venu : {membre.venu || ""}</p>
           <p>✨ Raison de la venue : {membre.statut_initial || ""}</p>
@@ -259,32 +259,96 @@ export default function DetailsMemberPopup({
           <p>📑 Commentaire Suivis Evangelisation : {membre.Commentaire_Suivi_Evangelisation || ""}</p>
         </div>
 
-        {/* Actions */}
-        <div className="mt-5 flex flex-col gap-2">
-          <button onClick={() => setEditMember(membre)} className="text-blue-600 text-sm">
-            ✏️ Modifier le contact
-          </button>
+        {/* Bloc Actions – carte unique */}
+          <div className="bg-white shadow-md rounded-xl p-4 mt-3 flex flex-col gap-4">
+            {/* Modifier le contact */}
+            <button
+              onClick={() => setEditMember(membre)}
+              className="text-orange-500 font-semibold text-sm"
+            >
+              ✏️ Modifier le contact
+            </button>
+          
+            {/* Intégration terminée - visible pour Conseiller */}
+            {userRole === "Conseiller" && membre.integration_fini !== "fini" && (
+              <button
+                onClick={async () => {
+                  const confirmAction = window.confirm(
+                    "⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?"
+                  );
+                  if (!confirmAction) return;
+          
+                  try {
+                    const { error } = await supabase
+                      .from("membres_complets")
+                      .update({ integration_fini: "fini", conseiller_id: null })
+                      .eq("id", membre.id);
+          
+                    if (error) throw error;
+          
+                    setAllMembers(prev => prev.filter(mem => mem.id !== membre.id));
+                    onClose();
+          
+                    showToast(
+                      <span className="inline-block bg-white text-blue-600 px-2 py-1 rounded shadow text-xs font-semibold">
+                        ✅ Intégration terminée. Contact détaché.
+                      </span>
+                    );
+                  } catch (err) {
+                    console.error("Erreur intégration :", err);
+                    showToast("❌ Erreur lors de l'opération");
+                  }
+                }}
+                className="text-blue-600 font-semibold text-sm"
+              >
+                ✅ Intégration terminée
+              </button>
+            )}
+          
+            {/* Supprimer le contact */}
+            <button
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "⚠️ Suppression définitive\n\n" +
+                      "Voulez-vous vraiment supprimer ce contact ?\n\n" +
+                      "Cette action supprimera également TOUT l’historique du contact (suivi, commentaires, transferts).\n" +
+                      "Cette action est irréversible."
+                  )
+                ) {
+                  onDelete(membre.id);
+                  onClose();
+                }
+              }}
+              className="text-red-500 font-semibold text-xs"
+            >
+              🗑️ Supprimer le contact
+            </button>
+          </div>        
 
-          <button
-            onClick={() => {
-              if (window.confirm("Supprimer définitivement ce contact ?")) {
-                onDelete(membre.id);
-                onClose();
-              }
-            }}
-            className="text-red-600 text-sm"
-          >
-            🗑️ Supprimer le contact
-          </button>
-        </div>
-
-        {editMember && (
-          <EditMemberPopup
-            member={editMember}
-            onClose={() => setEditMember(null)}
-            onUpdateMember={onClose}
-          />
-        )}
+            {editMember && (
+              <EditMemberPopup
+                member={editMember}
+                onClose={() => {
+                  setEditMember(null); // Ferme juste le popup EditMember
+                  onClose();           // Ferme aussi DetailsMemberPopup
+                }}
+                onUpdateMember={(updatedMember) => {
+                  setAllMembers(prev =>
+                    prev.map(m => (m.id === updatedMember.id ? updatedMember : m))
+                  );
+            
+                  setEditMember(null);
+                  onClose(); // Ferme DetailsMemberPopup après la sauvegarde
+            
+                  showToast(
+                    <span className="inline-block bg-white text-green-600 px-2 py-1 rounded shadow text-xs font-semibold">
+                      ✅ Contact mis à jour !
+                    </span>
+                  );
+                }}
+              />
+            )}
       </div>
     </div>
   );
