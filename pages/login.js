@@ -41,8 +41,6 @@ export default function LoginPage() {
   console.log("USER LOGGED IN:", data.user);
 
   router.push("/");
-};
-
 
     } catch (err) {
       console.error(err);
