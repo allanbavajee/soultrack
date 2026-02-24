@@ -12,56 +12,37 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    console.log("LOGIN CLICKED");
-    setError(null);
-    setLoading(true);
+  e.preventDefault();
+  console.log("LOGIN CLICKED");
 
-    try {
-      // 1️⃣ Connexion à Supabase
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+  setError(null);
+  setLoading(true);
 
-      if (authError || !authData.user) {
-        setError("❌ Email ou mot de passe incorrect");
-        setLoading(false);
-        return;
-      }
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-      const user = authData.user;
+  console.log("SUPABASE RESPONSE:", { data, error });
 
-      
-        if (authError) {
-        console.log("AUTH ERROR:", authError);
-        setError(authError.message);
-        setLoading(false);
-        return;
-      }
+  if (error) {
+    console.log("AUTH ERROR:", error.message);
+    setError(error.message);
+    setLoading(false);
+    return;
+  }
 
-      // 2️⃣ Récupérer le profil complet avec roles[]
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, role, roles, prenom, nom, telephone")
-        .eq("id", user.id)
-        .single();
+  if (!data?.user) {
+    console.log("NO USER RETURNED");
+    setLoading(false);
+    return;
+  }
 
-      if (profileError) {
-        setError("❌ Impossible de récupérer le profil");
-        setLoading(false);
-        return;
-      }
+  console.log("USER LOGGED IN:", data.user);
 
-      // 3️⃣ Stocker les rôles et le profil
-      const roles = profile.roles || [];
-      localStorage.setItem("userRole", JSON.stringify(roles));
-      localStorage.setItem("profile", JSON.stringify(profile));
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userId", user.id);
+  router.push("/");
+};
 
-      // 4️⃣ Redirection unique vers index
-      router.push("/");
 
     } catch (err) {
       console.error(err);
