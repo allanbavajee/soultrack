@@ -18,37 +18,35 @@ export default function LoginPage() {
   setError(null);
   setLoading(true);
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  console.log("SUPABASE RESPONSE:", { data, error });
+    console.log("SUPABASE RESPONSE:", { data, error });
 
-  if (error) {
-    console.log("AUTH ERROR:", error.message);
-    setError(error.message);
-    setLoading(false);
-    return;
-  }
-
-  if (!data?.user) {
-    console.log("NO USER RETURNED");
-    setLoading(false);
-    return;
-  }
-
-  console.log("USER LOGGED IN:", data.user);
-
-  router.push("/");
-
-    } catch (err) {
-      console.error(err);
-      setError("❌ Erreur lors de la connexion");
-    } finally {
-      setLoading(false);
+    if (error) {
+      console.log("AUTH ERROR:", error.message);
+      setError(error.message);
+      return;
     }
-  };
+
+    if (!data?.user) {
+      console.log("NO USER RETURNED");
+      return;
+    }
+
+    console.log("USER LOGGED IN:", data.user);
+
+    router.push("/");
+  } catch (err) {
+    console.error("CATCH ERROR:", err);
+    setError("❌ Erreur lors de la connexion");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
