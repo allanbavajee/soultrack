@@ -21,6 +21,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
     besoin: [],
     infos_supplementaires: "",
     is_whatsapp: false,
+    eglise_id: null,
+    branche_id: null,
   });
 
   const [showOtherField, setShowOtherField] = useState(false);
@@ -29,22 +31,41 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const besoinsList = [
-    "Finances",
-    "Santé",
-    "Travail",
-    "Les Enfants",
-    "La Famille",
-    "Paix",
-  ];
+  const besoinsList = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
+  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
 
-  // Vérification du token
+  // ➤ Récupérer eglise_id et branche_id de l'utilisateur connecté
+  useEffect(() => {
+    const fetchUserEglise = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", session.session.user.id)
+        .single();
+
+      if (!error && profile) {
+        setFormData((prev) => ({
+          ...prev,
+          eglise_id: profile.eglise_id,
+          branche_id: profile.branche_id,
+        }));
+        console.log("Eglise ID :", profile.eglise_id, "Branche ID :", profile.branche_id);
+      } else {
+        console.error("Erreur récupération eglise/branche :", error?.message);
+      }
+    };
+    fetchUserEglise();
+  }, []);
+
+  // Vérification du token si nécessaire
   useEffect(() => {
     if (!token) return;
 
     const verifyToken = async () => {
       setLoading(true);
-
       const { data, error } = await supabase
         .from("access_tokens")
         .select("*")
@@ -52,9 +73,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
         .gte("expires_at", new Date().toISOString())
         .single();
 
-      if (error || !data) {
-        setErrorMsg("Lien invalide ou expiré.");
-      }
+      if (error || !data) setErrorMsg("Lien invalide ou expiré.");
       setLoading(false);
     };
 
@@ -63,117 +82,106 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
   const handleBesoinChange = (value) => {
     let updated = [...formData.besoin];
-    if (updated.includes(value)) {
-      updated = updated.filter((b) => b !== value);
-    } else {
-      updated.push(value);
-    }
+    if (updated.includes(value)) updated = updated.filter((b) => b !== value);
+    else updated.push(value);
     setFormData({ ...formData, besoin: updated });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const finalBesoins = [...formData.besoin];
-    if (showOtherField && otherBesoin.trim()) {
-      finalBesoins.push(otherBesoin.trim());
-    }
+  // 🔹 Vérification que les UUID existent
+  if (!formData.eglise_id || !formData.branche_id) {
+    console.error("Eglise ID ou Branche ID manquant :", formData.eglise_id, formData.branche_id);
+    alert("Erreur : votre compte n'est pas rattaché à une église ou branche.");
+    return;
+  }
 
-    const finalData = {
-      nom: formData.nom.trim(),
-      prenom: formData.prenom.trim(),
-      telephone: formData.telephone.trim() || null,
-      ville: formData.ville.trim() || null,
-      statut: "evangelisé",
-      sexe: formData.sexe || null,
-      priere_salut: formData.priere_salut === "Oui",
-      type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
-      besoin: finalBesoins,
-      infos_supplementaires: formData.infos_supplementaires || null,
-      is_whatsapp: formData.is_whatsapp,
-    };
+  // 🔹 Préparer les besoins
+  const finalBesoins = [...formData.besoin];
+  if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
 
-    try {
-      // Insert évangélisé et récupérer l'objet créé
-      const { data: newEvangelise, error: insertError } = await supabase
-        .from("evangelises")
-        .insert([finalData])
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-
-      // Mise à jour rapport du jour
-      const today = new Date().toISOString().slice(0, 10);
-      const hommes = formData.sexe === "Homme" ? 1 : 0;
-      const femmes = formData.sexe === "Femme" ? 1 : 0;
-      const priere = formData.priere_salut === "Oui" ? 1 : 0;
-      const nouveau_converti =
-        formData.type_conversion === "Nouveau converti" ? 1 : 0;
-      const reconciliation =
-        formData.type_conversion === "Réconciliation" ? 1 : 0;
-
-      const { data: existingReport, error: fetchError } = await supabase
-        .from("rapport_evangelisation")
-        .select("*")
-        .eq("date", today)
-        .single();
-
-      if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
-
-      if (existingReport) {
-        await supabase
-          .from("rapport_evangelisation")
-          .update({
-            hommes: existingReport.hommes + hommes,
-            femmes: existingReport.femmes + femmes,
-            priere: existingReport.priere + priere,
-            nouveau_converti: existingReport.nouveau_converti + nouveau_converti,
-            reconciliation: existingReport.reconciliation + reconciliation,
-          })
-          .eq("date", today);
-      } else {
-        await supabase.from("rapport_evangelisation").insert([
-          {
-            date: today,
-            hommes,
-            femmes,
-            priere,
-            nouveau_converti,
-            reconciliation,
-          },
-        ]);
-      }
-
-      // ⚡️ Ajouter le nouvel évangélisé dans la table affichée
-      if (onNewEvangelise) onNewEvangelise(newEvangelise);
-
-      // Reset form
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-
-      setFormData({
-        nom: "",
-        prenom: "",
-        telephone: "",
-        ville: "",
-        statut: "evangelisé",
-        sexe: "",
-        priere_salut: "",
-        type_conversion: "",
-        besoin: [],
-        infos_supplementaires: "",
-        is_whatsapp: false,
-      });
-      setShowOtherField(false);
-      setOtherBesoin("");
-    } catch (err) {
-      alert(err.message);
-    }
+  // 🔹 Préparer les données pour evangelises
+  const finalData = {
+    nom: formData.nom.trim(),
+    prenom: formData.prenom.trim(),
+    telephone: formData.telephone.trim() || "", // si vide → null
+    ville: formData.ville.trim() || null,
+    statut: "evangelisé",
+    sexe: formData.sexe || null,
+    priere_salut: formData.priere_salut === "Oui",
+    type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
+    besoin: finalBesoins,
+    infos_supplementaires: formData.infos_supplementaires || null,
+    is_whatsapp: formData.is_whatsapp,
+    eglise_id: formData.eglise_id,
+    branche_id: formData.branche_id,
   };
 
-  const handleCancel = () => {
-    setFormData({
+  console.log("DATA ENVOYÉE EVANGELISE :", finalData);
+
+  try {
+    // 🔹 Insert dans evangelises
+    const { data: newEvangelise, error: insertError } = await supabase
+      .from("evangelises")
+      .insert([finalData])
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("ERREUR INSERT EVANGELISE :", insertError);
+      alert(insertError.message);
+      return;
+    }
+
+    // 🔹 Préparer le rapport
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+    const { data: existingReport, error: reportError } = await supabase
+      .from("rapport_evangelisation")
+      .select("*")
+      .eq("date", today)
+      .eq("eglise_id", formData.eglise_id)
+      .eq("branche_id", formData.branche_id)
+      .single();
+
+    if (reportError && reportError.code !== "PGRST116") {
+      console.error("ERREUR RAPPORT :", reportError);
+    }
+
+    if (existingReport) {
+      await supabase
+        .from("rapport_evangelisation")
+        .update({
+          hommes: existingReport.hommes + (formData.sexe === "Homme" ? 1 : 0),
+          femmes: existingReport.femmes + (formData.sexe === "Femme" ? 1 : 0),
+          priere: existingReport.priere + (formData.priere_salut === "Oui" ? 1 : 0),
+          nouveau_converti: existingReport.nouveau_converti + (formData.type_conversion === "Nouveau converti" ? 1 : 0),
+          reconciliation: existingReport.reconciliation + (formData.type_conversion === "Réconciliation" ? 1 : 0),
+          })
+        .eq("date", today)
+        .eq("eglise_id", formData.eglise_id)
+        .eq("branche_id", formData.branche_id);
+    } else {
+      await supabase
+        .from("rapport_evangelisation")
+        .insert([{
+          date: today,
+          hommes: formData.sexe === "Homme" ? 1 : 0,
+          femmes: formData.sexe === "Femme" ? 1 : 0,
+          priere: formData.priere_salut === "Oui" ? 1 : 0,
+          nouveau_converti: formData.type_conversion === "Nouveau converti" ? 1 : 0,
+          reconciliation: formData.type_conversion === "Réconciliation" ? 1 : 0,          
+          eglise_id: formData.eglise_id,
+          branche_id: formData.branche_id,
+        }]);
+    }
+
+    // 🔹 Afficher le message de succès via le composant
+    setSuccess(true);
+
+    // 🔹 Reset formulaire (sauf eglise_id et branche_id)
+    setFormData((prev) => ({
       nom: "",
       prenom: "",
       telephone: "",
@@ -185,16 +193,40 @@ export default function AddEvangelise({ onNewEvangelise }) {
       besoin: [],
       infos_supplementaires: "",
       is_whatsapp: false,
-    });
+      eglise_id: prev.eglise_id,
+      branche_id: prev.branche_id,
+    }));
+    setShowOtherField(false);
+    setOtherBesoin("");
 
+  } catch (err) {
+    console.error("ERREUR GLOBALE :", err);
+    alert(err.message);
+  }
+};
+
+  const handleCancel = () => {
+    setFormData((prev) => ({
+      nom: "",
+      prenom: "",
+      telephone: "",
+      ville: "",
+      statut: "evangelisé",
+      sexe: "",
+      priere_salut: "",
+      type_conversion: "",
+      besoin: [],
+      infos_supplementaires: "",
+      is_whatsapp: false,
+      eglise_id: prev.eglise_id,
+      branche_id: prev.branche_id,
+    }));
     setShowOtherField(false);
     setOtherBesoin("");
   };
 
-  if (loading)
-    return <p className="text-center mt-10">Vérification du lien...</p>;
-  if (errorMsg)
-    return <p className="text-center mt-10 text-red-600">{errorMsg}</p>;
+  if (loading) return <p className="text-center mt-10">Vérification du lien...</p>;
+  if (errorMsg) return <p className="text-center mt-10 text-red-600">{errorMsg}</p>;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
@@ -203,19 +235,16 @@ export default function AddEvangelise({ onNewEvangelise }) {
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
 
-        <h1 className="text-3xl font-bold text-center mb-2">
-          Ajouter une personne évangélisée
-        </h1>
+        <h1 className="text-3xl font-bold text-center mb-2">Ajouter une personne évangélisée</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
+    
           <input
             className="input"
             type="text"
             placeholder="Prénom"
             value={formData.prenom}
-            onChange={(e) =>
-              setFormData({ ...formData, prenom: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
             required
           />
           <input
@@ -223,9 +252,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
             type="text"
             placeholder="Nom"
             value={formData.nom}
-            onChange={(e) =>
-              setFormData({ ...formData, nom: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
             required
           />
           <input
@@ -233,40 +260,30 @@ export default function AddEvangelise({ onNewEvangelise }) {
             type="text"
             placeholder="Téléphone"
             value={formData.telephone}
-            onChange={(e) =>
-              setFormData({ ...formData, telephone: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
           />
           <input
             className="input"
             type="text"
             placeholder="Ville"
             value={formData.ville}
-            onChange={(e) =>
-              setFormData({ ...formData, ville: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
           />
 
-          {/* WhatsApp */}
           <label className="flex items-center gap-2 text-gray-700">
             <input
               type="checkbox"
               checked={formData.is_whatsapp}
-              onChange={(e) =>
-                setFormData({ ...formData, is_whatsapp: e.target.checked })
-              }
+              onChange={(e) => setFormData({ ...formData, is_whatsapp: e.target.checked })}
               className="w-5 h-5 accent-indigo-600 cursor-pointer"
             />
             WhatsApp
           </label>
 
-          {/* Sexe */}
           <select
             className="input"
             value={formData.sexe}
-            onChange={(e) =>
-              setFormData({ ...formData, sexe: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
             required
           >
             <option value="">Sexe</option>
@@ -274,7 +291,6 @@ export default function AddEvangelise({ onNewEvangelise }) {
             <option value="Femme">Femme</option>
           </select>
 
-          {/* Prière du salut */}
           <select
             className="input"
             value={formData.priere_salut}
@@ -293,14 +309,11 @@ export default function AddEvangelise({ onNewEvangelise }) {
             <option value="Non">Non</option>
           </select>
 
-          {/* Type de conversion */}
           {formData.priere_salut === "Oui" && (
             <select
               className="input"
               value={formData.type_conversion}
-              onChange={(e) =>
-                setFormData({ ...formData, type_conversion: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
               required
             >
               <option value="">Type</option>
@@ -309,10 +322,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
             </select>
           )}
 
-          {/* Besoins */}
           <div className="mt-4">
-            <p className="font-semibold mb-2">Besoins :</p>
-
+            <p className="font-semibold mb-2">Difficultés / Besoins :</p>
             {besoinsList.map((b) => (
               <label key={b} className="flex items-center gap-3 mb-2">
                 <input
@@ -351,25 +362,15 @@ export default function AddEvangelise({ onNewEvangelise }) {
             placeholder="Informations supplémentaires..."
             rows={3}
             value={formData.infos_supplementaires}
-            onChange={(e) =>
-              setFormData({ ...formData, infos_supplementaires: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, infos_supplementaires: e.target.value })}
             className="input"
           />
 
           <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-            >
+            <button type="button" onClick={handleCancel} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Annuler
             </button>
-
-            <button
-              type="submit"
-              className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-            >
+            <button type="submit" className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Ajouter
             </button>
           </div>
@@ -389,7 +390,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
             border: 1px solid #ccc;
           }
         `}</style>
-      </div>
+      </div>         
     </div>
   );
 }
