@@ -1,4 +1,3 @@
-// pages/login.js
 "use client";
 
 import { useState } from "react";
@@ -18,6 +17,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // 1️⃣ Connexion à Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -30,14 +30,12 @@ export default function LoginPage() {
       }
 
       const user = authData.user;
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userId", user.id);
 
-      // 🔹 Utiliser profile_id au lieu de id
+      // 2️⃣ Récupérer le profil complet avec roles[]
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("profile_id, role, prenom, nom, telephone")
-        .eq("profile_id", user.id)
+        .select("id, role, roles, prenom, nom, telephone")
+        .eq("id", user.id)
         .single();
 
       if (profileError) {
@@ -46,29 +44,16 @@ export default function LoginPage() {
         return;
       }
 
-      localStorage.setItem("userRole", JSON.stringify([profile.role]));
+      // 3️⃣ Stocker les rôles et le profil
+      const roles = profile.roles || [];
+      localStorage.setItem("userRole", JSON.stringify(roles));
       localStorage.setItem("profile", JSON.stringify(profile));
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userId", user.id);
 
-      // Redirection selon rôle
-      switch (profile.role) {
-        case "Administrateur":
-          router.push("/"); // page d'accueil pour admin
-          break;
-        case "ResponsableIntegration":
-          router.push("/membres-hub");
-          break;
-        case "ResponsableEvangelisation":
-          router.push("/evangelisation-hub");
-          break;
-        case "ResponsableCellule":
-          router.push("/cellules-hub");
-          break;
-        case "Conseiller":
-          router.push("/conseiller-hub");
-          break;
-        default:
-          router.push("/");
-      }
+      // 4️⃣ Redirection unique vers index
+      router.push("/");
+
     } catch (err) {
       console.error(err);
       setError("❌ Erreur lors de la connexion");
@@ -122,6 +107,13 @@ export default function LoginPage() {
           className="mt-4 text-blue-600 underline hover:text-blue-800"
         >
           Mot de passe oublié ?
+        </button>
+
+        <button
+          onClick={() => router.push("/SignupEglise")}
+          className="mt-4 text-orange-400 underline hover:text-orange-400"
+        >
+          Création de compte
         </button>
       </div>
     </div>
