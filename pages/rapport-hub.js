@@ -5,8 +5,10 @@ import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function RapportHub() {
+  function RapportHubContent() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
 
@@ -21,30 +23,7 @@ export default function RapportHub() {
       className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
-      {/* 🔹 Top bar */}
-      <div className="w-full max-w-5xl mb-6">
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-white hover:text-gray-200 transition-colors"
-          >
-            ← Retour
-          </button>
-
-          <LogoutLink />
-        </div>
-
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">
-            👋 Bienvenue {userName}
-          </p>
-        </div>
-      </div>
-
-      {/* 🔹 Logo centré */}
-      <div className="mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-      </div>
+      <HeaderPages />
 
       {/* 🔹 Titre */}
       <div className="text-center mb-4">
@@ -71,7 +50,7 @@ export default function RapportHub() {
 
         {/* Rapport évangélisation */}
         <Link
-          href="/rapport/evangelisation"
+          href="/Rapport-evangelisation"
           className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
           border-t-4 border-[#FBBF24] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
         >
@@ -81,7 +60,7 @@ export default function RapportHub() {
 
         {/* Rapport baptême */}
         <Link
-          href="/rapport/bapteme"
+          href="/RapportBaptemePage"
           className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
           border-t-4 border-[#3B82F6] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
         >
@@ -89,9 +68,39 @@ export default function RapportHub() {
           <div className="text-lg font-bold text-gray-800 text-center">Rapport Baptêmes</div>
         </Link>
 
+        {/* Rapport Formation */}
+        <Link
+          href="/RapportFormationPage"
+          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
+          border-t-4 border-[#3B82F6] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-4xl mb-2">✒️</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Rapport Formation</div>
+        </Link>
+
+        {/* Rapport Ministere */}
+        <Link
+          href="/RapportMinisterePage"
+          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
+          border-t-4 border-[#3B82F6] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-4xl mb-2">💢</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Rapport par Ministère</div>
+        </Link>
+
+        {/* Rapport Ministere */}
+        <Link
+          href="/RapportBesoinPage"
+          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
+          border-t-4 border-[#3B82F6] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-4xl mb-2">❓</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Rapport par Difficultés / Besoins</div>
+        </Link>
+
         {/* Statistiques globales */}
         <Link
-          href="/rapport/statistiques-globales"
+          href="/StatGlobalPage"
           className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
           border-t-4 border-[#10B981] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
         >
@@ -107,5 +116,13 @@ export default function RapportHub() {
         Actes 2:47 ✨
       </div>
     </div>
+  );
+}
+
+export default function Administrateur() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur"]}>
+      <RapportHubContent />
+    </ProtectedRoute>
   );
 }
