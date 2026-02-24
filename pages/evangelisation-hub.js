@@ -8,8 +8,19 @@ import LogoutLink from "../components/LogoutLink";
 import SendLinkPopup from "../components/SendLinkPopup";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
 export default function EvangelisationHub() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEvangelisation"]}>
+      <EvangelisationHubContent />
+    </ProtectedRoute>
+  );
+}
+  
+function EvangelisationHubContent() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
 
@@ -20,36 +31,12 @@ export default function EvangelisationHub() {
   }, []);
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-    >
-      {/* 🔹 Top bar */}
-      <div className="w-full max-w-5xl mb-6">
-        {/* Ligne principale : Retour + Déconnexion */}
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-white hover:text-gray-200 transition-colors"
-          >
-            ← Retour
-          </button>
+  <div
+    className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
+    style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+  >
 
-          <LogoutLink />
-        </div>
-
-        {/* Ligne du dessous : Bienvenue aligné à droite */}
-        <div className="flex justify-end mt-2">
-          <p className="text-orange-200 text-sm">
-            👋 Bienvenue {userName}
-          </p>
-        </div>
-      </div>
-
-      {/* 🔹 Logo centré */}
-      <div className="mb-6">
-        <Image src="/logo.png" alt="SoulTrack Logo" className="w-20 h-18 mx-auto" />
-      </div>
+     <HeaderPages />
 
       {/* 🔹 Titre + texte motivant */}
       <div className="text-center mb-6">
@@ -116,6 +103,7 @@ export default function EvangelisationHub() {
         <br />
         Romains 10:14 ❤️
       </div>
+        <Footer />
     </div>
   );
 }
