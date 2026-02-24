@@ -19,27 +19,54 @@ export default function LoginPage() {
   setLoading(true);
 
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    // 1️⃣ Connexion à Supabase
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    console.log("SUPABASE RESPONSE:", { data, error });
+    console.log("SUPABASE RESPONSE:", { authData, authError });
 
-    if (error) {
-      console.log("AUTH ERROR:", error.message);
-      setError(error.message);
+    if (authError) {
+      console.log("AUTH ERROR:", authError.message);
+      setError(authError.message);
       return;
     }
 
-    if (!data?.user) {
+    if (!authData?.user) {
       console.log("NO USER RETURNED");
+      setError("❌ Utilisateur non trouvé");
       return;
     }
 
-    console.log("USER LOGGED IN:", data.user);
+    const user = authData.user;
+    console.log("USER LOGGED IN:", user);
 
+    // 2️⃣ Récupérer le profil complet avec roles[]
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, role, roles, prenom, nom, telephone")
+      .eq("id", user.id)
+      .maybeSingle(); // ← sécurise si profil manquant
+
+    console.log("PROFILE DATA:", profile, "PROFILE ERROR:", profileError);
+
+    if (profileError) {
+      setError("❌ Impossible de récupérer le profil");
+    }
+
+    // 3️⃣ Stocker les rôles et le profil (même si profil manquant)
+    const roles = profile?.roles || [];
+    if (roles.length === 0) console.log("⚠️ Aucun rôle défini pour cet utilisateur");
+
+    localStorage.setItem("userRole", JSON.stringify(roles));
+    localStorage.setItem("profile", JSON.stringify(profile || {}));
+    localStorage.setItem("userEmail", email);
+    localStorage.setItem("userId", user.id);
+
+    // 4️⃣ Redirection unique vers index
     router.push("/");
+
   } catch (err) {
     console.error("CATCH ERROR:", err);
     setError("❌ Erreur lors de la connexion");
@@ -47,6 +74,7 @@ export default function LoginPage() {
     setLoading(false);
   }
 };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
