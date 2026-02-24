@@ -2,24 +2,112 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import EditUserModal from "../../components/EditUserModal";
+import HeaderPages from "../../components/HeaderPages";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import Footer from "../../components/Footer";
 
+/* =========================
+   Ligne utilisateur
+========================= */
+function UserRow({ u, setSelectedUser, setDeleteUser }) {
+  // Table de correspondance pour l'affichage lisible des rôles
+  const roleLabels = {
+    Administrateur: "Administrateur",
+    ResponsableIntegration: "Responsable Intégration",
+    ResponsableCellule: "Responsable Cellule",
+    ResponsableEvangelisation: "Responsable Évangélisation",
+    SuperviseurCellule: "Superviseur Cellule",
+    Conseiller: "Conseiller",
+  };
+
+  // Construire la chaîne à afficher pour les rôles
+  const rolesDisplay = (u.roles && u.roles.length > 0)
+    ? u.roles.map(role => roleLabels[role] || role).join(" / ")
+    : roleLabels[u.role] || u.role || "";
+
+  return (
+    <div className="flex flex-row items-center px-4 py-2 rounded-lg gap-2 bg-white/15 border-l-4 text-sm" style={{ borderLeftColor: "#F59E0B" }}>
+      <div className="flex-[2] text-white font-semibold">{u.prenom} {u.nom}</div>
+      <div className="flex-[2] text-white">{u.email}</div>
+      <div className="flex-[2] text-white font-medium">{rolesDisplay}</div>
+      {/* Actions */}
+      <div className="flex-[1] flex justify-center gap-2">
+        <button onClick={() => setSelectedUser(u)} className="text-blue-400 hover:text-blue-600 text-lg">✏️</button>
+        <button onClick={() => setDeleteUser(u)} className="text-red-400 hover:text-red-600 text-lg">🗑️</button>
+      </div>
+    </div>
+  );
+}
+
+
+/* =========================
+   Page principale
+========================= */
 export default function ListUsers() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur"]}>
+      <ListUsersContent />
+    </ProtectedRoute>
+  );
+}
+
+function ListUsersContent() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [roleFilter, setRoleFilter] = useState("");
+  const [role, setRole] = useState("");
   const [roles, setRoles] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
+  const [search, setSearch] = useState("");
+
+  const [userScope, setUserScope] = useState({
+    eglise_id: null,
+    branche_id: null,
+  });
+
+  /* =========================
+     Récupération scope utilisateur
+  ========================== */
+  useEffect(() => {
+    const fetchUserScope = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) return;
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
+
+      if (!error && profile) {
+        setUserScope({
+          eglise_id: profile.eglise_id,
+          branche_id: profile.branche_id,
+        });
+      }
+    };
+    fetchUserScope();
+  }, []);
+
+  /* =========================
+     Récupération utilisateurs
+  ========================== */
+  useEffect(() => {
+    if (!userScope.eglise_id || !userScope.branche_id) return;
+    fetchUsers();
+  }, [userScope]);
 
   const fetchUsers = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, prenom, nom, role_description, created_at")
+      .select("id, prenom, nom, email, telephone, roles, created_at")
+      .eq("eglise_id", userScope.eglise_id)
+      .eq("branche_id", userScope.branche_id)
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -29,15 +117,16 @@ export default function ListUsers() {
     }
 
     setUsers(data || []);
-    const uniqueRoles = [...new Set((data || []).map(u => u.role_description).filter(Boolean))];
-    setRoles(uniqueRoles);
+
+    // Liste unique de tous les rôles pour le filtre
+    const allRoles = Array.from(new Set((data || []).flatMap(u => u.roles || [])));
+    setRoles(allRoles);
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
+  /* =========================
+     Delete utilisateur
+  ========================== */
   const handleDelete = async () => {
     if (!deleteUser?.id) return;
     const { error } = await supabase.from("profiles").delete().eq("id", deleteUser.id);
@@ -47,54 +136,85 @@ export default function ListUsers() {
     }
   };
 
+  /* =========================
+     Update utilisateur
+  ========================== */
   const handleUpdated = (updatedUser) => {
     if (!updatedUser || !updatedUser.id) return;
     setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
   };
 
-  const filteredUsers = roleFilter ? users.filter(u => u.role_description === roleFilter) : users;
+  /* =========================
+     Filtrage + recherche
+  ========================== */
+  const filteredUsers = users
+    .filter(u => role ? u.roles?.includes(role) : true)
+    .filter(u => u.prenom.toLowerCase().includes(search.toLowerCase()) || u.nom.toLowerCase().includes(search.toLowerCase()));
 
-  if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
+  if (loading) return <p className="text-center mt-10 text-white text-lg">Chargement...</p>;
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
-      <button onClick={() => router.back()} className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700">← Retour</button>
+    <div className="min-h-screen p-6 bg-[#333699]">
+      <HeaderPages />
 
-      <div className="flex flex-col items-center mb-6">
-        <Image src="/logo.png" alt="Logo" width={80} height={80} />
-        <h1 className="text-3xl font-bold text-center mt-2">Gestion des utilisateurs</h1>
-      </div>
+      <h1 className="text-4xl text-white text-center mb-6 font-bold">Gestion des utilisateurs</h1>
 
-      <div className="flex justify-start items-center mb-6 max-w-5xl mx-auto gap-4">
-        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="border p-2 rounded-xl shadow-sm text-left w-auto">
-          <option value="">Tous les rôles</option>
-          {roles.map(r => <option key={r} value={r}>{r}</option>)}
-        </select>
-
-        <button onClick={() => router.push("/admin/create-internal-user")} className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-2 px-4 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600">
-          ➕ Créer utilisateur
-        </button>
-      </div>
-
-      <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden">
-        <div className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-2 bg-indigo-600 text-white font-semibold">
-          <span>Nom complet</span>
-          <span>Rôle</span>
-          <span className="text-center">Actions</span>
+      {/* Barre recherche / filtre / actions */}
+      <div className="max-w-6xl w-full mx-auto mb-6 flex flex-col gap-3">
+        <div className="flex justify-center">
+          <input
+            type="text"
+            placeholder="Chercher un membre..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full sm:w-1/2 px-4 py-2 rounded-md text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+          />
         </div>
 
-        {filteredUsers.map(user => (
-          <div key={user.id} className="grid grid-cols-[2fr_1fr_auto] gap-4 px-4 py-3 border-b border-gray-200">
-            <span className="font-semibold text-gray-700">{user.prenom} {user.nom}</span>
-            <span className="text-indigo-600 font-medium text-left">{user.role_description}</span>
-            <div className="flex justify-center gap-3">
-              <button onClick={() => setSelectedUser(user)} className="text-blue-600 hover:text-blue-800 text-lg">✏️</button>
-              <button onClick={() => setDeleteUser(user)} className="text-red-600 hover:text-red-800 text-lg">🗑️</button>
-            </div>
-          </div>
-        ))}
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="px-4 py-2 rounded-md text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+          >
+            <option value="">Tous les rôles</option>
+            {roles.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+
+          <span className="text-white text-sm font-medium">
+            Total : {filteredUsers.length}
+          </span>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+             onClick={() => router.push("/admin/create-internal-user")}
+             className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+           >
+             ➕ Ajouter un utilisateur
+           </button>
+        </div>
       </div>
 
+      {/* Liste des utilisateurs */}
+      <div className="max-w-6xl mx-auto space-y-2">
+        <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
+          <div className="flex-[2]">Nom complet</div>
+          <div className="flex-[2]">Email</div>
+          <div className="flex-[2]">Rôles</div>
+          <div className="flex-[1] text-center">Actions</div>
+        </div>
+
+        {filteredUsers.length === 0 ? (
+          <p className="text-white text-center mt-6">Aucun utilisateur</p>
+        ) : (
+          filteredUsers.map(u => (
+            <UserRow key={u.id} u={u} setSelectedUser={setSelectedUser} setDeleteUser={setDeleteUser} />
+          ))
+        )}
+      </div>
+
+      {/* Modals */}
       {selectedUser && <EditUserModal user={selectedUser} onClose={() => setSelectedUser(null)} onUpdated={handleUpdated} />}
 
       {deleteUser && (
@@ -109,6 +229,8 @@ export default function ListUsers() {
           </div>
         </div>
       )}
+
+      <Footer />
     </div>
   );
 }
