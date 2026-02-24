@@ -1,10 +1,21 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import Image from "next/image";
+import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
-export default function CreateConseiller() {
+export default function CreateConseillerPage() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
+      <CreateConseiller />
+    </ProtectedRoute>
+  );
+}
+
+function CreateConseiller() {
   const router = useRouter();
   const [members, setMembers] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState("");
@@ -19,28 +30,59 @@ export default function CreateConseiller() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ➤ Récupérer l'utilisateur connecté et son ID (responsable)
-  useEffect(() => {
-    async function fetchUser() {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) return console.error(error);
-      if (!session?.user) return setMessage("❌ Vous devez être connecté");
-      setResponsableId(session.user.id);
-    }
-    fetchUser();
-  }, []);
 
-  // ➤ Récupérer les membres avec star = true
+  // ➤ Récupérer l'utilisateur connecté et ses membres disponibles
   useEffect(() => {
-    async function fetchStarMembers() {
-      const { data, error } = await supabase
-        .from("membres")
-        .select("id, prenom, nom, telephone")
-        .eq("star", true);
-      if (error) console.error(error);
-      else setMembers(data);
+    async function fetchUserAndMembers() {
+      try {
+        // 🔹 Session utilisateur
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) return console.error("Erreur session :", sessionError);
+        if (!session?.user) return setMessage("❌ Vous devez être connecté");
+        setResponsableId(session.user.id);
+
+        // 🔹 Profil du responsable
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, eglise_id, branche_id")
+          .eq("id", session.user.id)
+          .single();
+        if (profileError) return console.error("Erreur profil :", profileError);
+
+        // 🔹 Membres star de la même église/branche
+        const { data: membersData, error: membersError } = await supabase
+          .from("membres_complets")
+          .select("id, prenom, nom, telephone")
+          .eq("star", true)
+          .eq("eglise_id", profileData.eglise_id)
+          .eq("branche_id", profileData.branche_id);
+        if (membersError) return console.error("Erreur membres :", membersError);
+
+        // 🔹 Conseillers existants
+        const { data: conseillersExistants, error: conseillersError } = await supabase
+          .from("profiles")
+          .select("prenom, nom, telephone")
+          .eq("role", "Conseiller");
+        if (conseillersError) return console.error("Erreur conseillers :", conseillersError);
+
+        // 🔹 Créer un Set des conseillers existants (clé unique prenom-nom-telephone)
+        const conseillersSet = new Set(
+          conseillersExistants.map(c => `${c.prenom.toLowerCase()}-${c.nom.toLowerCase()}-${c.telephone}`)
+        );
+
+        // 🔹 Filtrer les membres déjà conseillers
+        const membresDisponibles = membersData.filter(m => {
+          const key = `${m.prenom.toLowerCase()}-${m.nom.toLowerCase()}-${m.telephone}`;
+          return !conseillersSet.has(key);
+        });
+
+        setMembers(membresDisponibles || []);
+      } catch (err) {
+        console.error("Erreur fetchUserAndMembers :", err);
+      }
     }
-    fetchStarMembers();
+
+    fetchUserAndMembers();
   }, []);
 
   // ➤ Remplissage automatique des infos
@@ -98,8 +140,14 @@ export default function CreateConseiller() {
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
           <select value={selectedMemberId} onChange={(e) => setSelectedMemberId(e.target.value)} className="input" required>
-            <option value="">-- Sélectionnez un membre (star = Oui) --</option>
-            {members.map((m) => (<option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>))}
+            <option value="">-- Choisir un Serviteur --</option>
+            {members.length > 0 ? (
+              members.map((m) => (
+                <option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>
+              ))
+            ) : (
+              <option disabled>Aucun serviteur disponible</option>
+            )}
           </select>
 
           <input name="prenom" placeholder="Prénom" value={formData.prenom} readOnly className="input" />
@@ -120,6 +168,7 @@ export default function CreateConseiller() {
           .input { width:100%; border:1px solid #ccc; border-radius:12px; padding:12px; color:black; }
         `}</style>
       </div>
+          <Footer />
     </div>
   );
 }
