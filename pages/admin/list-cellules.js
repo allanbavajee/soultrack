@@ -1,131 +1,250 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import EditCelluleModal from "../../components/EditCelluleModal";
+import HeaderPages from "../../components/HeaderPages";
+import ProtectedRoute from "../../components/ProtectedRoute"; 
+import Footer from "../../components/Footer";
 
+/* =========================
+   Ligne Cellule
+========================= */
+function CelluleRow({ c, router }) {
+  const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
+  const phoneMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+        setOpenPhoneMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div
+      className="flex flex-row items-center px-2 py-2 rounded-lg gap-2 bg-white/15 border-l-4"
+      style={{ borderLeftColor: "#F59E0B" }}
+    >
+      <div className="flex-[2] text-white text-sm">{c.ville}</div>
+      <div className="flex-[2] text-white font-semibold text-sm">{c.cellule_full}</div>
+      <div className="flex-[2] text-white text-sm">{c.responsable}</div>
+
+      {/* Téléphone */}
+      <div className="flex-[2] flex justify-center relative text-sm">
+        <span
+          className="text-orange-400 underline cursor-pointer"
+          onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
+        >
+          {c.telephone || "—"}
+        </span>
+
+        {openPhoneMenu && (
+          <div
+            ref={phoneMenuRef}
+            className="absolute top-full mt-1 bg-white rounded-lg shadow-lg border z-50 w-56"
+          >
+            <a href={`tel:${c.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">📞 Appeler</a>
+            <a href={`sms:${c.telephone}`} className="block px-4 py-2 text-sm hover:bg-gray-100">✉️ SMS</a>
+            <a href={`https://wa.me/${c.telephone?.replace(/\D/g, "")}?call`} target="_blank" className="block px-4 py-2 text-sm hover:bg-gray-100">📱 Appel WhatsApp</a>
+            <a href={`https://wa.me/${c.telephone?.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 text-sm hover:bg-gray-100">💬 Message WhatsApp</a>
+          </div>
+        )}
+      </div>
+
+      {/* Count */}
+      <div className="flex-[1] flex justify-center text-white text-sm">
+        {c.membre_count}
+      </div>
+
+      {/* Action */}
+      <div className="flex-[1] flex justify-center">
+        <span
+          className="text-orange-400 underline cursor-pointer text-sm"
+          onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
+        >
+          Détails
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* =========================
+   Page principale
+========================= */
 export default function ListCellules() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
+      <ListCellulesContent />
+    </ProtectedRoute>
+  );
+}
+  
+function ListCellulesContent() {
   const router = useRouter();
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
+  const [userRole, setUserRole] = useState(null);
   const [selectedCellule, setSelectedCellule] = useState(null);
 
+  // 🔍 Recherche & filtre
+  const [search, setSearch] = useState("");
+  const [filterCellule, setFilterCellule] = useState("");
+
   useEffect(() => {
-    const fetchCellules = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("cellules")
-          .select(`
-            id,
-            cellule,
-            ville,
-            responsable,
-            telephone
-          `);
-
-        if (error) throw error;
-        setCellules(data || []);
-      } catch (err) {
-        console.error("❌ Erreur récupération cellules:", err);
-        setMessage("Erreur lors de la récupération des cellules.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCellules();
   }, []);
 
-  // Mise à jour instantanée
-  const handleUpdated = (updated) => {
-    setCellules(prev =>
-      prev.map(c => (c.id === updated.id ? updated : c))
+  const fetchCellules = async () => {
+    setLoading(true);
+
+    // Récupérer l'utilisateur connecté
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Récupérer le profil complet pour eglise_id et branche_id
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, role, eglise_id, branche_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile) return;
+
+    setUserRole(profile.role);
+
+    // 🔹 Récupérer les cellules filtrées par eglise et branche
+    let query = supabase
+      .from("cellules")
+      .select("id, cellule_full, ville, responsable, telephone, responsable_id, eglise_id, branche_id")
+      .eq("eglise_id", profile.eglise_id)
+      .eq("branche_id", profile.branche_id)
+      .order("cellule_full");
+
+    // Si ResponsableCellule, ne voir que ses cellules
+    if (profile.role === "ResponsableCellule") {
+      query = query.eq("responsable_id", profile.id);
+    }
+
+    const { data: cellsData } = await query;
+
+    // 🔹 Ajouter le compte des membres par cellule
+    const withCount = await Promise.all(
+      (cellsData || []).map(async (c) => {
+        const { count } = await supabase
+          .from("membres_complets")
+          .select("id", { count: "exact", head: true })
+          .eq("cellule_id", c.id)
+          .eq("statut_suivis", 3);
+
+        return { ...c, membre_count: count || 0 };
+      })
     );
+
+    setCellules(withCount);
+    setLoading(false);
   };
 
-  if (loading) return <p className="text-center mt-10 text-lg">Chargement...</p>;
-  if (message) return <p className="text-center text-red-600 mt-10">{message}</p>;
+  // 🔹 Filtrage recherche + menu
+  const cellulesFiltrees = cellules.filter((c) => {
+    const matchSearch = c.cellule_full?.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filterCellule ? c.cellule_full === filterCellule : true;
+    return matchSearch && matchFilter;
+  });
+
+  if (loading) {
+    return <p className="text-center mt-10 text-white">Chargement...</p>;
+  }
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-green-200 via-orange-100 to-purple-200">
+    <div className="min-h-screen p-6 bg-[#333699]">
+      <HeaderPages />
 
-      {/* Bouton retour */}
-      <button
-        onClick={() => router.back()}
-        className="absolute top-4 left-4 text-black font-semibold hover:text-gray-700"
-      >
-        ← Retour
-      </button>
+      <h1 className="text-4xl text-white text-center mb-4">
+        Liste des cellules
+      </h1>
 
-      {/* Logo + Titre */}
-      <div className="flex flex-col items-center mb-6">
-        <Image src="/logo.png" alt="Logo" width={80} height={80} />
-        <h1 className="text-3xl font-bold text-center mt-2 text-purple-700">
-          🏠 Liste des cellules
-        </h1>
-      </div>
+      {/* Filtre + Count */}
+{/* Recherche – CENTRÉE */}
+<div className="flex justify-center mb-4">
+  <input
+    type="text"
+    placeholder="Chercher par cellule..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    className="w-full max-w-md px-3 py-2 rounded-md text-black"
+  />
+</div>
 
-      {/* Boutons */}
-      <div className="max-w-5xl mx-auto mb-4 flex justify-end gap-4">
-        <button
-          onClick={() => router.push("/admin/create-internal-user")}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl shadow-md transition"
-        >
-          ➕ Créer un responsable
-        </button>
+   {/* Filtre + Count – CENTRÉS */}
+<div className="max-w-6xl mx-auto mb-4 flex justify-center items-center gap-4">
+  <select
+    value={filterCellule}
+    onChange={(e) => setFilterCellule(e.target.value)}
+    className="px-3 py-2 rounded-md text-black"
+  >
+    <option value="">Toutes les cellules</option>
+    {cellules.map((c) => (
+      <option key={c.id} value={c.cellule_full}>
+        {c.cellule_full}
+      </option>
+    ))}
+  </select>
 
-        <button
-          onClick={() => router.push("/admin/create-cellule")}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl shadow-md transition"
-        >
-          ➕ Créer une cellule
-        </button>
-      </div>
+  <span className="text-white text-sm font-semibold">
+    Total : {cellulesFiltrees.length}
+  </span>
+</div>
 
-      {/* Table */}
-      <div className="max-w-5xl mx-auto border border-gray-200 rounded-xl overflow-hidden bg-white shadow-xl">
-        <div className="grid grid-cols-[2fr_2fr_2fr_2fr_auto] gap-4 px-4 py-2 bg-purple-600 text-white font-semibold">
-          <span>Zone / Ville</span>
-          <span>Nom de la cellule</span>
-          <span>Responsable</span>
-          <span>Téléphone</span>
-          <span className="text-center">Actions</span>
+{/* Bouton Ajouter – ALIGNÉ À LA FIN DE LA TABLE */}
+<div className="max-w-6xl mx-auto flex justify-end mb-3">
+  <button
+    onClick={() => router.push("/admin/create-cellule")}
+    className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+  >
+    ➕ Ajouter une Cellule
+  </button>
+</div>
+
+
+      {/* Tableau */}
+
+      <div className="max-w-6xl mx-auto space-y-2">
+        <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
+          <div className="flex-[2]">Ville</div>
+          <div className="flex-[2]">Cellule</div>
+          <div className="flex-[2]">Responsable</div>
+          <div className="flex-[2] text-center">Téléphone</div>
+          <div className="flex-[1] text-center">Count</div>
+          <div className="flex-[1] text-center">Action</div>
         </div>
 
-        {cellules.map((c) => (
-          <div
-            key={c.id}
-            className="grid grid-cols-[2fr_2fr_2fr_2fr_auto] gap-4 px-4 py-3 border-b border-gray-200 hover:bg-purple-50 transition-all"
-          >
-            <span>{c.ville}</span>
-            <span className="font-semibold text-gray-700">{c.cellule}</span>            
-            <span className="text-purple-700 font-medium">{c.responsable}</span>
-            <span>{c.telephone}</span>
-
-            <div className="flex justify-center">
-              <button
-                onClick={() => setSelectedCellule(c)}
-                className="text-blue-600 hover:text-blue-800 text-xl"
-              >
-                ✏️
-              </button>
-            </div>
-          </div>
-        ))}
+        {cellulesFiltrees.length === 0 ? (
+          <p className="text-white text-center mt-6">Aucune cellule</p>
+        ) : (
+          cellulesFiltrees.map((c) => (
+            <CelluleRow key={c.id} c={c} router={router} />
+          ))
+        )}
       </div>
 
-      {/* Popup */}
       {selectedCellule && (
         <EditCelluleModal
           cellule={selectedCellule}
           onClose={() => setSelectedCellule(null)}
-          onUpdated={handleUpdated}
+          onUpdated={(updated) =>
+            setCellules((prev) =>
+              prev.map((c) => (c.id === updated.id ? updated : c))
+            )
+          }
         />
       )}
+         <Footer />
     </div>
   );
 }
