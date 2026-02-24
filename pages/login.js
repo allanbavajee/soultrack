@@ -13,6 +13,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    console.log("LOGIN CLICKED");
     setError(null);
     setLoading(true);
 
