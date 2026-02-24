@@ -31,6 +31,14 @@ export default function LoginPage() {
 
       const user = authData.user;
 
+      
+        if (authError) {
+        console.log("AUTH ERROR:", authError);
+        setError(authError.message);
+        setLoading(false);
+        return;
+      }
+
       // 2️⃣ Récupérer le profil complet avec roles[]
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -61,13 +69,6 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-
-  if (authError) {
-  console.log("AUTH ERROR:", authError);
-  setError(authError.message);
-  setLoading(false);
-  return;
-}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
