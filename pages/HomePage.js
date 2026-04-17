@@ -4,13 +4,15 @@ import { useEffect, useRef } from "react";
 
 export default function HomePage() {
   const router = useRouter();
-  const fadeRefs = useRef<HTMLDivElement[]>([]);
+  const fadeRefs = useRef([]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
-          if (e.isIntersecting) e.target.classList.add("opacity-100", "translate-y-0");
+          if (e.isIntersecting) {
+            e.target.classList.add("opacity-100", "translate-y-0");
+          }
         });
       },
       { threshold: 0.1 }
@@ -19,12 +21,11 @@ export default function HomePage() {
     return () => observer.disconnect();
   }, []);
 
-  const addRef = (el: HTMLDivElement | null) => {
+  const addRef = (el) => {
     if (el && !fadeRefs.current.includes(el)) fadeRefs.current.push(el);
   };
 
   const features = [
-    { icon: "✝️", title: "Évangélisation Hub", desc: "Regroupe les nouvelles âmes, les décisions, les suivis et les baptêmes. Permet de ne laisser aucun contact sans accompagnement." },
     { icon: "🏠", title: "Cellules Hub", desc: "Organise les groupes, les responsables et les présences hebdomadaires. Vision vivante de la dynamique des cellules." },
     { icon: "🧭", title: "Conseillers Hub", desc: "Suivi personnalisé par responsable. Accompagner, noter, discerner les besoins et intervenir de manière ciblée." },
     { icon: "📊", title: "Rapports Hub", desc: "Analyse toutes les données du ministère pour ressortir des indicateurs clairs et des décisions stratégiques." },
@@ -89,20 +90,26 @@ export default function HomePage() {
               Regroupe les nouvelles âmes, les décisions, les suivis et les baptêmes. Permet de ne laisser aucun contact sans accompagnement et d'assurer une progression spirituelle structurée.
             </p>
             <div className="flex gap-8 mt-5">
-              <div><div className="text-[#7F77DD] text-2xl font-medium">100%</div><div className="text-white/35 text-xs uppercase tracking-wider">Suivi</div></div>
-              <div><div className="text-[#7F77DD] text-2xl font-medium">0</div><div className="text-white/35 text-xs uppercase tracking-wider">Oubliés</div></div>
+              <div>
+                <div className="text-[#7F77DD] text-2xl font-medium">100%</div>
+                <div className="text-white/35 text-xs uppercase tracking-wider">Suivi</div>
+              </div>
+              <div>
+                <div className="text-[#7F77DD] text-2xl font-medium">0</div>
+                <div className="text-white/35 text-xs uppercase tracking-wider">Oubliés</div>
+              </div>
             </div>
           </div>
 
-          {features.slice(1).map((f, i) => (
+          {features.map((f, i) => (
             <div
               key={i}
               ref={addRef}
-              className="bg-[#13132a] border border-[rgba(83,74,183,0.2)] rounded-2xl p-6 opacity-0 translate-y-5 transition-all duration-500 hover:-translate-y-1.5 hover:border-[rgba(127,119,221,0.5)]"
+              className="bg-[#13132a] border border-[rgba(83,74,183,0.2)] rounded-2xl p-6 opacity-0 translate-y-5 transition-all duration-500 hover:-translate-y-1 hover:border-[rgba(127,119,221,0.5)]"
             >
               <span className="text-xl mb-3 block">{f.icon}</span>
               <h3 className="text-[#C8C4F0] text-base font-medium mb-2">{f.title}</h3>
-              <p className="text-white/38 text-sm leading-relaxed">{f.desc}</p>
+              <p className="text-white/40 text-sm leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
