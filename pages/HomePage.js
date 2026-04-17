@@ -1,146 +1,116 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import PublicHeader from "../components/PublicHeader";
-import Footer from "../components/Footer";
-import TestimonialsSection from "../components/TestimonialsSection";
 
 export default function HomePage() {
   const router = useRouter();
 
-  return (
-    <div className="min-h-screen bg-[#333699] text-white">
+  const features = [
+    {
+      title: "✝️ Évangélisation Hub",
+      desc: "Regroupe les nouvelles âmes, les décisions, les suivis et les baptêmes. Permet de ne laisser aucun contact sans accompagnement et d’assurer une progression spirituelle structurée.",
+    },
+    {
+      title: "🏠 Cellules Hub",
+      desc: "Organise les groupes, les responsables et les présences hebdomadaires. Donne une vision vivante de la dynamique des cellules et aide à maintenir la connexion et la croissance.",
+    },
+    {
+      title: "🧭 Conseillers Hub",
+      desc: "Offre un suivi personnalisé par responsable. Chaque conseiller peut accompagner, noter, discerner les besoins et intervenir de manière ciblée.",
+    },
+    {
+      title: "📊 Rapports Hub",
+      desc: "Analyse toutes les données du ministère pour en ressortir des indicateurs clairs et aider à prendre des décisions stratégiques.",
+    },
+    {
+      title: "⚙️ Admin Hub",
+      desc: "Pilote l’ensemble de la structure : gestion des accès, organisation interne et configuration de l’église. Assure une base solide et cohérente.",
+    },
+  ];
 
-      <PublicHeader />
+  return (
+    <div className="bg-white text-gray-900">
 
       {/* HERO */}
-      <section className="pt-28 pb-28">
+      <section className="py-28 text-center max-w-5xl mx-auto px-6">
+        <h1 className="text-5xl font-extrabold leading-tight mb-6">
+          Pilotez votre église avec clarté et précision
+        </h1>
 
-        <div className="max-w-5xl mx-auto text-center px-6 space-y-8">
+        <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-8">
+          SoulTrack connecte toutes les dimensions de votre ministère pour transformer
+          des données dispersées en une vision claire et actionnable.
+        </p>
 
-          <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
-            Voir chaque âme. Comprendre chaque mouvement. Guider chaque vie.
-          </h1>
+        <div className="flex justify-center gap-4">
+          <button
+            onClick={() => router.push("/SignupEglise")}
+            className="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:scale-105 transition"
+          >
+            Créer mon église
+          </button>
 
-          <p className="text-lg md:text-xl text-white/80 leading-relaxed">
-            SoulTrack est un système complet de pilotage pastoral qui connecte votre église :
-            membres, cellules, conseillers, évangélisation, baptêmes et structure globale.
-          </p>
+          <button
+            onClick={() => router.push("/comment-ca-marche")}
+            className="border px-8 py-3 rounded-xl hover:bg-gray-100 transition"
+          >
+            Voir comment ça marche
+          </button>
+        </div>
+      </section>
 
-          <p className="text-white/70 italic">
-            Une église ne se gère pas. Elle se veille.
-          </p>
+      {/* FEATURES GRID */}
+      <section className="py-20 px-6 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-          <div className="flex flex-col md:flex-row gap-4 justify-center pt-4">
-            <button
-              onClick={() => router.push("/SignupEglise")}
-              className="bg-white text-[#333699] px-8 py-3 rounded-xl font-semibold hover:scale-105 transition"
+          {features.map((f, i) => (
+            <div
+              key={i}
+              className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-xl transition border"
             >
-              Créer mon église
-            </button>
+              <h3 className="text-xl font-semibold mb-3">
+                {f.title}
+              </h3>
 
-            <button
-              onClick={() => router.push("/comment-ca-marche")}
-              className="border border-white/30 px-8 py-3 rounded-xl hover:bg-white/10 transition"
-            >
-              Comprendre le système
-            </button>
-          </div>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                {f.desc}
+              </p>
+            </div>
+          ))}
 
         </div>
       </section>
 
-      {/* GLOBAL VISION */}
-      <section className="py-24 px-6">
-
-        <div className="max-w-6xl mx-auto text-center space-y-12">
+      {/* DETAIL SECTION */}
+      <section className="py-24 bg-gray-50 px-6">
+        <div className="max-w-5xl mx-auto text-center space-y-6">
 
           <h2 className="text-3xl font-bold">
-            Une vision complète du troupeau, en un seul endroit
+            Une structure complète pour accompagner chaque âme
           </h2>
 
-          <p className="text-white/80 max-w-3xl mx-auto">
-            SoulTrack relie toutes les dimensions de votre ministère pour transformer des données dispersées
-            en une vision claire et actionnable.
+          <p className="text-gray-600">
+            SoulTrack ne se contente pas de stocker des données. Il vous donne une vision
+            vivante, exploitable et stratégique pour guider votre église avec précision.
           </p>
 
-          <div className="grid md:grid-cols-3 gap-8">
-
-            <div className="p-6 rounded-2xl border border-white/20">
-              <h3 className="font-semibold">👥 Membres Hub</h3>
-              <p className="text-sm text-white/70 mt-2">
-                Vue centralisée de chaque membre.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl border border-white/20">
-              <h3 className="font-semibold">🏠 Cellules Hub</h3>
-              <p className="text-sm text-white/70 mt-2">
-                Organisation des groupes.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl border border-white/20">
-              <h3 className="font-semibold">🧭 Conseillers Hub</h3>
-              <p className="text-sm text-white/70 mt-2">
-                Suivi personnalisé.
-              </p>
-            </div>
-
-          </div>
         </div>
       </section>
-
-      {/* MODULE DETAIL */}
-      <section className="py-24 px-6">
-
-        <div className="max-w-6xl mx-auto space-y-20">
-
-          <div className="lg:flex lg:items-center lg:gap-14">
-
-            <div className="lg:w-1/2 space-y-4">
-              <h3 className="text-3xl font-bold">👥 Chaque âme compte</h3>
-              <p className="text-white/80">
-                Vous voyez qui est actif, absent, en croissance ou en danger spirituel.
-              </p>
-            </div>
-
-            <div className="lg:w-1/2">
-              <Image
-                src="/membres-hub.png"
-                width={600}
-                height={400}
-                alt="membres"
-                className="rounded-2xl"
-              />
-            </div>
-
-          </div>
-
-        </div>
-      </section>
-
-      {/* TESTIMONIALS */}
-      <TestimonialsSection />
 
       {/* CTA */}
-      <section className="py-24 px-6 text-center">
-
+      <section className="py-24 text-center px-6">
         <h2 className="text-3xl font-bold mb-6">
-          Commencez à voir votre église autrement
+          Commencez dès aujourd’hui
         </h2>
 
         <button
           onClick={() => router.push("/SignupEglise")}
-          className="bg-white text-[#333699] px-10 py-4 rounded-xl font-semibold hover:scale-105 transition"
+          className="bg-blue-600 text-white px-10 py-4 rounded-xl font-semibold hover:scale-105 transition"
         >
           Démarrer SoulTrack
         </button>
-
       </section>
 
-      <Footer />
     </div>
   );
 }
