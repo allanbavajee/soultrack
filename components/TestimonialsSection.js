@@ -76,8 +76,8 @@ export default function TestimonialsSection() {
             return (
               <div key={i} className="flex-shrink-0 w-[300px] px-2">
                 <div
-                  className={`bg-white p-6 rounded-2xl shadow-sm transition-all duration-500
-                  ${isCenter ? "scale-110 shadow-xl" : "scale-95 opacity-80"}`}
+                  className={`bg-white p-6 rounded-2xl transition-all duration-500
+                  ${isCenter ? "scale-110 " : "scale-95 opacity-80"}`}
                 >
                   <Image
                     src={t.avatar}
