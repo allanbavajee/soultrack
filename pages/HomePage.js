@@ -43,6 +43,12 @@ export default function HomePage() {
 
   const features = [
     {
+      icon: "👥",
+      title: "Membres Hub",
+      desc: "Une vue centralisée de chaque membre pour suivre son parcours, son engagement et son évolution. Toutes les informations essentielles sont regroupées pour garder une vision claire du troupeau et agir au bon moment.",
+      accent: "rgba(55,138,221,0.5)",
+    },
+    {
       icon: "✝️",
       title: "Évangélisation Hub",
       desc: "Regroupe les nouvelles âmes, les décisions, les suivis et les baptêmes. Permet de ne laisser aucun contact sans accompagnement et d'assurer une progression spirituelle structurée.",
@@ -64,7 +70,7 @@ export default function HomePage() {
       icon: "📊",
       title: "Rapports Hub",
       desc: "Analyse toutes les données du ministère pour en ressortir des indicateurs clairs. Aide à prendre des décisions stratégiques basées sur des faits concrets et mesurables.",
-      accent: "rgba(55,138,221,0.45)",
+      accent: "rgba(93,202,165,0.45)",
     },
     {
       icon: "⚙️",
@@ -83,11 +89,25 @@ export default function HomePage() {
   ];
 
   return (
-    <div style={{ background: "#0a0a14", minHeight: "100vh" }}>
+    <div style={{ background: "#0a0a14", minHeight: "100vh", position: "relative", overflow: "hidden" }}>
+
+      {/* GLOW GLOBAL — couvre header + hero d'un seul bloc, zIndex 0 */}
+      <div style={{
+        position: "absolute",
+        width: "900px",
+        height: "900px",
+        borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(83,74,183,0.13) 0%, transparent 68%)",
+        top: "120px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        pointerEvents: "none",
+        zIndex: 0,
+      }} />
 
       {/* ───── HEADER ───── */}
       <header style={{
-        background: scrolled ? "rgba(10,10,20,0.92)" : "transparent",
+        background: scrolled ? "rgba(10,10,20,0.88)" : "transparent",
         borderBottom: scrolled ? "0.5px solid rgba(83,74,183,0.25)" : "0.5px solid transparent",
         position: "sticky",
         top: 0,
@@ -95,21 +115,14 @@ export default function HomePage() {
         backdropFilter: scrolled ? "blur(16px)" : "none",
         transition: "background 0.3s, border-color 0.3s",
       }}>
-        <div style={{
-          maxWidth: "1100px",
-          margin: "0 auto",
-          padding: "0 24px",
-          height: "64px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}>
-          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 24px", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+
+          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", position: "relative", zIndex: 1 }}>
             <Image src="/logo.png" alt="SoulTrack" width={32} height={32} />
             <span style={{ color: "#fff", fontSize: "16px", fontWeight: 500 }}>SoulTrack</span>
           </div>
 
-          <nav style={{ display: "flex", alignItems: "center", gap: "32px" }}>
+          <nav style={{ display: "flex", alignItems: "center", gap: "32px", position: "relative", zIndex: 1 }}>
             {navItems.map((item) => (
               <span
                 key={item.path}
@@ -124,7 +137,7 @@ export default function HomePage() {
             ))}
           </nav>
 
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }} className="nav-hide">
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", position: "relative", zIndex: 1 }} className="nav-hide">
             <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "rgba(255,255,255,0.65)", border: "0.5px solid rgba(255,255,255,0.18)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
               Connexion
             </button>
@@ -133,7 +146,7 @@ export default function HomePage() {
             </button>
           </div>
 
-          <button onClick={() => setOpenMenu(!openMenu)} className="nav-show" style={{ background: "none", border: "none", cursor: "pointer", display: "none", flexDirection: "column", gap: "5px", padding: "4px" }}>
+          <button onClick={() => setOpenMenu(!openMenu)} className="nav-show" style={{ background: "none", border: "none", cursor: "pointer", display: "none", flexDirection: "column", gap: "5px", padding: "4px", position: "relative", zIndex: 1 }}>
             {[0, 1, 2].map(i => (
               <span key={i} style={{
                 display: "block", width: "22px", height: "1.5px", background: "rgba(255,255,255,0.7)", borderRadius: "2px", transition: "transform 0.2s, opacity 0.2s",
@@ -160,28 +173,17 @@ export default function HomePage() {
       </header>
 
       {/* ───── HERO ───── */}
-      <section style={{ minHeight: "560px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 24px", position: "relative", overflow: "hidden" }}>
-        {/* Glow derrière — z-index 0 */}
-        <div style={{
-          position: "absolute",
-          width: "800px", height: "800px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(83,74,183,0.15) 0%, transparent 68%)",
-          top: "50%", left: "50%",
-          transform: "translate(-50%, -50%)",
-          pointerEvents: "none",
-          zIndex: 0,
-        }} />
-        <span style={{ position: "relative", zIndex: 1, color: "#AFA9EC", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", border: "0.5px solid rgba(83,74,183,0.4)", background: "rgba(83,74,183,0.15)", padding: "5px 16px", borderRadius: "20px", marginBottom: "28px" }}>
+      <section style={{ minHeight: "560px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 24px", position: "relative", zIndex: 1 }}>
+        <span style={{ color: "#AFA9EC", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", border: "0.5px solid rgba(83,74,183,0.4)", background: "rgba(83,74,183,0.15)", padding: "5px 16px", borderRadius: "20px", marginBottom: "28px" }}>
           SoulTrack — Plateforme ministérielle
         </span>
-        <h1 style={{ position: "relative", zIndex: 1, fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "18px" }}>
+        <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "18px" }}>
           Pilotez votre église avec <span style={{ color: "#7F77DD" }}>clarté</span> et précision
         </h1>
-        <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.45)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "36px" }}>
+        <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "36px" }}>
           Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
         </p>
-        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
+        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
           <button onClick={() => router.push("/SignupEglise")} style={{ background: "#534AB7", color: "#fff", border: "none", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", fontWeight: 500, cursor: "pointer" }}>
             Créer mon église →
           </button>
@@ -192,7 +194,7 @@ export default function HomePage() {
       </section>
 
       {/* ───── LABEL ───── */}
-      <div ref={addRef} style={{ textAlign: "center", padding: "64px 24px 48px" }}>
+      <div ref={addRef} style={{ textAlign: "center", padding: "64px 24px 48px", position: "relative", zIndex: 1 }}>
         <p style={{ color: "#534AB7", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "10px" }}>Modules</p>
         <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "0 auto", lineHeight: 1.3 }}>
           Une structure complète pour accompagner chaque âme
@@ -200,79 +202,22 @@ export default function HomePage() {
       </div>
 
       {/* ───── CARDS ───── */}
-      <section style={{ padding: "0 24px 100px", position: "relative" }}>
-        {/* Glow ambiant derrière les cartes */}
-        <div style={{
-          position: "absolute",
-          width: "900px", height: "900px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(83,74,183,0.08) 0%, transparent 65%)",
-          top: "50%", left: "50%",
-          transform: "translate(-50%, -50%)",
-          pointerEvents: "none",
-          zIndex: 0,
-        }} />
-
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "16px",
-          maxWidth: "1050px",
-          margin: "0 auto",
-          position: "relative",
-          zIndex: 1,
-        }}>
+      <section style={{ padding: "0 24px 100px", position: "relative", zIndex: 1 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px", maxWidth: "1050px", margin: "0 auto" }}>
           {features.map((f, i) => (
             <div
               key={i}
               ref={addRef}
-              style={{
-                background: "rgba(19,19,42,0.7)",
-                border: "0.5px solid rgba(255,255,255,0.07)",
-                borderRadius: "18px",
-                padding: "28px 24px",
-                position: "relative",
-                overflow: "hidden",
-                backdropFilter: "blur(8px)",
-                cursor: "default",
-                transition: "transform 0.25s, border-color 0.25s",
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = "translateY(-5px)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.14)";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
-              }}
+              style={{ background: "rgba(19,19,42,0.7)", border: "0.5px solid rgba(255,255,255,0.07)", borderRadius: "18px", padding: "28px 24px", position: "relative", overflow: "hidden", backdropFilter: "blur(8px)", cursor: "default", transition: "transform 0.25s, border-color 0.25s" }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-5px)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.14)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; }}
             >
-              {/* Glow coloré propre à chaque carte */}
-              <div style={{
-                position: "absolute",
-                top: "-40px", left: "-40px",
-                width: "180px", height: "180px",
-                borderRadius: "50%",
-                background: `radial-gradient(circle, ${f.accent} 0%, transparent 70%)`,
-                pointerEvents: "none",
-                zIndex: 0,
-              }} />
-
-              {/* Ligne colorée en haut */}
-              <div style={{
-                position: "absolute",
-                top: 0, left: "24px", right: "24px",
-                height: "1px",
-                background: `linear-gradient(90deg, transparent, ${f.accent}, transparent)`,
-              }} />
-
+              <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "180px", height: "180px", borderRadius: "50%", background: `radial-gradient(circle, ${f.accent} 0%, transparent 70%)`, pointerEvents: "none", zIndex: 0 }} />
+              <div style={{ position: "absolute", top: 0, left: "24px", right: "24px", height: "1px", background: `linear-gradient(90deg, transparent, ${f.accent}, transparent)` }} />
               <div style={{ position: "relative", zIndex: 1 }}>
                 <span style={{ fontSize: "24px", display: "block", marginBottom: "16px" }}>{f.icon}</span>
-                <h3 style={{ color: "#e8e6ff", fontSize: "15px", fontWeight: 500, marginBottom: "10px", letterSpacing: "0.01em" }}>
-                  {f.title}
-                </h3>
-                <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "13.5px", lineHeight: 1.7 }}>
-                  {f.desc}
-                </p>
+                <h3 style={{ color: "#e8e6ff", fontSize: "15px", fontWeight: 500, marginBottom: "10px", letterSpacing: "0.01em" }}>{f.title}</h3>
+                <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "13.5px", lineHeight: 1.7 }}>{f.desc}</p>
               </div>
             </div>
           ))}
@@ -280,7 +225,7 @@ export default function HomePage() {
       </section>
 
       {/* ───── CTA ───── */}
-      <section ref={addRef} style={{ borderTop: "0.5px solid rgba(83,74,183,0.15)", padding: "80px 24px", textAlign: "center" }}>
+      <section ref={addRef} style={{ borderTop: "0.5px solid rgba(83,74,183,0.15)", padding: "80px 24px", textAlign: "center", position: "relative", zIndex: 1 }}>
         <h2 style={{ color: "#fff", fontSize: "clamp(1.6rem, 3vw, 2.2rem)", fontWeight: 500, marginBottom: "12px" }}>
           Commencez dès aujourd'hui
         </h2>
