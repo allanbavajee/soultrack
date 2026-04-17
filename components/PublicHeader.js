@@ -22,7 +22,7 @@ export default function PublicHeader() {
   };
 
   return (
-    <header className="w-full bg-[#333699] shadow-md">
+    <header className="w-full bg-[#333699]">
       <div className="max-w-6xl mx-auto flex items-center p-4">
         
         {/* Logo */}
@@ -74,7 +74,7 @@ export default function PublicHeader() {
 
       {/* Mobile menu */}
       {openMenu && (
-        <div className="md:hidden bg-[#333699] shadow-md px-4 pb-4 flex flex-col gap-2">
+        <div className="md:hidden bg-[#333699] px-4 pb-4 flex flex-col gap-2">
           {navItems.map((item) => (
             <span
               key={item.label}
