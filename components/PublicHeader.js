@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -8,98 +7,201 @@ export default function PublicHeader() {
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState(false);
 
+  const navLink = {
+    color: "rgba(255,255,255,0.6)",
+    fontSize: "14px",
+    fontWeight: 400,
+    cursor: "pointer",
+    textDecoration: "none",
+    transition: "color 0.2s",
+    background: "none",
+    border: "none",
+    padding: 0,
+  };
+
   return (
-    <header className="w-full bg-[#333699]">
+    <header style={{
+      background: "#0a0a14",
+      borderBottom: "0.5px solid rgba(83,74,183,0.25)",
+      position: "sticky",
+      top: 0,
+      zIndex: 100,
+      backdropFilter: "blur(12px)",
+    }}>
+      <div style={{
+        maxWidth: "1100px",
+        margin: "0 auto",
+        padding: "0 24px",
+        height: "64px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}>
 
-      <div className="max-w-5xl mx-auto grid grid-cols-3 items-center py-4">
-
-        {/* LEFT NAV (rapproché du centre) */}
-        <div className="hidden md:flex items-center gap-3 justify-end pr-4">
-          <span onClick={() => router.push("/site/HomePage")} className="cursor-pointer text-amber-300 hover:text-white font-semibold text-sm">
-            Accueil
-          </span>
-          <span onClick={() => router.push("/CommentCaMarche")} className="cursor-pointer text-amber-300 hover:text-white font-semibold text-sm">
-            Process
-          </span>
-          <span onClick={() => router.push("/about")} className="cursor-pointer text-amber-300 hover:text-white font-semibold text-sm">
-            À propos
-          </span>
-        </div>
-
-        {/* CENTER LOGO (PLUS GROS) */}
+        {/* LOGO */}
         <div
-          className="flex flex-col items-center justify-center cursor-pointer"
           onClick={() => router.push("/site/HomePage")}
+          style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}
         >
-          <Image src="/logo.png" alt="Logo SoulTrack" width={70} height={70} />
-          <span className="text-white font-extrabold text-2xl leading-none mt-1 tracking-wide">
+          <Image src="/logo.png" alt="SoulTrack" width={32} height={32} />
+          <span style={{ color: "#fff", fontSize: "16px", fontWeight: 500, letterSpacing: "0.02em" }}>
             SoulTrack
           </span>
         </div>
 
-        {/* RIGHT NAV (rapproché du centre) */}
-        <div className="hidden md:flex items-center gap-3 justify-start pl-4">
+        {/* NAV DESKTOP */}
+        <nav style={{ display: "flex", alignItems: "center", gap: "32px" }} className="hide-mobile">
+          {[
+            { label: "Accueil", path: "/site/HomePage" },
+            { label: "Process", path: "/CommentCaMarche" },
+            { label: "À propos", path: "/about" },
+            { label: "Pricing", path: "/pricing" },
+            { label: "Contact", path: "/contact" },
+          ].map((item) => (
+            <span
+              key={item.path}
+              onClick={() => router.push(item.path)}
+              style={navLink}
+              onMouseEnter={e => e.target.style.color = "#fff"}
+              onMouseLeave={e => e.target.style.color = "rgba(255,255,255,0.6)"}
+            >
+              {item.label}
+            </span>
+          ))}
+        </nav>
 
-          <span onClick={() => router.push("/pricing")} className="cursor-pointer text-amber-300 hover:text-white font-semibold text-sm">
-            Pricing
-          </span>
-          <span onClick={() => router.push("/contact")} className="cursor-pointer text-amber-300 hover:text-white font-semibold text-sm">
-            Contact
-          </span>
-
+        {/* ACTIONS DESKTOP */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }} className="hide-mobile">
           <button
             onClick={() => router.push("/login")}
-            className="ml-3 px-3 py-1.5 bg-white text-[#333699] rounded-xl hover:scale-105 transition font-semibold text-sm"
+            style={{
+              background: "transparent",
+              color: "rgba(255,255,255,0.7)",
+              border: "0.5px solid rgba(255,255,255,0.2)",
+              padding: "8px 18px",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: 400,
+              cursor: "pointer",
+            }}
           >
             Connexion
           </button>
-
           <button
             onClick={() => router.push("/SignupEglise")}
-            className="ml-2 px-3 py-1.5 border border-white text-white rounded-xl hover:bg-white hover:text-[#333699] transition font-semibold text-sm"
+            style={{
+              background: "#534AB7",
+              color: "#fff",
+              border: "none",
+              padding: "8px 18px",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
           >
-            Inscription
-          </button>
-
-        </div>
-
-        {/* MOBILE */}
-        <div className="md:hidden col-span-3 flex justify-end px-4">
-          <button
-            onClick={() => setOpenMenu(!openMenu)}
-            className="text-white text-2xl"
-          >
-            ☰
+            Créer mon église
           </button>
         </div>
+
+        {/* HAMBURGER MOBILE */}
+        <button
+          onClick={() => setOpenMenu(!openMenu)}
+          className="show-mobile"
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            display: "none",
+            flexDirection: "column",
+            gap: "5px",
+            padding: "4px",
+          }}
+        >
+          {[0,1,2].map(i => (
+            <span key={i} style={{
+              display: "block",
+              width: "22px",
+              height: "1.5px",
+              background: "rgba(255,255,255,0.7)",
+              borderRadius: "2px",
+              transition: "transform 0.2s, opacity 0.2s",
+              transform: openMenu
+                ? i === 0 ? "rotate(45deg) translate(5px, 5px)"
+                : i === 2 ? "rotate(-45deg) translate(5px, -5px)"
+                : "scaleX(0)"
+                : "none",
+              opacity: openMenu && i === 1 ? 0 : 1,
+            }} />
+          ))}
+        </button>
       </div>
 
       {/* MOBILE MENU */}
       {openMenu && (
-        <div className="md:hidden bg-[#333699] px-4 pb-4 flex flex-col gap-3">
-
-          <span onClick={() => router.push("/site/HomePage")} className="text-amber-300">Accueil</span>
-          <span onClick={() => router.push("/CommentCaMarche")} className="text-amber-300">Process</span>
-          <span onClick={() => router.push("/about")} className="text-amber-300">À propos</span>
-          <span onClick={() => router.push("/pricing")} className="text-amber-300">Pricing</span>
-          <span onClick={() => router.push("/contact")} className="text-amber-300">Contact</span>
-
-          <button
-            onClick={() => router.push("/login")}
-            className="mt-2 px-4 py-2 bg-white text-[#333699] rounded-xl"
-          >
-            Connexion
-          </button>
-
-          <button
-            onClick={() => router.push("/SignupEglise")}
-            className="px-4 py-2 border border-white text-white rounded-xl"
-          >
-            Inscription
-          </button>
-
+        <div style={{
+          background: "#0d0d1f",
+          borderTop: "0.5px solid rgba(83,74,183,0.2)",
+          padding: "20px 24px 28px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+        }}>
+          {[
+            { label: "Accueil", path: "/site/HomePage" },
+            { label: "Process", path: "/CommentCaMarche" },
+            { label: "À propos", path: "/about" },
+            { label: "Pricing", path: "/pricing" },
+            { label: "Contact", path: "/contact" },
+          ].map((item) => (
+            <span
+              key={item.path}
+              onClick={() => { router.push(item.path); setOpenMenu(false); }}
+              style={{ color: "rgba(255,255,255,0.65)", fontSize: "15px", cursor: "pointer" }}
+            >
+              {item.label}
+            </span>
+          ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "8px" }}>
+            <button
+              onClick={() => router.push("/login")}
+              style={{
+                background: "transparent",
+                color: "rgba(255,255,255,0.7)",
+                border: "0.5px solid rgba(255,255,255,0.2)",
+                padding: "11px",
+                borderRadius: "8px",
+                fontSize: "14px",
+                cursor: "pointer",
+              }}
+            >
+              Connexion
+            </button>
+            <button
+              onClick={() => router.push("/SignupEglise")}
+              style={{
+                background: "#534AB7",
+                color: "#fff",
+                border: "none",
+                padding: "11px",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
+            >
+              Créer mon église
+            </button>
+          </div>
         </div>
       )}
+
+      <style>{`
+        @media (max-width: 768px) {
+          .hide-mobile { display: none !important; }
+          .show-mobile { display: flex !important; }
+        }
+      `}</style>
     </header>
   );
 }
