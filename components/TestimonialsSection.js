@@ -25,8 +25,8 @@ export default function TestimonialsSection() {
   useEffect(() => {
     const interval = setInterval(() => {
       if (animating.current) return;
-      setIndex((prev) => prev + 1);
-    }, 3000);
+      setIndex((prev) => prev - 1);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
