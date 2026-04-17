@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import PublicHeader from "../components/PublicHeader";
-import Footer from "../components/Footer";
-import TestimonialsSection from "../components/TestimonialsSection";
+import PublicHeader from "../../components/PublicHeader";
+import Footer from "../../components/Footer";
+import TestimonialsSection from "../../components/TestimonialsSection";
 
 export default function HomePage() {
   const router = useRouter();
@@ -15,11 +15,9 @@ export default function HomePage() {
       <PublicHeader />
 
       {/* HERO */}
-      <section className="relative pt-28 pb-28 overflow-hidden">
+      <section className="pt-28 pb-28">
 
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.25),transparent)]" />
-
-        <div className="relative max-w-5xl mx-auto text-center px-6 space-y-8">
+        <div className="max-w-5xl mx-auto text-center px-6 space-y-8">
 
           <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
             Voir chaque âme. Comprendre chaque mouvement. Guider chaque vie.
@@ -55,6 +53,7 @@ export default function HomePage() {
 
       {/* GLOBAL VISION */}
       <section className="py-24 px-6">
+
         <div className="max-w-6xl mx-auto text-center space-y-12">
 
           <h2 className="text-3xl font-bold">
@@ -68,21 +67,21 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-3 gap-8">
 
-            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+            <div className="p-6 rounded-2xl border border-white/20">
               <h3 className="font-semibold">👥 Membres Hub</h3>
               <p className="text-sm text-white/70 mt-2">
                 Vue centralisée de chaque membre.
               </p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+            <div className="p-6 rounded-2xl border border-white/20">
               <h3 className="font-semibold">🏠 Cellules Hub</h3>
               <p className="text-sm text-white/70 mt-2">
                 Organisation des groupes.
               </p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+            <div className="p-6 rounded-2xl border border-white/20">
               <h3 className="font-semibold">🧭 Conseillers Hub</h3>
               <p className="text-sm text-white/70 mt-2">
                 Suivi personnalisé.
@@ -95,9 +94,11 @@ export default function HomePage() {
 
       {/* MODULE DETAIL */}
       <section className="py-24 px-6">
+
         <div className="max-w-6xl mx-auto space-y-20">
 
           <div className="lg:flex lg:items-center lg:gap-14">
+
             <div className="lg:w-1/2 space-y-4">
               <h3 className="text-3xl font-bold">👥 Chaque âme compte</h3>
               <p className="text-white/80">
@@ -111,9 +112,10 @@ export default function HomePage() {
                 width={600}
                 height={400}
                 alt="membres"
-                className="rounded-2xl shadow-lg"
+                className="rounded-2xl"
               />
             </div>
+
           </div>
 
         </div>
@@ -124,6 +126,7 @@ export default function HomePage() {
 
       {/* CTA */}
       <section className="py-24 px-6 text-center">
+
         <h2 className="text-3xl font-bold mb-6">
           Commencez à voir votre église autrement
         </h2>
@@ -134,6 +137,7 @@ export default function HomePage() {
         >
           Démarrer SoulTrack
         </button>
+
       </section>
 
       <Footer />
