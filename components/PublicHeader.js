@@ -16,56 +16,56 @@ export default function PublicHeader() {
     { label: "Contact", path: "/contact" },
   ];
 
-  const changeLanguage = (locale) => {
-    localStorage.setItem("lang", locale);
-    window.location.reload();
-  };
-
   return (
     <header className="w-full bg-[#333699]">
-      <div className="max-w-6xl mx-auto flex items-center p-4">
-        
+      <div className="max-w-6xl mx-auto flex items-center justify-between p-4">
+
         {/* Logo */}
         <div
           className="flex items-center cursor-pointer"
           onClick={() => router.push("/site/HomePage")}
         >
           <Image src="/logo.png" alt="Logo SoulTrack" width={50} height={50} />
-          <span className="ml-3 text-2xl font-bold text-gray-800">SoulTrack</span>
-        </div>       
+          <span className="ml-3 text-2xl font-bold text-white">
+            SoulTrack
+          </span>
+        </div>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-3">
+
           {navItems.map((item) => (
             <span
               key={item.label}
               onClick={() => router.push(item.path)}
-              className="cursor-pointer text-gray-700 hover:text-blue-500 font-semibold transition"
+              className="cursor-pointer text-amber-300 hover:text-white font-semibold transition"
             >
               {item.label}
             </span>
           ))}
 
+          {/* Buttons */}
           <button
             onClick={() => router.push("/login")}
-            className="ml-4 px-4 py-2 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition font-semibold"
+            className="ml-4 px-4 py-2 bg-white text-[#333699] rounded-xl hover:scale-105 transition font-semibold"
           >
             Connexion
           </button>
 
           <button
             onClick={() => router.push("/SignupEglise")}
-            className="ml-2 px-4 py-2 border border-blue-500 text-blue-500 rounded-2xl hover:bg-blue-500 hover:text-white transition font-semibold"
+            className="ml-2 px-4 py-2 border border-white text-white rounded-xl hover:bg-white hover:text-[#333699] transition font-semibold"
           >
             Inscription
           </button>
+
         </nav>
 
         {/* Mobile menu button */}
         <div className="md:hidden flex items-center">
           <button
             onClick={() => setOpenMenu(!openMenu)}
-            className="text-gray-700 focus:outline-none"
+            className="text-white text-2xl"
           >
             ☰
           </button>
@@ -74,7 +74,8 @@ export default function PublicHeader() {
 
       {/* Mobile menu */}
       {openMenu && (
-        <div className="md:hidden bg-[#333699] px-4 pb-4 flex flex-col gap-2">
+        <div className="md:hidden bg-[#333699] px-4 pb-4 flex flex-col gap-3">
+
           {navItems.map((item) => (
             <span
               key={item.label}
@@ -82,11 +83,26 @@ export default function PublicHeader() {
                 router.push(item.path);
                 setOpenMenu(false);
               }}
-              className="cursor-pointer text-gray-700 hover:text-blue-500 font-semibold transition"
+              className="cursor-pointer text-amber-300 hover:text-white font-semibold transition"
             >
               {item.label}
             </span>
           ))}
+
+          <button
+            onClick={() => router.push("/login")}
+            className="mt-2 px-4 py-2 bg-white text-[#333699] rounded-xl font-semibold"
+          >
+            Connexion
+          </button>
+
+          <button
+            onClick={() => router.push("/SignupEglise")}
+            className="px-4 py-2 border border-white text-white rounded-xl font-semibold"
+          >
+            Inscription
+          </button>
+
         </div>
       )}
     </header>
