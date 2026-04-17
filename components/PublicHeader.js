@@ -8,43 +8,35 @@ export default function PublicHeader() {
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState(false);
 
-  const navItems = [
-    { label: "Accueil", path: "/site/HomePage" },
-    { label: "Process", path: "/CommentCaMarche" },
-    { label: "À propos", path: "/about" },
-    { label: "Pricing", path: "/pricing" },
-    { label: "Contact", path: "/contact" },
-  ];
-
   return (
     <header className="w-full bg-[#333699]">
-      <div className="max-w-6xl mx-auto flex items-center justify-between p-4">
 
-        {/* Logo */}
+      <div className="max-w-6xl mx-auto grid grid-cols-3 items-center p-4">
+
+        {/* LEFT NAV */}
+        <div className="hidden md:flex items-center gap-4 justify-start">
+          <span onClick={() => router.push("/site/HomePage")} className="cursor-pointer text-amber-300 hover:text-white font-semibold">Accueil</span>
+          <span onClick={() => router.push("/CommentCaMarche")} className="cursor-pointer text-amber-300 hover:text-white font-semibold">Process</span>
+          <span onClick={() => router.push("/about")} className="cursor-pointer text-amber-300 hover:text-white font-semibold">À propos</span>
+        </div>
+
+        {/* CENTER LOGO */}
         <div
-          className="flex items-center cursor-pointer"
+          className="flex flex-col items-center justify-center cursor-pointer"
           onClick={() => router.push("/site/HomePage")}
         >
           <Image src="/logo.png" alt="Logo SoulTrack" width={50} height={50} />
-          <span className="ml-3 text-2xl font-bold text-white">
+          <span className="text-white font-bold text-lg leading-none mt-1">
             SoulTrack
           </span>
         </div>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-3">
+        {/* RIGHT NAV */}
+        <div className="hidden md:flex items-center gap-4 justify-end">
 
-          {navItems.map((item) => (
-            <span
-              key={item.label}
-              onClick={() => router.push(item.path)}
-              className="cursor-pointer text-amber-300 hover:text-white font-semibold transition"
-            >
-              {item.label}
-            </span>
-          ))}
+          <span onClick={() => router.push("/pricing")} className="cursor-pointer text-amber-300 hover:text-white font-semibold">Pricing</span>
+          <span onClick={() => router.push("/contact")} className="cursor-pointer text-amber-300 hover:text-white font-semibold">Contact</span>
 
-          {/* Buttons */}
           <button
             onClick={() => router.push("/login")}
             className="ml-4 px-4 py-2 bg-white text-[#333699] rounded-xl hover:scale-105 transition font-semibold"
@@ -59,10 +51,10 @@ export default function PublicHeader() {
             Inscription
           </button>
 
-        </nav>
+        </div>
 
-        {/* Mobile menu button */}
-        <div className="md:hidden flex items-center">
+        {/* MOBILE BUTTON */}
+        <div className="md:hidden col-span-3 flex justify-end">
           <button
             onClick={() => setOpenMenu(!openMenu)}
             className="text-white text-2xl"
@@ -72,33 +64,26 @@ export default function PublicHeader() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* MOBILE MENU */}
       {openMenu && (
         <div className="md:hidden bg-[#333699] px-4 pb-4 flex flex-col gap-3">
 
-          {navItems.map((item) => (
-            <span
-              key={item.label}
-              onClick={() => {
-                router.push(item.path);
-                setOpenMenu(false);
-              }}
-              className="cursor-pointer text-amber-300 hover:text-white font-semibold transition"
-            >
-              {item.label}
-            </span>
-          ))}
+          <span onClick={() => router.push("/site/HomePage")} className="text-amber-300">Accueil</span>
+          <span onClick={() => router.push("/CommentCaMarche")} className="text-amber-300">Process</span>
+          <span onClick={() => router.push("/about")} className="text-amber-300">À propos</span>
+          <span onClick={() => router.push("/pricing")} className="text-amber-300">Pricing</span>
+          <span onClick={() => router.push("/contact")} className="text-amber-300">Contact</span>
 
           <button
             onClick={() => router.push("/login")}
-            className="mt-2 px-4 py-2 bg-white text-[#333699] rounded-xl font-semibold"
+            className="mt-2 px-4 py-2 bg-white text-[#333699] rounded-xl"
           >
             Connexion
           </button>
 
           <button
             onClick={() => router.push("/SignupEglise")}
-            className="px-4 py-2 border border-white text-white rounded-xl font-semibold"
+            className="px-4 py-2 border border-white text-white rounded-xl"
           >
             Inscription
           </button>
