@@ -52,7 +52,7 @@ export default function TestimonialsSection() {
   }, [index]);
 
   return (
-    <section className="py-24 bg-gray-50 overflow-hidden">
+    <section className="py-24bg-[#333699]  overflow-hidden">
       <div className="max-w-6xl mx-auto text-center mb-12">
         <h2 className="text-3xl font-bold">
           Ce que disent les responsables
