@@ -7,16 +7,25 @@ export default function HomePage() {
   const fadeRefs = useRef([]);
 
   useEffect(() => {
+    fadeRefs.current.forEach((el) => {
+      if (!el) return;
+      el.style.opacity = "0";
+      el.style.transform = "translateY(24px)";
+      el.style.transition = "opacity 0.55s ease, transform 0.55s ease";
+    });
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
           if (e.isIntersecting) {
-            e.target.classList.add("opacity-100", "translate-y-0");
+            e.target.style.opacity = "1";
+            e.target.style.transform = "translateY(0)";
           }
         });
       },
       { threshold: 0.1 }
     );
+
     fadeRefs.current.forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
   }, []);
@@ -33,32 +42,92 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="font-sans">
+    <div style={{ fontFamily: "sans-serif" }}>
       {/* HERO */}
-      <section className="bg-[#0a0a14] min-h-[520px] flex flex-col items-center justify-center text-center px-6 py-24 relative overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[700px] h-[700px] rounded-full bg-[radial-gradient(circle,rgba(83,74,183,0.18)_0%,transparent_70%)]" />
-        </div>
-        <span className="relative z-10 text-[#AFA9EC] text-xs tracking-widest uppercase border border-[rgba(83,74,183,0.4)] bg-[rgba(83,74,183,0.2)] px-4 py-1.5 rounded-full mb-7">
+      <section style={{
+        background: "#0a0a14",
+        minHeight: "520px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        padding: "80px 24px",
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        <div style={{
+          position: "absolute",
+          width: "700px", height: "700px",
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(83,74,183,0.18) 0%, transparent 70%)",
+          top: "50%", left: "50%",
+          transform: "translate(-50%, -50%)",
+          pointerEvents: "none",
+        }} />
+        <span style={{
+          position: "relative",
+          color: "#AFA9EC",
+          fontSize: "11px",
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          border: "0.5px solid rgba(83,74,183,0.4)",
+          background: "rgba(83,74,183,0.2)",
+          padding: "5px 16px",
+          borderRadius: "20px",
+          marginBottom: "28px",
+        }}>
           SoulTrack — Plateforme ministérielle
         </span>
-        <h1 className="relative z-10 text-4xl md:text-5xl font-medium text-white leading-tight max-w-2xl mb-5">
+        <h1 style={{
+          position: "relative",
+          fontSize: "clamp(2rem, 5vw, 3.2rem)",
+          fontWeight: 500,
+          color: "#fff",
+          lineHeight: 1.15,
+          maxWidth: "680px",
+          marginBottom: "18px",
+        }}>
           Pilotez votre église avec{" "}
-          <span className="text-[#7F77DD]">clarté</span> et précision
+          <span style={{ color: "#7F77DD" }}>clarté</span> et précision
         </h1>
-        <p className="relative z-10 text-white/50 text-base max-w-lg mb-9 leading-relaxed">
+        <p style={{
+          position: "relative",
+          color: "rgba(255,255,255,0.48)",
+          fontSize: "16px",
+          maxWidth: "500px",
+          lineHeight: 1.7,
+          marginBottom: "36px",
+        }}>
           Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
         </p>
-        <div className="relative z-10 flex gap-3 flex-wrap justify-center">
+        <div style={{ position: "relative", display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
           <button
             onClick={() => router.push("/SignupEglise")}
-            className="bg-[#534AB7] hover:bg-[#7F77DD] text-white px-7 py-3 rounded-xl font-medium transition-all hover:scale-105"
+            style={{
+              background: "#534AB7",
+              color: "#fff",
+              border: "none",
+              padding: "12px 28px",
+              borderRadius: "10px",
+              fontSize: "15px",
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
           >
             Créer mon église →
           </button>
           <button
             onClick={() => router.push("/comment-ca-marche")}
-            className="border border-white/20 text-white/65 px-7 py-3 rounded-xl hover:bg-white/10 transition"
+            style={{
+              background: "transparent",
+              color: "rgba(255,255,255,0.6)",
+              border: "0.5px solid rgba(255,255,255,0.2)",
+              padding: "12px 28px",
+              borderRadius: "10px",
+              fontSize: "15px",
+              cursor: "pointer",
+            }}
           >
             Voir comment ça marche
           </button>
@@ -66,67 +135,89 @@ export default function HomePage() {
       </section>
 
       {/* LABEL */}
-      <div
-        ref={addRef}
-        className="bg-[#0e0e1c] text-center pt-16 pb-0 px-6 opacity-0 translate-y-5 transition-all duration-500"
-      >
-        <p className="text-[#534AB7] text-xs uppercase tracking-widest mb-2">Modules</p>
-        <h2 className="text-white text-2xl font-medium max-w-md mx-auto leading-snug">
+      <div ref={addRef} style={{ background: "#0e0e1c", textAlign: "center", padding: "64px 24px 0" }}>
+        <p style={{ color: "#534AB7", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "10px" }}>
+          Modules
+        </p>
+        <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "0 auto", lineHeight: 1.3 }}>
           Une structure complète pour accompagner chaque âme
         </h2>
       </div>
 
       {/* FEATURES */}
-      <section className="bg-[#0e0e1c] py-12 px-6">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+      <section style={{ background: "#0e0e1c", padding: "48px 24px 80px" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+          gap: "16px",
+          maxWidth: "1050px",
+          margin: "0 auto",
+        }}>
           {/* Featured card */}
-          <div
-            ref={addRef}
-            className="md:col-span-2 lg:col-span-3 bg-[#13132a] border border-[rgba(83,74,183,0.25)] rounded-2xl p-7 opacity-0 translate-y-5 transition-all duration-500 hover:-translate-y-1"
-          >
-            <span className="text-2xl mb-3 block">✝️</span>
-            <h3 className="text-[#C8C4F0] text-base font-medium mb-2">Évangélisation Hub</h3>
-            <p className="text-white/40 text-sm leading-relaxed max-w-xl">
+          <div ref={addRef} style={{
+            gridColumn: "1 / -1",
+            background: "#13132a",
+            border: "0.5px solid rgba(83,74,183,0.25)",
+            borderRadius: "16px",
+            padding: "28px 24px",
+          }}>
+            <span style={{ fontSize: "22px", display: "block", marginBottom: "12px" }}>✝️</span>
+            <h3 style={{ color: "#C8C4F0", fontSize: "16px", fontWeight: 500, marginBottom: "10px" }}>Évangélisation Hub</h3>
+            <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "14px", lineHeight: 1.65, maxWidth: "600px" }}>
               Regroupe les nouvelles âmes, les décisions, les suivis et les baptêmes. Permet de ne laisser aucun contact sans accompagnement et d'assurer une progression spirituelle structurée.
             </p>
-            <div className="flex gap-8 mt-5">
+            <div style={{ display: "flex", gap: "32px", marginTop: "20px" }}>
               <div>
-                <div className="text-[#7F77DD] text-2xl font-medium">100%</div>
-                <div className="text-white/35 text-xs uppercase tracking-wider">Suivi</div>
+                <div style={{ color: "#7F77DD", fontSize: "24px", fontWeight: 500 }}>100%</div>
+                <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.07em" }}>Suivi</div>
               </div>
               <div>
-                <div className="text-[#7F77DD] text-2xl font-medium">0</div>
-                <div className="text-white/35 text-xs uppercase tracking-wider">Oubliés</div>
+                <div style={{ color: "#7F77DD", fontSize: "24px", fontWeight: 500 }}>0</div>
+                <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.07em" }}>Oubliés</div>
               </div>
             </div>
           </div>
 
           {features.map((f, i) => (
-            <div
-              key={i}
-              ref={addRef}
-              className="bg-[#13132a] border border-[rgba(83,74,183,0.2)] rounded-2xl p-6 opacity-0 translate-y-5 transition-all duration-500 hover:-translate-y-1 hover:border-[rgba(127,119,221,0.5)]"
-            >
-              <span className="text-xl mb-3 block">{f.icon}</span>
-              <h3 className="text-[#C8C4F0] text-base font-medium mb-2">{f.title}</h3>
-              <p className="text-white/40 text-sm leading-relaxed">{f.desc}</p>
+            <div key={i} ref={addRef} style={{
+              background: "#13132a",
+              border: "0.5px solid rgba(83,74,183,0.2)",
+              borderRadius: "16px",
+              padding: "24px",
+            }}>
+              <span style={{ fontSize: "20px", display: "block", marginBottom: "12px" }}>{f.icon}</span>
+              <h3 style={{ color: "#C8C4F0", fontSize: "15px", fontWeight: 500, marginBottom: "8px" }}>{f.title}</h3>
+              <p style={{ color: "rgba(255,255,255,0.38)", fontSize: "13.5px", lineHeight: 1.65 }}>{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* CTA */}
-      <section
-        ref={addRef}
-        className="bg-[#0a0a14] border-t border-[rgba(83,74,183,0.15)] py-20 text-center px-6 opacity-0 translate-y-5 transition-all duration-500"
-      >
-        <h2 className="text-white text-3xl font-medium mb-3">Commencez dès aujourd'hui</h2>
-        <p className="text-white/40 max-w-sm mx-auto mb-8 leading-relaxed">
+      <section ref={addRef} style={{
+        background: "#0a0a14",
+        borderTop: "0.5px solid rgba(83,74,183,0.15)",
+        padding: "80px 24px",
+        textAlign: "center",
+      }}>
+        <h2 style={{ color: "#fff", fontSize: "clamp(1.6rem, 3vw, 2.2rem)", fontWeight: 500, marginBottom: "12px" }}>
+          Commencez dès aujourd'hui
+        </h2>
+        <p style={{ color: "rgba(255,255,255,0.4)", maxWidth: "400px", margin: "0 auto 32px", lineHeight: 1.7, fontSize: "15px" }}>
           SoulTrack vous donne une vision vivante et stratégique pour guider votre église avec précision.
         </p>
         <button
           onClick={() => router.push("/SignupEglise")}
-          className="bg-[#534AB7] hover:bg-[#7F77DD] text-white px-9 py-3.5 rounded-xl font-medium text-base transition-all hover:scale-105"
+          style={{
+            background: "#534AB7",
+            color: "#fff",
+            border: "none",
+            padding: "14px 36px",
+            borderRadius: "10px",
+            fontSize: "16px",
+            fontWeight: 500,
+            cursor: "pointer",
+          }}
         >
           Démarrer SoulTrack →
         </button>
