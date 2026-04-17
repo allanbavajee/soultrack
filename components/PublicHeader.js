@@ -9,24 +9,30 @@ export default function PublicHeader() {
   const [openMenu, setOpenMenu] = useState(false);
 
   const navItems = [
-    { label: "Accueil", path: "/HomePage" },
+    { label: "Accueil", path: "/site/HomePage" },
     { label: "Process", path: "/CommentCaMarche" },
     { label: "À propos", path: "/about" },
     { label: "Pricing", path: "/pricing" },
     { label: "Contact", path: "/contact" },
   ];
 
+  const changeLanguage = (locale) => {
+    localStorage.setItem("lang", locale);
+    window.location.reload();
+  };
+
   return (
-    <header className="w-full bg-white shadow-md">
-      <div className="max-w-6xl mx-auto flex justify-between items-center p-4">
+    <header className="w-full bg-[#333699] shadow-md">
+      <div className="max-w-6xl mx-auto flex items-center p-4">
+        
         {/* Logo */}
         <div
           className="flex items-center cursor-pointer"
-          onClick={() => router.push("/HomePage")}
+          onClick={() => router.push("/site/HomePage")}
         >
           <Image src="/logo.png" alt="Logo SoulTrack" width={50} height={50} />
           <span className="ml-3 text-2xl font-bold text-gray-800">SoulTrack</span>
-        </div>
+        </div>       
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
@@ -68,7 +74,7 @@ export default function PublicHeader() {
 
       {/* Mobile menu */}
       {openMenu && (
-        <div className="md:hidden bg-white shadow-md px-4 pb-4 flex flex-col gap-2">
+        <div className="md:hidden bg-[#333699] shadow-md px-4 pb-4 flex flex-col gap-2">
           {navItems.map((item) => (
             <span
               key={item.label}
@@ -81,26 +87,6 @@ export default function PublicHeader() {
               {item.label}
             </span>
           ))}
-
-          <button
-            onClick={() => {
-              router.push("/login");
-              setOpenMenu(false);
-            }}
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition font-semibold"
-          >
-            Connexion
-          </button>
-
-          <button
-            onClick={() => {
-              router.push("/SignupEglise");
-              setOpenMenu(false);
-            }}
-            className="mt-2 px-4 py-2 border border-blue-500 text-blue-500 rounded-2xl hover:bg-blue-500 hover:text-white transition font-semibold"
-          >
-            Inscription
-          </button>
         </div>
       )}
     </header>
