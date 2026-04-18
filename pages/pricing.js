@@ -141,12 +141,9 @@ export default function PricingPage() {
       </header>
 
       {/* HERO */}
-      <section style={{ textAlign: "center", padding: "80px 24px 40px", position: "relative", zIndex: 1 }}>
-        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", letterSpacing: "0.12em", marginBottom: "12px" }}>
-          TARIFICATION
-        </p>
+      <section style={{ textAlign: "center", padding: "60px 24px 40px", position: "relative", zIndex: 1 }}>        
 
-        <h1 style={{ color: "#fff", fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 500, marginBottom: "16px" }}>
+        <h1 style={{ color: "#fff", fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 500, marginBottom: "10px" }}>
           Une structure adaptée à votre <span style={{ color: "#fbbf24" }}>croissance</span>
         </h1>
 
