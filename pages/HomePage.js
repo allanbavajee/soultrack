@@ -108,11 +108,12 @@ export default function HomePage() {
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflow: "hidden" }}>
 
-      {/* GLOW GLOBAL — derrière header + hero */}
+      {/* GLOW GLOBAL derrière header + hero — position fixed en % pour rester centré */}
       <div style={{
-        position: "absolute", width: "900px", height: "900px", borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 68%)",
-        top: "60px", left: "50%", transform: "translateX(-50%)",
+        position: "absolute",
+        width: "900px", height: "900px", borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 65%)",
+        top: "0px", left: "50%", transform: "translateX(-50%)",
         pointerEvents: "none", zIndex: 0,
       }} />
 
@@ -124,13 +125,25 @@ export default function HomePage() {
         backdropFilter: scrolled ? "blur(16px)" : "none",
         transition: "background 0.3s, border-color 0.3s",
       }}>
-        <div style={{ maxWidth: "1100px", margin: "5", padding: "0 24px", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", position: "relative", zIndex: 1 }}>
+        {/* ↓ margin: "0 auto" corrige le décalage à gauche, height augmenté à 72px */}
+        <div style={{
+          maxWidth: "1100px",
+          margin: "0 auto",           /* centrage horizontal */
+          padding: "12px 24px",       /* espace haut/bas dans le header */
+          height: "72px",             /* un peu plus haut pour respirer */
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",  /* logo gauche, nav centre, boutons droite */
+        }}>
+
+          {/* LOGO — gauche */}
+          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
             <Image src="/logo.png" alt="SoulTrack" width={32} height={32} />
             <span style={{ color: "#fff", fontSize: "16px", fontWeight: 500 }}>SoulTrack</span>
           </div>
 
-          <nav style={{ display: "flex", alignItems: "center", gap: "32px", position: "relative", zIndex: 1 }}>
+          {/* NAV — centre */}
+          <nav style={{ display: "flex", alignItems: "center", gap: "32px", zIndex: 1 }}>
             {navItems.map((item) => (
               <span key={item.path} onClick={() => router.push(item.path)}
                 style={{ color: "rgba(255,255,255,0.7)", fontSize: "14px", cursor: "pointer", transition: "color 0.2s" }}
@@ -141,7 +154,8 @@ export default function HomePage() {
             ))}
           </nav>
 
-          <div style={{ display: "flex", gap: "10px", alignItems: "center", position: "relative", zIndex: 1 }} className="nav-hide">
+          {/* BOUTONS — droite */}
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
             <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "rgba(255,255,255,0.85)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
               Connexion
             </button>
@@ -150,7 +164,8 @@ export default function HomePage() {
             </button>
           </div>
 
-          <button onClick={() => setOpenMenu(!openMenu)} className="nav-show" style={{ background: "none", border: "none", cursor: "pointer", display: "none", flexDirection: "column", gap: "5px", padding: "4px", position: "relative", zIndex: 1 }}>
+          {/* HAMBURGER mobile */}
+          <button onClick={() => setOpenMenu(!openMenu)} className="nav-show" style={{ background: "none", border: "none", cursor: "pointer", display: "none", flexDirection: "column", gap: "5px", padding: "4px", zIndex: 1 }}>
             {[0, 1, 2].map(i => (
               <span key={i} style={{
                 display: "block", width: "22px", height: "1.5px", background: "rgba(255,255,255,0.85)", borderRadius: "2px", transition: "transform 0.2s, opacity 0.2s",
@@ -176,79 +191,62 @@ export default function HomePage() {
       </header>
 
       {/* ───── HERO ───── */}
-<section style={{ 
-  minHeight: "380px", 
-  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", 
-  textAlign: "center", 
-  padding: "90px 24px 40px",  // ← 70px en haut pour l'espace sous header
-  position: "relative",       // ← indispensable pour le glow absolu
-  zIndex: 1, 
-  overflow: "visible" 
-}}>
-  {/* GLOW ROND — positionné ici, derrière tout le contenu */}
-  <div style={{
-    position: "absolute",
-    width: "700px",
-    height: "700px",
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 60%)",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    pointerEvents: "none",
-    zIndex: 0,   // ← derrière le texte
-  }} />
-
-  {/* Badge — zIndex: 1 pour passer devant le glow */}
-  <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "24px" }}>
-    Prendre soin d’une église, c’est veiller sur chaque âme avec attention, discernement et fidélité, afin qu’aucune ne se perde en chemin.
-  </p>
-
-  <h1 style={{ position: "relative", zIndex: 1, fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "12px" }}>
-    Pilotez votre église avec <span style={{ color: "#fbbf24" }}>clarté</span> et précision
-  </h1>
-
-  <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "24px" }}>
-    Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
-  </p>
-
-  <div style={{ position: "relative", zIndex: 1, display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
-    <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
-      Créer mon église →
-    </button>
-    <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
-      Voir comment ça marche
-    </button>
-  </div>
-</section>
-
-      {/* GLOW entre hero et modules */}
-      <div style={{
-        position: "relative", zIndex: 1,
-        display: "flex", justifyContent: "center",
-        height: "0px", overflow: "visible",
+      <section style={{
+        minHeight: "460px",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        textAlign: "center",
+        padding: "80px 24px 70px",   /* ↑ plus d'espace haut et bas autour du titre */
+        position: "relative",
+        zIndex: 1,
+        overflow: "visible",
       }}>
+
+        {/* GLOW ROND — visible car dans position:relative avec zIndex:0 */}
         <div style={{
-          width: "600px", height: "600px", borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 65%)",
-          transform: "translateY(-50%)",
-          pointerEvents: "none",
           position: "absolute",
-          top: 0,
+          width: "750px", height: "750px",
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 45%, transparent 68%)",
+          top: "50%", left: "50%",
+          transform: "translate(-50%, -50%)",
+          pointerEvents: "none",
+          zIndex: 0,
         }} />
-      </div>
+
+        <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "28px" }}>
+          Prendre soin d'une église, c'est veiller sur chaque âme avec attention, discernement et fidélité, afin qu'aucune ne se perde en chemin.
+        </p>
+
+        <h1 style={{ position: "relative", zIndex: 1, fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "20px" }}>
+          Pilotez votre église avec <span style={{ color: "#fbbf24" }}>clarté</span> et précision
+        </h1>
+
+        <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "32px" }}>
+          Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
+        </p>
+
+        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
+          <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
+            Créer mon église →
+          </button>
+          <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
+            Voir comment ça marche
+          </button>
+        </div>
+      </section>
 
       {/* ───── LABEL MODULES ───── */}
-      <div ref={addRef} style={{ textAlign: "center", padding: "50px 24px 20px", position: "relative", zIndex: 1 }}>
-        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "10px" }}>Chaque espace a été conçu pour aider le berger à voir, comprendre 
-        et accompagner son troupeau avec sagesse, amour et vision.</p>
+      <div ref={addRef} style={{ textAlign: "center", padding: "40px 24px 20px", position: "relative", zIndex: 1 }}>
+        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", letterSpacing: "0.08em", maxWidth: "560px", margin: "0 auto 14px", lineHeight: 1.6 }}>
+          Chaque espace a été conçu pour aider le berger à voir, comprendre et accompagner son troupeau avec sagesse, amour et vision.
+        </p>
         <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "0 auto", lineHeight: 1.3 }}>
           Une structure complète pour accompagner chaque âme
         </h2>
       </div>
 
       {/* ───── CARDS MODULES ───── */}
-      <section style={{ padding: "16px 24px 80px", position: "relative", zIndex: 1 }}>
+      <section style={{ padding: "24px 24px 48px", position: "relative", zIndex: 1 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px", maxWidth: "1050px", margin: "0 auto" }}>
           {features.map((f, i) => (
             <div key={i} ref={addRef}
@@ -269,7 +267,7 @@ export default function HomePage() {
       </section>
 
       {/* ───── TÉMOIGNAGES ───── */}
-      <section style={{ padding: "80px 0", position: "relative", zIndex: 1 }}>
+      <section style={{ padding: "40px 0 80px", position: "relative", zIndex: 1 }}>
         <div style={{
           position: "absolute", width: "700px", height: "700px", borderRadius: "50%",
           background: "radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 68%)",
