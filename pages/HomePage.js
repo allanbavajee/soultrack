@@ -124,7 +124,7 @@ export default function HomePage() {
         backdropFilter: scrolled ? "blur(16px)" : "none",
         transition: "background 0.3s, border-color 0.3s",
       }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 24px", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ maxWidth: "1100px", margin: "5", padding: "0 24px", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", position: "relative", zIndex: 1 }}>
             <Image src="/logo.png" alt="SoulTrack" width={32} height={32} />
             <span style={{ color: "#fff", fontSize: "16px", fontWeight: 500 }}>SoulTrack</span>
@@ -180,7 +180,7 @@ export default function HomePage() {
   minHeight: "380px", 
   display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", 
   textAlign: "center", 
-  padding: "70px 24px 40px",  // ← 70px en haut pour l'espace sous header
+  padding: "90px 24px 40px",  // ← 70px en haut pour l'espace sous header
   position: "relative",       // ← indispensable pour le glow absolu
   zIndex: 1, 
   overflow: "visible" 
@@ -200,9 +200,9 @@ export default function HomePage() {
   }} />
 
   {/* Badge — zIndex: 1 pour passer devant le glow */}
-  <span style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.9)", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", border: "0.5px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.1)", padding: "5px 16px", borderRadius: "20px", marginBottom: "16px" }}>
-    SoulTrack — Plateforme ministérielle
-  </span>
+  <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "24px" }}>
+    Prendre soin d’une église, c’est veiller sur chaque âme avec attention, discernement et fidélité, afin qu’aucune ne se perde en chemin.
+  </p>
 
   <h1 style={{ position: "relative", zIndex: 1, fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "12px" }}>
     Pilotez votre église avec <span style={{ color: "#fbbf24" }}>clarté</span> et précision
@@ -239,8 +239,9 @@ export default function HomePage() {
       </div>
 
       {/* ───── LABEL MODULES ───── */}
-      <div ref={addRef} style={{ textAlign: "center", padding: "28px 24px 20px", position: "relative", zIndex: 1 }}>
-        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "10px" }}>Modules</p>
+      <div ref={addRef} style={{ textAlign: "center", padding: "50px 24px 20px", position: "relative", zIndex: 1 }}>
+        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "10px" }}>Chaque espace a été conçu pour aider le berger à voir, comprendre 
+        et accompagner son troupeau avec sagesse, amour et vision.</p>
         <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "0 auto", lineHeight: 1.3 }}>
           Une structure complète pour accompagner chaque âme
         </h2>
