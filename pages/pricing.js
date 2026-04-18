@@ -1,303 +1,238 @@
 "use client";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
-import PublicHeader from "../components/PublicHeader";
-import Footer from "../components/Footer";
+import Image from "next/image";
+
+import { Great_Vibes } from "next/font/google";
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: "400",
+});
 
 export default function PricingPage() {
   const router = useRouter();
-  const fadeRefs = useRef([]);
-
-  const addRef = (el) => {
-    if (el && !fadeRefs.current.includes(el)) fadeRefs.current.push(el);
-  };
+  const [openMenu, setOpenMenu] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    fadeRefs.current.forEach((el) => {
-      if (!el) return;
-      el.style.opacity = "0";
-      el.style.transform = "translateY(24px)";
-      el.style.transition = "opacity 0.6s ease, transform 0.6s ease";
-    });
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.style.opacity = "1";
-            e.target.style.transform = "translateY(0)";
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    fadeRefs.current.forEach((el) => el && observer.observe(el));
-    return () => observer.disconnect();
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const navItems = [
+    { label: "Accueil", path: "/site/HomePage" },
+    { label: "Process", path: "/CommentCaMarche" },
+    { label: "À propos", path: "/about" },
+    { label: "Pricing", path: "/pricing" },
+    { label: "Contact", path: "/contact" },
+  ];
 
   const plans = [
     {
-      name: "🌱 Starter",
-      members: "0 – 50 membres",
+      name: "Départ",
+      emoji: "🌱",
+      range: "0 – 50 membres",
       price: "Gratuit",
-      highlight: false,
-      desc: "Pour structurer les bases du suivi.",
+      accent: "rgba(29,158,117,0.45)",
       features: [
-        "👥 Suivi des membres",
-        "🏠 Gestion des cellules",
-        "✝️ Évangélisation simple",
+        "👥 Gestion des membres",
+        "🏠 Cellules",
+        "✝️ Suivi simple",
       ],
     },
     {
-      name: "🚀 Croissance",
-      members: "51 – 200 membres",
-      price: "$19 / mois",
-      highlight: true,
-      desc: "Pour accompagner une église en développement.",
+      name: "Croissance",
+      emoji: "📈",
+      range: "51 – 300 membres",
+      price: "$29/mois",
+      accent: "rgba(55,138,221,0.5)",
       features: [
-        "✔ Tout Starter",
-        "📊 Rapports essentiels",
-        "🧭 Suivi des conseillers",
+        "✔ Tout dans Départ",
+        "📊 Rapports",
+        "🧭 Conseillers",
       ],
     },
     {
-      name: "📊 Vision",
-      members: "201 – 800 membres",
-      price: "$39 / mois",
-      highlight: false,
-      desc: "Pour piloter avec clarté.",
+      name: "Vision",
+      emoji: "🔥",
+      range: "301 – 1000 membres",
+      price: "$59/mois",
+      accent: "rgba(251,191,36,0.4)",
       features: [
-        "✔ Tout Croissance",
+        "✔ Tout dans Croissance",
         "📈 Statistiques avancées",
-        "🧠 Analyse des besoins",
+        "⚙️ Organisation complète",
       ],
     },
     {
-      name: "🔥 Expansion",
-      members: "801 – 2000 membres",
-      price: "$79 / mois",
-      highlight: false,
-      desc: "Pour structurer la croissance.",
-      features: [
-        "✔ Tout Vision",
-        "👥 Multi-responsables",
-        "📤 Exports complets",
-      ],
-    },
-    {
-      name: "🏆 Réseau",
-      members: "2000+ membres",
+      name: "Expansion",
+      emoji: "🌍",
+      range: "1000+ membres",
       price: "Sur mesure",
-      highlight: false,
-      desc: "Pour les grandes structures.",
+      accent: "rgba(212,83,126,0.4)",
       features: [
-        "🌍 Multi-branches",
+        "⚙ Plan personnalisé",
         "🤝 Support dédié",
-        "⚙️ Accompagnement stratégique",
+        "🏢 Multi-branches",
       ],
     },
   ];
 
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
-      
-      {/* GLOW TOP */}
+
+      {/* GLOW */}
       <div style={{
         position: "absolute",
-        width: "700px",
-        height: "700px",
-        borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)",
-        top: "120px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        pointerEvents: "none",
+        width: "800px", height: "800px", borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 40%, transparent 65%)",
+        top: "80px", left: "50%", transform: "translateX(-50%)",
+        pointerEvents: "none", zIndex: 0,
       }} />
 
-      {/* GLOW BOTTOM */}
       <div style={{
         position: "absolute",
-        width: "600px",
-        height: "600px",
-        borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 70%)",
-        bottom: "100px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        pointerEvents: "none",
+        width: "600px", height: "600px", borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(251,191,36,0.07) 0%, rgba(255,255,255,0.02) 40%, transparent 65%)",
+        top: "600px", left: "50%", transform: "translateX(-50%)",
+        pointerEvents: "none", zIndex: 0,
       }} />
 
-      <PublicHeader />
+      {/* HEADER (copié exactement) */}
+      <header style={{
+        background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
+        borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent",
+        position: "sticky", top: 0, zIndex: 100,
+        backdropFilter: scrolled ? "blur(16px)" : "none",
+        transition: "background 0.3s, border-color 0.3s",
+      }}>
+        <div style={{
+          maxWidth: "1100px", margin: "0 auto", padding: "22px 24px", height: "88px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
+            <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
+            <span style={{ color: "#fff", fontSize: "22px", fontWeight: 500, fontFamily: "'Great Vibes', cursive" }}>SoulTrack</span>
+          </div>
 
-      {/* HERO */}
-      <section
-        ref={addRef}
-        style={{
-          textAlign: "center",
-          padding: "100px 24px 60px",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <h1
-          style={{
-            color: "#fff",
-            fontSize: "clamp(2rem, 5vw, 3rem)",
-            marginBottom: "20px",
-          }}
-        >
-          Une structure adaptée à chaque église
-        </h1>
+          <nav style={{ display: "flex", alignItems: "center", gap: "32px", zIndex: 1 }}>
+            {navItems.map((item) => (
+              <span key={item.path} onClick={() => router.push(item.path)}
+                style={{ color: item.path === "/pricing" ? "#fbbf24" : "rgba(255,255,255,0.7)", fontSize: "14px", cursor: "pointer" }}
+                className="nav-hide"
+              >{item.label}</span>
+            ))}
+          </nav>
 
-        <p
-          style={{
-            color: "rgba(255,255,255,0.7)",
-            maxWidth: "600px",
-            margin: "0 auto",
-            lineHeight: 1.7,
-          }}
-        >
-          Chaque niveau correspond à une étape de croissance.
-          Vous équipez votre ministère avec les bons outils,
-          au bon moment.
-        </p>
-      </section>
-
-      {/* CARDS */}
-      <section
-        style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-          padding: "40px 24px 80px",
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: "20px",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        {plans.map((plan, i) => (
-          <div
-            key={i}
-            ref={addRef}
-            style={{
-              background: plan.highlight
-                ? "rgba(255,255,255,0.15)"
-                : "rgba(255,255,255,0.08)",
-              border: plan.highlight
-                ? "1px solid rgba(255,255,255,0.4)"
-                : "0.5px solid rgba(255,255,255,0.15)",
-              borderRadius: "18px",
-              padding: "28px 24px",
-              backdropFilter: "blur(10px)",
-              transition: "0.3s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-6px)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-          >
-            {plan.highlight && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "-10px",
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  background: "#fbbf24",
-                  color: "#333699",
-                  padding: "4px 12px",
-                  borderRadius: "10px",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                }}
-              >
-                ⭐ Recommandé
-              </div>
-            )}
-
-            <h3 style={{ color: "#fff", fontSize: "18px", marginBottom: "6px" }}>
-              {plan.name}
-            </h3>
-
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px" }}>
-              {plan.members}
-            </p>
-
-            <div style={{ color: "#fff", fontSize: "28px", margin: "16px 0" }}>
-              {plan.price}
-            </div>
-
-            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", marginBottom: "16px" }}>
-              {plan.desc}
-            </p>
-
-            <ul style={{ color: "rgba(255,255,255,0.7)", fontSize: "13px", lineHeight: 1.8, marginBottom: "20px" }}>
-              {plan.features.map((f, idx) => (
-                <li key={idx}>{f}</li>
-              ))}
-            </ul>
-
-            <button
-              onClick={() => router.push("/SignupEglise")}
-              style={{
-                width: "100%",
-                padding: "10px",
-                borderRadius: "10px",
-                border: "0.5px solid #fff",
-                background: plan.highlight ? "#fff" : "transparent",
-                color: plan.highlight ? "#333699" : "#fff",
-                cursor: "pointer",
-                fontWeight: 500,
-              }}
-            >
-              Commencer
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1 }} className="nav-hide">
+            <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px" }}>
+              Connexion
+            </button>
+            <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", padding: "7px 18px", borderRadius: "8px", fontWeight: 600 }}>
+              Créer mon église
             </button>
           </div>
-        ))}
-      </section>
 
-      {/* CTA */}
-      <section
-        ref={addRef}
-        style={{
-          textAlign: "center",
-          padding: "60px 24px",
-          borderTop: "0.5px solid rgba(255,255,255,0.1)",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <h2 style={{ color: "#fff", marginBottom: "12px" }}>
-          Structurer pour mieux accompagner
-        </h2>
+          <button onClick={() => setOpenMenu(!openMenu)} className="nav-show" style={{ background: "none", border: "none", display: "none" }}>
+            ☰
+          </button>
+        </div>
+      </header>
 
-        <p
-          style={{
-            color: "rgba(255,255,255,0.6)",
-            maxWidth: "500px",
-            margin: "0 auto 24px",
-          }}
-        >
-          Une église qui grandit a besoin de visibilité, de clarté et d’organisation.
+      {/* HERO */}
+      <section style={{ textAlign: "center", padding: "80px 24px 40px", position: "relative", zIndex: 1 }}>
+        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", letterSpacing: "0.12em", marginBottom: "12px" }}>
+          TARIFICATION
         </p>
 
-        <button
-          onClick={() => router.push("/SignupEglise")}
-          style={{
-            background: "#fff",
-            color: "#333699",
-            padding: "12px 28px",
-            borderRadius: "10px",
-            border: "none",
-            cursor: "pointer",
-            fontWeight: 600,
-          }}
-        >
-          Démarrer SoulTrack →
-        </button>
+        <h1 style={{ color: "#fff", fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 500, marginBottom: "16px" }}>
+          Une structure adaptée à votre <span style={{ color: "#fbbf24" }}>croissance</span>
+        </h1>
+
+        <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: "500px", margin: "0 auto", lineHeight: 1.7 }}>
+          Chaque étape du ministère nécessite un niveau de structure différent. SoulTrack évolue avec votre église.
+        </p>
       </section>
 
-      <Footer />
+      {/* PLANS */}
+      <section style={{ padding: "40px 24px 100px", position: "relative", zIndex: 1 }}>
+        <div style={{
+          maxWidth: "1100px",
+          margin: "0 auto",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gap: "20px",
+        }}>
+          {plans.map((plan, i) => (
+            <div key={i} style={{
+              background: "rgba(255,255,255,0.08)",
+              border: "0.5px solid rgba(255,255,255,0.12)",
+              borderRadius: "20px",
+              padding: "28px 24px",
+              position: "relative",
+              backdropFilter: "blur(8px)",
+            }}>
+              <div style={{
+                position: "absolute",
+                top: "-40px",
+                left: "-40px",
+                width: "160px",
+                height: "160px",
+                borderRadius: "50%",
+                background: `radial-gradient(circle, ${plan.accent} 0%, transparent 70%)`,
+              }} />
+
+              <h3 style={{ color: "#fff", fontSize: "18px", marginBottom: "6px" }}>
+                {plan.emoji} {plan.name}
+              </h3>
+
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", marginBottom: "16px" }}>
+                {plan.range}
+              </p>
+
+              <div style={{ color: "#fff", fontSize: "26px", fontWeight: 600, marginBottom: "20px" }}>
+                {plan.price}
+              </div>
+
+              <ul style={{ color: "rgba(255,255,255,0.7)", fontSize: "13px", lineHeight: 1.8, marginBottom: "20px" }}>
+                {plan.features.map((f, idx) => (
+                  <li key={idx}>{f}</li>
+                ))}
+              </ul>
+
+              <button
+                onClick={() => router.push("/SignupEglise")}
+                style={{
+                  background: "#fff",
+                  color: "#333699",
+                  padding: "10px 20px",
+                  borderRadius: "10px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Commencer →
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ borderTop: "0.5px solid rgba(255,255,255,0.1)", padding: "20px 24px" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "14px" }}>
+          © {new Date().getFullYear()} SoulTrack. Tous droits réservés.
+        </div>
+      </footer>
+
+      <style>{`
+        body { overflow-x: hidden; }
+        @media (max-width: 768px) {
+          .nav-hide { display: none !important; }
+          .nav-show { display: flex !important; }
+        }
+      `}</style>
     </div>
   );
 }
