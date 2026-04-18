@@ -231,7 +231,7 @@ export default function HomePage() {
         </p>
 
         <div style={{ position: "relative", zIndex: 1, marginBottom: "5px" }}>
-          <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "4px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
+          <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "2px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
             Voir comment ça marche
           </button>
         </div>
@@ -239,10 +239,10 @@ export default function HomePage() {
 
       {/* ───── LABEL MODULES ───── */}
       <div ref={addRef} style={{ textAlign: "center", padding: "20px 24px 20px", position: "relative", zIndex: 1 }}>
-        <p style={{ color: "#fff", fontSize: "16px", padding: "40px 24px 20px", letterSpacing: "0.08em", maxWidth: "560px", margin: "0 auto 14px", lineHeight: 1.6 }}>
+        <p style={{ color: "#fff", fontSize: "16px", padding: "50px 24px 20px", letterSpacing: "0.08em", maxWidth: "560px", margin: "0 auto 14px", lineHeight: 1.6 }}>
           Chaque espace a été conçu pour aider le berger à voir, comprendre et accompagner son troupeau avec sagesse, amour et vision.
         </p>
-        <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "0 auto", lineHeight: 1.3 }}>
+        <h2 style={{ color: "#fbbf24", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "0 auto", lineHeight: 1.3 }}>
           Une structure complète pour accompagner chaque âme
         </h2>
       </div>
