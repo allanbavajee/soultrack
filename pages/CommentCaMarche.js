@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { Great_Vibes } from "next/font/google";
-const greatVibes = Great_Vibes({
-  subsets: ["latin"],
-  weight: "400",
-});
-
 export default function CommentCaMarche() {
   const router = useRouter();
-  const [openMenu, setOpenMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+
+  const stepsRef = useRef([]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -29,62 +25,47 @@ export default function CommentCaMarche() {
     { label: "Contact", path: "/contact" },
   ];
 
-  const steps = [
+  const modules = [
     {
-      number: "01",
-      title: "Créer une église ou une structure",
-      desc: "Vous pouvez créer une église OU une organisation sans église. Le système s’adapte à toute structure (église, réseau, groupe).",
-      emoji: "🏛️",
+      title: "Membres",
+      desc: "Ajouter une personne → base centralisée → assignation conseiller ou cellule → suivi complet",
     },
     {
-      number: "02",
-      title: "Ajouter une personne",
-      desc: "Chaque nouvelle personne est ajoutée dans la base de membres et devient visible dans la liste globale.",
-      emoji: "👤",
+      title: "Évangélisation",
+      desc: "Nouvelle âme → WhatsApp → suivi progression → conversion → baptême",
     },
     {
-      number: "03",
-      title: "Assignation automatique ou manuelle",
-      desc: "La personne est assignée à une cellule ou un conseiller pour assurer un suivi spirituel structuré.",
-      emoji: "🧭",
+      title: "Cellules",
+      desc: "Créer cellule → ajouter membres → responsable → suivi hebdomadaire",
     },
     {
-      number: "04",
-      title: "Suivi par conseiller et cellule",
-      desc: "Les conseillers et responsables de cellule suivent les membres, ajoutent des notes et assurent un accompagnement régulier.",
-      emoji: "👥",
+      title: "Conseillers",
+      desc: "Créer conseiller → assignation → suivi individuel → accompagnement",
     },
     {
-      number: "05",
-      title: "Communication et WhatsApp",
-      desc: "Les actions importantes peuvent être envoyées par WhatsApp pour accélérer la communication et le suivi terrain.",
-      emoji: "📲",
-    },
-    {
-      number: "06",
-      title: "Évangélisation & nouvelles âmes",
-      desc: "Chaque nouvelle âme est suivie, convertie, et intégrée dans le système avec un parcours clair.",
-      emoji: "✝️",
-    },
-    {
-      number: "07",
-      title: "Cellules & structure",
-      desc: "Organisation complète des cellules avec responsables, membres et suivi des présences.",
-      emoji: "🏠",
-    },
-    {
-      number: "08",
-      title: "Rapports intelligents",
-      desc: "Rapports par cellule, par conseiller, par église : croissance, engagement, suivi des âmes.",
-      emoji: "📊",
-    },
-    {
-      number: "09",
-      title: "Dashboard & vision globale",
-      desc: "Vue globale de toute l’église ou réseau pour prendre des décisions stratégiques.",
-      emoji: "📈",
+      title: "Rapports",
+      desc: "Données automatiques → analyse cellule → analyse conseiller → vision globale",
     },
   ];
+
+  // Scroll detection (highlight step)
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+
+      stepsRef.current.forEach((el, index) => {
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+
+        if (rect.top < window.innerHeight * 0.5) {
+          setActiveStep(index);
+        }
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
@@ -96,16 +77,28 @@ export default function CommentCaMarche() {
         height: "800px",
         borderRadius: "50%",
         background: "radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 40%, transparent 65%)",
-        top: "80px",
+        top: "100px",
         left: "50%",
         transform: "translateX(-50%)",
         pointerEvents: "none",
       }} />
 
-      {/* HEADER (COPIER-COLLER IDENTIQUE) */}
+      <div style={{
+        position: "absolute",
+        width: "600px",
+        height: "600px",
+        borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 70%)",
+        top: "600px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* HEADER (copié fidèle ton style) */}
       <header style={{
         background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
-        borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent",
+        borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "none",
         position: "sticky",
         top: 0,
         zIndex: 100,
@@ -117,11 +110,11 @@ export default function CommentCaMarche() {
           padding: "22px 24px",
           height: "88px",
           display: "flex",
-          alignItems: "center",
           justifyContent: "space-between",
+          alignItems: "center",
         }}>
 
-          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", gap: "6px", cursor: "pointer" }}>
             <Image src="/logo.png" width={50} height={50} />
             <span style={{ color: "#fff", fontSize: "22px", fontFamily: "'Great Vibes', cursive" }}>
               SoulTrack
@@ -130,8 +123,13 @@ export default function CommentCaMarche() {
 
           <nav style={{ display: "flex", gap: "32px" }}>
             {navItems.map((i) => (
-              <span key={i.path} onClick={() => router.push(i.path)}
-                style={{ color: "rgba(255,255,255,0.7)", fontSize: "14px", cursor: "pointer" }}>
+              <span key={i.path}
+                onClick={() => router.push(i.path)}
+                style={{
+                  color: i.path === "/CommentCaMarche" ? "#fbbf24" : "rgba(255,255,255,0.7)",
+                  fontSize: "14px",
+                  cursor: "pointer"
+                }}>
                 {i.label}
               </span>
             ))}
@@ -142,64 +140,107 @@ export default function CommentCaMarche() {
 
       {/* HERO */}
       <section style={{ textAlign: "center", padding: "70px 24px 40px" }}>
-        <h1 style={{ color: "#fff", fontSize: "40px", fontWeight: 500 }}>
+        <h1 style={{ color: "#fff", fontSize: "42px", fontWeight: 500 }}>
           Comment fonctionne <span style={{ color: "#fbbf24" }}>SoulTrack</span>
         </h1>
         <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: "600px", margin: "10px auto" }}>
-          Une plateforme structurée pour gérer membres, cellules, évangélisation et suivi pastoral.
+          Un système structuré pour suivre chaque âme, cellule et responsable avec précision.
         </p>
       </section>
 
-      {/* STEPS FLOW STYLE */}
-      <section style={{ padding: "40px 24px 80px" }}>
-        <div style={{ maxWidth: "900px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "28px" }}>
+      {/* TIMELINE HORIZONTAL STYLE (comme ton image) */}
+      <section style={{ padding: "60px 24px 120px", overflowX: "auto" }}>
+        <div style={{
+          display: "flex",
+          gap: "80px",
+          minWidth: "1100px",
+          maxWidth: "1200px",
+          margin: "0 auto",
+          position: "relative"
+        }}>
 
-          {steps.map((s, i) => (
-            <div key={i} style={{
-              display: "flex",
-              gap: "20px",
-              alignItems: "flex-start"
-            }}>
+          {/* ligne horizontale */}
+          <div style={{
+            position: "absolute",
+            top: "28px",
+            left: 0,
+            right: 0,
+            height: "1px",
+            background: "rgba(255,255,255,0.2)"
+          }} />
 
-              {/* circle number */}
+          {modules.map((m, i) => (
+            <div
+              key={i}
+              ref={el => stepsRef.current[i] = el}
+              style={{
+                flex: 1,
+                textAlign: "center",
+                position: "relative"
+              }}
+            >
+
+              {/* circle */}
               <div style={{
-                minWidth: "60px",
-                height: "60px",
+                width: "56px",
+                height: "56px",
                 borderRadius: "50%",
-                background: "#fbbf24",
+                margin: "0 auto 14px",
+                background: activeStep >= i ? "#fbbf24" : "transparent",
+                border: "2px solid #fbbf24",
+                color: activeStep >= i ? "#333699" : "#fbbf24",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontWeight: 700,
-                color: "#333699"
+                transition: "all 0.3s"
               }}>
-                {s.number}
+                {i + 1}
               </div>
 
               {/* content */}
-              <div style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "16px",
-                padding: "18px 20px",
-                flex: 1
+              <h3 style={{ color: "#fff", fontSize: "15px", marginBottom: "8px" }}>
+                {m.title}
+              </h3>
+
+              <p style={{
+                color: "rgba(255,255,255,0.6)",
+                fontSize: "13px",
+                lineHeight: 1.6
               }}>
-                <h3 style={{ color: "#fff", marginBottom: "6px" }}>
-                  {s.emoji} {s.title}
-                </h3>
-                <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>
-                  {s.desc}
-                </p>
-              </div>
+                {m.desc}
+              </p>
 
             </div>
           ))}
-
         </div>
       </section>
 
-      {/* FOOTER SIMPLE */}
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,0.1)", padding: "20px", textAlign: "center", color: "rgba(255,255,255,0.4)" }}>
+      {/* CTA */}
+      <section style={{ textAlign: "center", padding: "40px 24px 100px" }}>
+        <button
+          onClick={() => router.push("/SignupEglise")}
+          style={{
+            background: "#fff",
+            color: "#333699",
+            padding: "14px 34px",
+            borderRadius: "10px",
+            fontWeight: 600,
+            border: "none",
+            cursor: "pointer"
+          }}
+        >
+          🚀 Commencer maintenant
+        </button>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{
+        borderTop: "1px solid rgba(255,255,255,0.1)",
+        padding: "20px",
+        textAlign: "center",
+        color: "rgba(255,255,255,0.4)"
+      }}>
         © {new Date().getFullYear()} SoulTrack
       </footer>
 
