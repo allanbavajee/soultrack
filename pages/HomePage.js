@@ -156,10 +156,10 @@ export default function HomePage() {
 
           {/* BOUTONS — droite */}
           <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
-            <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "rgba(255,255,255,0.85)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
+            <button onClick={() => router.push("/login")} style={{ background: "transparent", "style={{ color: "#fbbf24" }}", border: "0.5px solid style={{ color: "#fbbf24" }}", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
               Connexion
             </button>
-            <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fbbf24", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
               Créer mon église
             </button>
           </div>
@@ -221,15 +221,12 @@ export default function HomePage() {
           Pilotez votre église avec <span style={{ color: "#fbbf24" }}>clarté</span> et précision
         </h1>
 
-        <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "32px" }}>
+        <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "50px" }}>
           Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
         </p>
 
-        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
-          <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
-            Créer mon église →
-          </button>
-          <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
+        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>          
+          <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", style={{ color: "#fbbf24" }}, border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
             Voir comment ça marche
           </button>
         </div>
@@ -240,7 +237,7 @@ export default function HomePage() {
         <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", letterSpacing: "0.08em", maxWidth: "560px", margin: "0 auto 14px", lineHeight: 1.6 }}>
           Chaque espace a été conçu pour aider le berger à voir, comprendre et accompagner son troupeau avec sagesse, amour et vision.
         </p>
-        <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "0 auto", lineHeight: 1.3 }}>
+        <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "15", lineHeight: 1.3 }}>
           Une structure complète pour accompagner chaque âme
         </h2>
       </div>
@@ -275,9 +272,8 @@ export default function HomePage() {
           pointerEvents: "none", zIndex: 0,
         }} />
 
-        <div ref={addRef} style={{ textAlign: "center", marginBottom: "40px", position: "relative", zIndex: 1 }}>
-          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "10px" }}>Témoignages</p>
-          <h2 style={{ color: "#fff", fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 500, maxWidth: "480px", margin: "0 auto", lineHeight: 1.3 }}>
+        <div ref={addRef} style={{ textAlign: "center", marginBottom: "40px", position: "relative", zIndex: 1 }}>          
+          <h2 style={{ color: "#fbbf24", fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 500, maxWidth: "480px", margin: "0 auto", lineHeight: 1.3 }}>
             Ce que disent les responsables
           </h2>
         </div>
@@ -340,7 +336,7 @@ export default function HomePage() {
         <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: "400px", margin: "0 auto 28px", lineHeight: 1.7, fontSize: "15px" }}>
           SoulTrack vous donne une vision vivante et stratégique pour guider votre église avec précision.
         </p>
-        <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "14px 36px", borderRadius: "10px", fontSize: "16px", fontWeight: 600, cursor: "pointer" }}>
+        <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#"#fbbf24", border: "none", padding: "14px 36px", borderRadius: "10px", fontSize: "16px", fontWeight: 600, cursor: "pointer" }}>
           Démarrer SoulTrack →
         </button>
       </section>
