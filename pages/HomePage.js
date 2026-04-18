@@ -2,7 +2,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+
 import { Great_Vibes } from "next/font/google";
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: "400",
+});
 
 export default function HomePage() {
   const router = useRouter();
@@ -29,12 +34,7 @@ export default function HomePage() {
   const trackRef = useRef(null);
   const animating = useRef(false);
 
-  const greatVibes = Great_Vibes({
-  subsets: ["latin"],
-  weight: "400",
-});
-
-  useEffect(() => {
+   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
