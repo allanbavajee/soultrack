@@ -108,11 +108,11 @@ export default function HomePage() {
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflow: "hidden" }}>
 
-      {/* GLOW GLOBAL */}
+      {/* GLOW GLOBAL — derrière header + hero */}
       <div style={{
         position: "absolute", width: "900px", height: "900px", borderRadius: "50%",
         background: "radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 68%)",
-        top: "120px", left: "50%", transform: "translateX(-50%)",
+        top: "60px", left: "50%", transform: "translateX(-50%)",
         pointerEvents: "none", zIndex: 0,
       }} />
 
@@ -176,36 +176,44 @@ export default function HomePage() {
       </header>
 
       {/* ───── HERO ───── */}
-      <section style={{ minHeight: "560px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "80px 24px", position: "relative", zIndex: 1 }}>
-       <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "18px" }}>
+      <section style={{ minHeight: "380px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "36px 24px 28px", position: "relative", zIndex: 1 }}>
+        <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", border: "0.5px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.1)", padding: "5px 16px", borderRadius: "20px", marginBottom: "16px" }}>
+          SoulTrack — Plateforme ministérielle
+        </span>
+        <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "12px" }}>
           Pilotez votre église avec <span style={{ color: "#fbbf24" }}>clarté</span> et précision
         </h1>
-        <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "36px" }}>
+        <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "24px" }}>
           Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
         </p>
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>          
+        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
+          <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
+            Créer mon église →
+          </button>
           <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
             Voir comment ça marche
           </button>
         </div>
       </section>
 
-{/* GLOW HERO */}
-<div style={{
-  position: "absolute",
-  width: "600px",
-  height: "600px",
-  borderRadius: "50%",
-  background: "radial-gradient(circle, rgba(255,255,255,0.09) 0%, transparent 65%)",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  pointerEvents: "none",
-  zIndex: 0,
-}} />
+      {/* GLOW entre hero et modules */}
+      <div style={{
+        position: "relative", zIndex: 1,
+        display: "flex", justifyContent: "center",
+        height: "0px", overflow: "visible",
+      }}>
+        <div style={{
+          width: "600px", height: "600px", borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 65%)",
+          transform: "translateY(-50%)",
+          pointerEvents: "none",
+          position: "absolute",
+          top: 0,
+        }} />
+      </div>
 
       {/* ───── LABEL MODULES ───── */}
-      <div ref={addRef} style={{ textAlign: "center", padding: "64px 24px 48px", position: "relative", zIndex: 1 }}>
+      <div ref={addRef} style={{ textAlign: "center", padding: "28px 24px 20px", position: "relative", zIndex: 1 }}>
         <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "10px" }}>Modules</p>
         <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "0 auto", lineHeight: 1.3 }}>
           Une structure complète pour accompagner chaque âme
@@ -213,7 +221,7 @@ export default function HomePage() {
       </div>
 
       {/* ───── CARDS MODULES ───── */}
-      <section style={{ padding: "0 24px 100px", position: "relative", zIndex: 1 }}>
+      <section style={{ padding: "16px 24px 80px", position: "relative", zIndex: 1 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px", maxWidth: "1050px", margin: "0 auto" }}>
           {features.map((f, i) => (
             <div key={i} ref={addRef}
@@ -234,7 +242,7 @@ export default function HomePage() {
       </section>
 
       {/* ───── TÉMOIGNAGES ───── */}
-      <section style={{ padding: "100px 0", position: "relative", zIndex: 1 }}>
+      <section style={{ padding: "80px 0", position: "relative", zIndex: 1 }}>
         <div style={{
           position: "absolute", width: "700px", height: "700px", borderRadius: "50%",
           background: "radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 68%)",
@@ -242,7 +250,7 @@ export default function HomePage() {
           pointerEvents: "none", zIndex: 0,
         }} />
 
-        <div ref={addRef} style={{ textAlign: "center", marginBottom: "56px", position: "relative", zIndex: 1 }}>
+        <div ref={addRef} style={{ textAlign: "center", marginBottom: "40px", position: "relative", zIndex: 1 }}>
           <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "10px" }}>Témoignages</p>
           <h2 style={{ color: "#fff", fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 500, maxWidth: "480px", margin: "0 auto", lineHeight: 1.3 }}>
             Ce que disent les responsables
@@ -300,11 +308,11 @@ export default function HomePage() {
       </section>
 
       {/* ───── CTA ───── */}
-      <section ref={addRef} style={{ borderTop: "0.5px solid rgba(255,255,255,0.15)", padding: "80px 24px", textAlign: "center", position: "relative", zIndex: 1 }}>
+      <section ref={addRef} style={{ borderTop: "0.5px solid rgba(255,255,255,0.15)", padding: "60px 24px", textAlign: "center", position: "relative", zIndex: 1 }}>
         <h2 style={{ color: "#fff", fontSize: "clamp(1.6rem, 3vw, 2.2rem)", fontWeight: 500, marginBottom: "12px" }}>
           Commencez dès aujourd'hui
         </h2>
-        <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: "400px", margin: "0 auto 32px", lineHeight: 1.7, fontSize: "15px" }}>
+        <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: "400px", margin: "0 auto 28px", lineHeight: 1.7, fontSize: "15px" }}>
           SoulTrack vous donne une vision vivante et stratégique pour guider votre église avec précision.
         </p>
         <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "14px 36px", borderRadius: "10px", fontSize: "16px", fontWeight: 600, cursor: "pointer" }}>
