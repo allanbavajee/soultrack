@@ -214,11 +214,11 @@ export default function HomePage() {
         position: "relative",
         zIndex: 1,
       }}>
-        <p style={{ position: "relative", zIndex: 1, color: "#fff", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "28px" }}>
+        <p style={{ position: "relative", zIndex: 1, color: "#fff", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "35px" }}>
           Prendre soin d'une église, c'est veiller sur chaque âme avec attention, discernement et fidélité, afin qu'aucune ne se perde en chemin.
         </p>
 
-        <h1 style={{ position: "relative", zIndex: 1, fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "20px" }}>
+        <h1 style={{ position: "relative", zIndex: 1, fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "35px" }}>
           Pilotez votre église avec <span style={{ color: "#fbbf24" }}>clarté</span> et précision
         </h1>
 
@@ -226,7 +226,7 @@ export default function HomePage() {
           Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
         </p>
 
-        <div style={{ position: "relative", zIndex: 1, color: "#fff", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "15px" }}>        
+        <div style={{ position: "relative", zIndex: 1, color: "#fff", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "5px" }}>        
           <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "4px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
             Voir comment ça marche
           </button>
@@ -235,7 +235,7 @@ export default function HomePage() {
 
       {/* ───── LABEL MODULES ───── */}
       <div ref={addRef} style={{ textAlign: "center", padding: "20px 24px 20px", position: "relative", zIndex: 1 }}>
-        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "16px",  padding: "40px 24px 20px", letterSpacing: "0.08em", maxWidth: "560px", margin: "0 auto 14px", lineHeight: 1.6 }}>
+        <p style={{ color: "#fff", fontSize: "16px",  padding: "40px 24px 20px", letterSpacing: "0.08em", maxWidth: "560px", margin: "0 auto 14px", lineHeight: 1.6 }}>
           Chaque espace a été conçu pour aider le berger à voir, comprendre et accompagner son troupeau avec sagesse, amour et vision.
         </p>
         <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "0 auto", lineHeight: 1.3 }}>
