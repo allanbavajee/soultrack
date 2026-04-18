@@ -1,18 +1,15 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-
-import { Great_Vibes } from "next/font/google";
-const greatVibes = Great_Vibes({
-  subsets: ["latin"],
-  weight: "400",
-});
+import PublicHeader from "../components/PublicHeader";
+import Footer from "../components/Footer";
 
 export default function CommentCaMarche() {
   const router = useRouter();
-  const [openMenu, setOpenMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [openMenu, setOpenMenu] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -28,67 +25,67 @@ export default function CommentCaMarche() {
     { label: "Contact", path: "/contact" },
   ];
 
-  const steps = [
-    {
-      icon: "🏛️",
-      title: "Créer votre structure",
-      desc: "Créez votre église ou simplement vos cellules. Ajoutez vos responsables et organisez votre ministère.",
-      accent: "rgba(55,138,221,0.5)",
-    },
+  const flows = [
     {
       icon: "👥",
-      title: "Ajouter vos membres",
-      desc: "Ajoutez ou importez vos membres. Chaque personne possède une fiche complète avec historique.",
-      accent: "rgba(127,119,221,0.5)",
+      title: "MODULE MEMBRES",
+      steps: [
+        "➕ Ajouter un membre",
+        "📂 Ajout dans la base automatiquement",
+        "🧭 Attribution conseiller ou cellule",
+        "👥 Suivi personnalisé",
+        "📊 Rapport d’engagement"
+      ],
+      accent: "rgba(55,138,221,0.5)"
     },
     {
       icon: "✝️",
-      title: "Ajouter une nouvelle âme",
-      desc: "Ajoutez une personne rencontrée et envoyez un message WhatsApp directement. Elle apparaît dans les suivis.",
-      accent: "rgba(239,159,39,0.4)",
-    },
-    {
-      icon: "🧭",
-      title: "Suivi par conseiller",
-      desc: "Attribuez chaque personne à un conseiller pour un accompagnement personnalisé et structuré.",
-      accent: "rgba(29,158,117,0.45)",
+      title: "MODULE ÉVANGÉLISATION",
+      steps: [
+        "➕ Ajouter une nouvelle âme",
+        "📲 Envoi WhatsApp automatique",
+        "🧭 Attribution conseiller / cellule",
+        "👥 Suivi progression (visité → converti → baptisé)",
+        "📊 Rapport conversion"
+      ],
+      accent: "rgba(251,191,36,0.4)"
     },
     {
       icon: "🏠",
-      title: "Organiser les cellules",
-      desc: "Créez vos cellules, ajoutez les membres et suivez les présences chaque semaine.",
-      accent: "rgba(93,202,165,0.45)",
+      title: "MODULE CELLULES",
+      steps: [
+        "➕ Créer une cellule",
+        "👥 Ajouter membres",
+        "🧭 Nommer un responsable",
+        "📅 Suivi hebdomadaire",
+        "📊 Rapport cellule"
+      ],
+      accent: "rgba(29,158,117,0.45)"
     },
     {
-      icon: "📅",
-      title: "Suivre les présences",
-      desc: "Visualisez qui est présent, absent et identifiez rapidement les personnes à relancer.",
-      accent: "rgba(212,83,126,0.4)",
+      icon: "🧭",
+      title: "MODULE CONSEILLERS",
+      steps: [
+        "➕ Créer un conseiller",
+        "👥 Assigner membres",
+        "📞 Suivi individuel",
+        "📝 Notes & accompagnement",
+        "📊 Rapport performance"
+      ],
+      accent: "rgba(127,119,221,0.5)"
     },
     {
       icon: "📊",
-      title: "Rapports par cellule",
-      desc: "Analysez la croissance, les présences et l’activité de chaque cellule.",
-      accent: "rgba(55,138,221,0.5)",
-    },
-    {
-      icon: "🧠",
-      title: "Rapports par conseiller",
-      desc: "Suivez le travail des conseillers et l’évolution des personnes qu’ils accompagnent.",
-      accent: "rgba(127,119,221,0.5)",
-    },
-    {
-      icon: "📈",
-      title: "Vision globale",
-      desc: "Accédez à des statistiques complètes pour piloter votre église avec précision.",
-      accent: "rgba(239,159,39,0.4)",
-    },
-    {
-      icon: "🔥",
-      title: "Évangélisation structurée",
-      desc: "Suivez chaque contact : rencontré, suivi, converti, baptisé. Rien n’est perdu.",
-      accent: "rgba(251,191,36,0.4)",
-    },
+      title: "MODULE RAPPORTS",
+      steps: [
+        "📥 Données automatiques",
+        "📈 Analyse croissance",
+        "📉 Détection pertes",
+        "🧠 Vision par cellule / conseiller",
+        "📊 Dashboard global église"
+      ],
+      accent: "rgba(212,83,126,0.4)"
+    }
   ];
 
   return (
@@ -97,40 +94,60 @@ export default function CommentCaMarche() {
       {/* GLOW */}
       <div style={{
         position: "absolute",
-        width: "800px", height: "800px", borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 40%, transparent 65%)",
-        top: "80px", left: "50%", transform: "translateX(-50%)",
-        pointerEvents: "none", zIndex: 0,
+        width: "800px",
+        height: "800px",
+        borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 40%, transparent 70%)",
+        top: "100px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        pointerEvents: "none",
       }} />
 
       <div style={{
         position: "absolute",
-        width: "600px", height: "600px", borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(251,191,36,0.07) 0%, rgba(255,255,255,0.02) 40%, transparent 65%)",
-        top: "600px", left: "50%", transform: "translateX(-50%)",
-        pointerEvents: "none", zIndex: 0,
+        width: "600px",
+        height: "600px",
+        borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(251,191,36,0.06) 0%, transparent 70%)",
+        top: "700px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        pointerEvents: "none",
       }} />
 
-      {/* HEADER */}
+      {/* HEADER IDENTIQUE STYLE CONTACT */}
       <header style={{
         background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
-        borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent",
-        position: "sticky", top: 0, zIndex: 100,
+        borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "none",
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
         backdropFilter: scrolled ? "blur(16px)" : "none",
       }}>
         <div style={{
-          maxWidth: "1100px", margin: "0 auto", padding: "22px 24px", height: "88px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
+          maxWidth: "1100px",
+          margin: "0 auto",
+          padding: "22px 24px",
+          height: "88px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
         }}>
-          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", gap: "6px", cursor: "pointer" }}>
             <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
             <span style={{ color: "#fff", fontSize: "22px", fontFamily: "'Great Vibes', cursive" }}>SoulTrack</span>
           </div>
 
-          <nav style={{ display: "flex", gap: "32px" }} className="nav-hide">
+          <nav style={{ display: "flex", gap: "30px" }} className="nav-hide">
             {navItems.map((item) => (
-              <span key={item.path} onClick={() => router.push(item.path)}
-                style={{ color: item.path === "/CommentCaMarche" ? "#fbbf24" : "rgba(255,255,255,0.7)", cursor: "pointer" }}>
+              <span key={item.path}
+                onClick={() => router.push(item.path)}
+                style={{
+                  color: item.path === "/CommentCaMarche" ? "#fbbf24" : "rgba(255,255,255,0.7)",
+                  cursor: "pointer",
+                  fontSize: "14px"
+                }}>
                 {item.label}
               </span>
             ))}
@@ -139,45 +156,62 @@ export default function CommentCaMarche() {
       </header>
 
       {/* HERO */}
-      <section style={{ textAlign: "center", padding: "70px 24px 40px", position: "relative", zIndex: 1 }}>
-        <h1 style={{ color: "#fff", fontSize: "2.5rem", marginBottom: "16px" }}>
-          Comment ça marche ?
+      <section style={{ textAlign: "center", padding: "80px 24px 40px" }}>
+        <h1 style={{ color: "#fff", fontSize: "2.8rem", fontWeight: 500 }}>
+          Comment fonctionne SoulTrack ?
         </h1>
-        <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: "500px", margin: "0 auto" }}>
-          Une plateforme simple pour organiser, suivre et faire grandir votre église ou vos cellules.
+        <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: "500px", margin: "15px auto" }}>
+          Un système structuré pour suivre chaque âme, chaque cellule et chaque responsable.
         </p>
       </section>
 
-      {/* STEPS */}
-      <section style={{ padding: "40px 24px 80px", position: "relative", zIndex: 1 }}>
-        <div style={{ maxWidth: "1000px", margin: "0 auto", display: "grid", gap: "20px" }}>
-          {steps.map((step, i) => (
+      {/* FLOW */}
+      <section style={{ padding: "40px 24px 80px" }}>
+        <div style={{ maxWidth: "900px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>
+
+          {flows.map((flow, i) => (
             <div key={i} style={{
-              background: "rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.06)",
               border: "0.5px solid rgba(255,255,255,0.12)",
               borderRadius: "18px",
               padding: "24px",
-              position: "relative",
-              backdropFilter: "blur(8px)",
+              position: "relative"
             }}>
-              <div style={{ position: "absolute", top: "-30px", left: "-30px", width: "140px", height: "140px", borderRadius: "50%", background: `radial-gradient(circle, ${step.accent} 0%, transparent 70%)` }} />
 
-              <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", position: "relative", zIndex: 1 }}>
-                <span style={{ fontSize: "26px" }}>{step.icon}</span>
-                <div>
-                  <h3 style={{ color: "#fff", fontSize: "16px", marginBottom: "6px" }}>{step.title}</h3>
-                  <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", lineHeight: 1.6 }}>
-                    {step.desc}
-                  </p>
+              <div style={{
+                position: "absolute",
+                top: "-40px",
+                left: "-40px",
+                width: "160px",
+                height: "160px",
+                borderRadius: "50%",
+                background: `radial-gradient(circle, ${flow.accent} 0%, transparent 70%)`
+              }} />
+
+              <div style={{ position: "relative" }}>
+                <div style={{ fontSize: "22px", marginBottom: "10px" }}>{flow.icon}</div>
+
+                <h2 style={{ color: "#fff", fontSize: "16px", marginBottom: "12px" }}>
+                  {flow.title}
+                </h2>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {flow.steps.map((s, idx) => (
+                    <div key={idx} style={{ color: "rgba(255,255,255,0.65)", fontSize: "14px" }}>
+                      {s}
+                    </div>
+                  ))}
                 </div>
               </div>
+
             </div>
           ))}
+
         </div>
       </section>
 
       {/* CTA */}
-      <section style={{ textAlign: "center", paddingBottom: "80px" }}>
+      <section style={{ textAlign: "center", padding: "40px 24px 80px" }}>
         <button
           onClick={() => router.push("/SignupEglise")}
           style={{
@@ -186,25 +220,15 @@ export default function CommentCaMarche() {
             padding: "14px 32px",
             borderRadius: "10px",
             fontWeight: 600,
-            cursor: "pointer",
+            border: "none",
+            cursor: "pointer"
           }}
         >
-          🚀 Créer mon église
+          🚀 Commencer maintenant
         </button>
       </section>
 
-      {/* FOOTER */}
-      <footer style={{ borderTop: "0.5px solid rgba(255,255,255,0.1)", padding: "20px 24px" }}>
-        <div style={{ textAlign: "center", color: "rgba(255,255,255,0.35)" }}>
-          © {new Date().getFullYear()} SoulTrack
-        </div>
-      </footer>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .nav-hide { display: none !important; }
-        }
-      `}</style>
+      <Footer />
     </div>
   );
 }
