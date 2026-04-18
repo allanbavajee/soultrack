@@ -146,7 +146,7 @@ export default function HomePage() {
         }}>
           {/* LOGO */}
           <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
-            <Image src="/logo.png" alt="SoulTrack" width={32} height={32} />
+            <Image src="/logo.png" alt="SoulTrack" width={42} height={42} />
             <span style={{ color: "#fff", fontSize: "16px", fontWeight: 500 }}>SoulTrack</span>
           </div>
 
@@ -219,7 +219,7 @@ export default function HomePage() {
           Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
         </p>
 
-        <div style={{ position: "relative", zIndex: 1, color: "#fff", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "50px" }}>        
+        <div style={{ position: "relative", zIndex: 1, color: "#fff", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "30px" }}>        
           <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "4px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
             Voir comment ça marche
           </button>
