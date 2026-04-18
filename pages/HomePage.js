@@ -17,6 +17,7 @@ export default function HomePage() {
     { name: "Samuel", church: "Église Lumière", message: "Le tableau de bord est intuitif et puissant. Mes conseillers sont maintenant beaucoup plus efficaces dans leur accompagnement.", avatar: "/avatar3.png" },
     { name: "Past. Clara", church: "Église Espoir", message: "SoulTrack nous a permis de doubler notre capacité de suivi sans doubler notre charge de travail. Indispensable.", avatar: "/avatar1.png" },
   ];
+
   const CARD_WIDTH = 300;
   const GAP = 16;
   const STEP = CARD_WIDTH + GAP;
@@ -106,14 +107,23 @@ export default function HomePage() {
   const offset = -(tIndex * STEP) + CARD_WIDTH + GAP;
 
   return (
-    <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflow: "hidden" }}>
+    <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
 
-      {/* GLOW GLOBAL derrière header + hero — position fixed en % pour rester centré */}
+      {/* GLOW 1 — hero (milieu haut) */}
       <div style={{
         position: "absolute",
-        width: "900px", height: "900px", borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 65%)",
-        top: "0px", left: "50%", transform: "translateX(-50%)",
+        width: "800px", height: "800px", borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 40%, transparent 65%)",
+        top: "80px", left: "50%", transform: "translateX(-50%)",
+        pointerEvents: "none", zIndex: 0,
+      }} />
+
+      {/* GLOW 2 — section modules (plus bas) */}
+      <div style={{
+        position: "absolute",
+        width: "700px", height: "700px", borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(251,191,36,0.08) 0%, rgba(255,255,255,0.03) 40%, transparent 65%)",
+        top: "900px", left: "50%", transform: "translateX(-50%)",
         pointerEvents: "none", zIndex: 0,
       }} />
 
@@ -125,24 +135,22 @@ export default function HomePage() {
         backdropFilter: scrolled ? "blur(16px)" : "none",
         transition: "background 0.3s, border-color 0.3s",
       }}>
-        {/* ↓ margin: "0 auto" corrige le décalage à gauche, height augmenté à 72px */}
         <div style={{
           maxWidth: "1100px",
-          margin: "0 auto",           /* centrage horizontal */
-          padding: "12px 24px",       /* espace haut/bas dans le header */
-          height: "72px",             /* un peu plus haut pour respirer */
+          margin: "0 auto",
+          padding: "12px 24px",
+          height: "72px",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",  /* logo gauche, nav centre, boutons droite */
+          justifyContent: "space-between",
         }}>
-
-          {/* LOGO — gauche */}
+          {/* LOGO */}
           <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
             <Image src="/logo.png" alt="SoulTrack" width={32} height={32} />
             <span style={{ color: "#fff", fontSize: "16px", fontWeight: 500 }}>SoulTrack</span>
           </div>
 
-          {/* NAV — centre */}
+          {/* NAV */}
           <nav style={{ display: "flex", alignItems: "center", gap: "32px", zIndex: 1 }}>
             {navItems.map((item) => (
               <span key={item.path} onClick={() => router.push(item.path)}
@@ -154,17 +162,17 @@ export default function HomePage() {
             ))}
           </nav>
 
-          {/* BOUTONS — droite */}
+          {/* BOUTONS */}
           <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
-            <button onClick={() => router.push("/login")} style={{ background: "transparent", "style={{ color: "#fbbf24" }}", border: "0.5px solid style={{ color: "#fbbf24" }}", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
+            <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "rgba(255,255,255,0.85)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
               Connexion
             </button>
-            <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fbbf24", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
               Créer mon église
             </button>
           </div>
 
-          {/* HAMBURGER mobile */}
+          {/* HAMBURGER */}
           <button onClick={() => setOpenMenu(!openMenu)} className="nav-show" style={{ background: "none", border: "none", cursor: "pointer", display: "none", flexDirection: "column", gap: "5px", padding: "4px", zIndex: 1 }}>
             {[0, 1, 2].map(i => (
               <span key={i} style={{
@@ -195,24 +203,10 @@ export default function HomePage() {
         minHeight: "460px",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         textAlign: "center",
-        padding: "80px 24px 70px",   /* ↑ plus d'espace haut et bas autour du titre */
+        padding: "80px 24px 70px",
         position: "relative",
         zIndex: 1,
-        overflow: "visible",
       }}>
-
-        {/* GLOW ROND — visible car dans position:relative avec zIndex:0 */}
-        <div style={{
-          position: "absolute",
-          width: "750px", height: "750px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 45%, transparent 68%)",
-          top: "50%", left: "50%",
-          transform: "translate(-50%, -50%)",
-          pointerEvents: "none",
-          zIndex: 0,
-        }} />
-
         <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "28px" }}>
           Prendre soin d'une église, c'est veiller sur chaque âme avec attention, discernement et fidélité, afin qu'aucune ne se perde en chemin.
         </p>
@@ -225,8 +219,11 @@ export default function HomePage() {
           Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
         </p>
 
-        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>          
-          <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", style={{ color: "#fbbf24" }}, border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
+        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
+          <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
+            Créer mon église →
+          </button>
+          <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
             Voir comment ça marche
           </button>
         </div>
@@ -237,7 +234,7 @@ export default function HomePage() {
         <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", letterSpacing: "0.08em", maxWidth: "560px", margin: "0 auto 14px", lineHeight: 1.6 }}>
           Chaque espace a été conçu pour aider le berger à voir, comprendre et accompagner son troupeau avec sagesse, amour et vision.
         </p>
-        <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "15", lineHeight: 1.3 }}>
+        <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "0 auto", lineHeight: 1.3 }}>
           Une structure complète pour accompagner chaque âme
         </h2>
       </div>
@@ -267,12 +264,13 @@ export default function HomePage() {
       <section style={{ padding: "40px 0 80px", position: "relative", zIndex: 1 }}>
         <div style={{
           position: "absolute", width: "700px", height: "700px", borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 68%)",
+          background: "radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 65%)",
           top: "50%", left: "50%", transform: "translate(-50%, -50%)",
           pointerEvents: "none", zIndex: 0,
         }} />
 
-        <div ref={addRef} style={{ textAlign: "center", marginBottom: "40px", position: "relative", zIndex: 1 }}>          
+        <div ref={addRef} style={{ textAlign: "center", marginBottom: "40px", position: "relative", zIndex: 1 }}>
+          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "10px" }}>Témoignages</p>
           <h2 style={{ color: "#fbbf24", fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 500, maxWidth: "480px", margin: "0 auto", lineHeight: 1.3 }}>
             Ce que disent les responsables
           </h2>
@@ -336,12 +334,20 @@ export default function HomePage() {
         <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: "400px", margin: "0 auto 28px", lineHeight: 1.7, fontSize: "15px" }}>
           SoulTrack vous donne une vision vivante et stratégique pour guider votre église avec précision.
         </p>
-        <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#"#fbbf24", border: "none", padding: "14px 36px", borderRadius: "10px", fontSize: "16px", fontWeight: 600, cursor: "pointer" }}>
+        <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "14px 36px", borderRadius: "10px", fontSize: "16px", fontWeight: 600, cursor: "pointer" }}>
           Démarrer SoulTrack →
         </button>
       </section>
 
+      {/* ───── FOOTER ───── */}
+      <footer style={{ borderTop: "0.5px solid rgba(255,255,255,0.1)", padding: "20px 24px" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "14px" }}>
+          © {new Date().getFullYear()} SoulTrack. Tous droits réservés.
+        </div>
+      </footer>
+
       <style>{`
+        body { overflow-x: hidden; }
         @media (max-width: 768px) {
           .nav-hide { display: none !important; }
           .nav-show { display: flex !important; }
