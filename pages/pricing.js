@@ -1,6 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
+import PublicHeader from "../components/PublicHeader";
+import Footer from "../components/Footer";
 
 export default function PricingPage() {
   const router = useRouter();
@@ -36,76 +38,106 @@ export default function PricingPage() {
 
   const plans = [
     {
-      name: "Starter",
+      name: "🌱 Starter",
       members: "0 – 50 membres",
       price: "Gratuit",
       highlight: false,
-      desc: "Pour démarrer et structurer les bases du suivi.",
+      desc: "Pour structurer les bases du suivi.",
       features: [
-        "Suivi des membres",
-        "Gestion des cellules",
-        "Évangélisation simple",
+        "👥 Suivi des membres",
+        "🏠 Gestion des cellules",
+        "✝️ Évangélisation simple",
       ],
     },
     {
-      name: "Croissance",
+      name: "🚀 Croissance",
       members: "51 – 200 membres",
       price: "$19 / mois",
       highlight: true,
       desc: "Pour accompagner une église en développement.",
       features: [
-        "Tout Starter",
-        "Rapports essentiels",
-        "Suivi des conseillers",
+        "✔ Tout Starter",
+        "📊 Rapports essentiels",
+        "🧭 Suivi des conseillers",
       ],
     },
     {
-      name: "Vision",
+      name: "📊 Vision",
       members: "201 – 800 membres",
       price: "$39 / mois",
       highlight: false,
-      desc: "Pour piloter avec clarté et précision.",
+      desc: "Pour piloter avec clarté.",
       features: [
-        "Tout Croissance",
-        "Statistiques avancées",
-        "Analyse des besoins",
+        "✔ Tout Croissance",
+        "📈 Statistiques avancées",
+        "🧠 Analyse des besoins",
       ],
     },
     {
-      name: "Expansion",
+      name: "🔥 Expansion",
       members: "801 – 2000 membres",
       price: "$79 / mois",
       highlight: false,
-      desc: "Pour structurer une église en forte croissance.",
+      desc: "Pour structurer la croissance.",
       features: [
-        "Tout Vision",
-        "Multi-responsables",
-        "Exports & rapports complets",
+        "✔ Tout Vision",
+        "👥 Multi-responsables",
+        "📤 Exports complets",
       ],
     },
     {
-      name: "Réseau",
+      name: "🏆 Réseau",
       members: "2000+ membres",
       price: "Sur mesure",
       highlight: false,
-      desc: "Pour les églises et réseaux multi-branches.",
+      desc: "Pour les grandes structures.",
       features: [
-        "Multi-branches",
-        "Support dédié",
-        "Accompagnement stratégique",
+        "🌍 Multi-branches",
+        "🤝 Support dédié",
+        "⚙️ Accompagnement stratégique",
       ],
     },
   ];
 
   return (
-    <div style={{ background: "#333699", minHeight: "100vh" }}>
+    <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
       
+      {/* GLOW TOP */}
+      <div style={{
+        position: "absolute",
+        width: "700px",
+        height: "700px",
+        borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%)",
+        top: "120px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* GLOW BOTTOM */}
+      <div style={{
+        position: "absolute",
+        width: "600px",
+        height: "600px",
+        borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 70%)",
+        bottom: "100px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        pointerEvents: "none",
+      }} />
+
+      <PublicHeader />
+
       {/* HERO */}
       <section
         ref={addRef}
         style={{
           textAlign: "center",
           padding: "100px 24px 60px",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <h1
@@ -126,9 +158,9 @@ export default function PricingPage() {
             lineHeight: 1.7,
           }}
         >
-          SoulTrack évolue avec votre ministère. 
-          Chaque niveau vous donne les outils nécessaires pour suivre, comprendre 
-          et accompagner votre église avec précision.
+          Chaque niveau correspond à une étape de croissance.
+          Vous équipez votre ministère avec les bons outils,
+          au bon moment.
         </p>
       </section>
 
@@ -141,6 +173,8 @@ export default function PricingPage() {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
           gap: "20px",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         {plans.map((plan, i) => (
@@ -157,15 +191,10 @@ export default function PricingPage() {
               borderRadius: "18px",
               padding: "28px 24px",
               backdropFilter: "blur(10px)",
-              position: "relative",
               transition: "0.3s",
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-6px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-6px)")}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
           >
             {plan.highlight && (
               <div
@@ -182,7 +211,7 @@ export default function PricingPage() {
                   fontWeight: 600,
                 }}
               >
-                Recommandé
+                ⭐ Recommandé
               </div>
             )}
 
@@ -194,36 +223,17 @@ export default function PricingPage() {
               {plan.members}
             </p>
 
-            <div
-              style={{
-                color: "#fff",
-                fontSize: "28px",
-                margin: "16px 0",
-              }}
-            >
+            <div style={{ color: "#fff", fontSize: "28px", margin: "16px 0" }}>
               {plan.price}
             </div>
 
-            <p
-              style={{
-                color: "rgba(255,255,255,0.6)",
-                fontSize: "13px",
-                marginBottom: "16px",
-              }}
-            >
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", marginBottom: "16px" }}>
               {plan.desc}
             </p>
 
-            <ul
-              style={{
-                color: "rgba(255,255,255,0.7)",
-                fontSize: "13px",
-                lineHeight: 1.8,
-                marginBottom: "20px",
-              }}
-            >
+            <ul style={{ color: "rgba(255,255,255,0.7)", fontSize: "13px", lineHeight: 1.8, marginBottom: "20px" }}>
               {plan.features.map((f, idx) => (
-                <li key={idx}>• {f}</li>
+                <li key={idx}>{f}</li>
               ))}
             </ul>
 
@@ -233,12 +243,9 @@ export default function PricingPage() {
                 width: "100%",
                 padding: "10px",
                 borderRadius: "10px",
-                border: "none",
+                border: "0.5px solid #fff",
                 background: plan.highlight ? "#fff" : "transparent",
                 color: plan.highlight ? "#333699" : "#fff",
-                borderColor: "#fff",
-                borderWidth: "0.5px",
-                borderStyle: "solid",
                 cursor: "pointer",
                 fontWeight: 500,
               }}
@@ -256,10 +263,12 @@ export default function PricingPage() {
           textAlign: "center",
           padding: "60px 24px",
           borderTop: "0.5px solid rgba(255,255,255,0.1)",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <h2 style={{ color: "#fff", marginBottom: "12px" }}>
-          Une vision claire commence par une bonne structure
+          Structurer pour mieux accompagner
         </h2>
 
         <p
@@ -269,7 +278,7 @@ export default function PricingPage() {
             margin: "0 auto 24px",
           }}
         >
-          Choisissez le plan adapté à votre réalité et développez votre église avec cohérence et intention.
+          Une église qui grandit a besoin de visibilité, de clarté et d’organisation.
         </p>
 
         <button
@@ -287,6 +296,8 @@ export default function PricingPage() {
           Démarrer SoulTrack →
         </button>
       </section>
+
+      <Footer />
     </div>
   );
 }
