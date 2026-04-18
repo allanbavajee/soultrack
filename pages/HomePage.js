@@ -176,25 +176,51 @@ export default function HomePage() {
       </header>
 
       {/* ───── HERO ───── */}
-      <section style={{ minHeight: "380px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "36px 24px 28px", position: "relative", zIndex: 1 }}>
-        <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", border: "0.5px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.1)", padding: "5px 16px", borderRadius: "20px", marginBottom: "16px" }}>
-          SoulTrack — Plateforme ministérielle
-        </span>
-        <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "12px" }}>
-          Pilotez votre église avec <span style={{ color: "#fbbf24" }}>clarté</span> et précision
-        </h1>
-        <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "24px" }}>
-          Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
-        </p>
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
-          <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
-            Créer mon église →
-          </button>
-          <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
-            Voir comment ça marche
-          </button>
-        </div>
-      </section>
+<section style={{ 
+  minHeight: "380px", 
+  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", 
+  textAlign: "center", 
+  padding: "70px 24px 40px",  // ← 70px en haut pour l'espace sous header
+  position: "relative",       // ← indispensable pour le glow absolu
+  zIndex: 1, 
+  overflow: "visible" 
+}}>
+  {/* GLOW ROND — positionné ici, derrière tout le contenu */}
+  <div style={{
+    position: "absolute",
+    width: "700px",
+    height: "700px",
+    borderRadius: "50%",
+    background: "radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 60%)",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    pointerEvents: "none",
+    zIndex: 0,   // ← derrière le texte
+  }} />
+
+  {/* Badge — zIndex: 1 pour passer devant le glow */}
+  <span style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.9)", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", border: "0.5px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.1)", padding: "5px 16px", borderRadius: "20px", marginBottom: "16px" }}>
+    SoulTrack — Plateforme ministérielle
+  </span>
+
+  <h1 style={{ position: "relative", zIndex: 1, fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "12px" }}>
+    Pilotez votre église avec <span style={{ color: "#fbbf24" }}>clarté</span> et précision
+  </h1>
+
+  <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "24px" }}>
+    Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
+  </p>
+
+  <div style={{ position: "relative", zIndex: 1, display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
+    <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
+      Créer mon église →
+    </button>
+    <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
+      Voir comment ça marche
+    </button>
+  </div>
+</section>
 
       {/* GLOW entre hero et modules */}
       <div style={{
