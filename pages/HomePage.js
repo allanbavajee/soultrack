@@ -3,18 +3,11 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { Great_Vibes } from "next/font/google";
-const greatVibes = Great_Vibes({
-  subsets: ["latin"],
-  weight: "400",
-});
-
 export default function HomePage() {
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const fadeRefs = useRef([]);
-  
 
   const testimonials = [
     { name: "Past. Jean", church: "Église Bethel", message: "Avant SoulTrack, je perdais le fil de chaque nouvelle âme. Aujourd'hui, chaque suivi est structuré et aucun membre n'est oublié.", avatar: "/avatar1.png" },
@@ -34,7 +27,7 @@ export default function HomePage() {
   const trackRef = useRef(null);
   const animating = useRef(false);
 
-   useEffect(() => {
+  useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
@@ -153,8 +146,8 @@ export default function HomePage() {
         }}>
           {/* LOGO */}
           <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
-            <Image src="/logo.png" alt="SoulTrack" width={42} height={42} />
-            <span style={{ color: "#fff", fontSize: "16px", fontWeight: 500, fontFamily: "'Great Vibes', cursive" }}>SoulTrack</span>
+            <Image src="/logo.png" alt="SoulTrack" width={32} height={32} />
+            <span style={{ color: "#fff", fontSize: "16px", fontWeight: 500 }}>SoulTrack</span>
           </div>
 
           {/* NAV */}
@@ -171,7 +164,7 @@ export default function HomePage() {
 
           {/* BOUTONS */}
           <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
-            <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
+            <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "rgba(255,255,255,0.85)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
               Connexion
             </button>
             <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
@@ -214,28 +207,31 @@ export default function HomePage() {
         position: "relative",
         zIndex: 1,
       }}>
-        <p style={{ position: "relative", zIndex: 1, color: "#fff", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "35px" }}>
+        <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "28px" }}>
           Prendre soin d'une église, c'est veiller sur chaque âme avec attention, discernement et fidélité, afin qu'aucune ne se perde en chemin.
         </p>
 
-        <h1 style={{ position: "relative", zIndex: 1, fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "35px" }}>
+        <h1 style={{ position: "relative", zIndex: 1, fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "20px" }}>
           Pilotez votre église avec <span style={{ color: "#fbbf24" }}>clarté</span> et précision
         </h1>
 
-        <p style={{ position: "relative", zIndex: 1, color: "#fff", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "50px" }}>
+        <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "50px" }}>
           Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
         </p>
 
-        <div style={{ position: "relative", zIndex: 1, color: "#fff", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "5px" }}>        
-          <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "4px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
+        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
+          <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
+            Créer mon église →
+          </button>
+          <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
             Voir comment ça marche
           </button>
         </div>
       </section>
 
       {/* ───── LABEL MODULES ───── */}
-      <div ref={addRef} style={{ textAlign: "center", padding: "20px 24px 20px", position: "relative", zIndex: 1 }}>
-        <p style={{ color: "#fff", fontSize: "16px",  padding: "40px 24px 20px", letterSpacing: "0.08em", maxWidth: "560px", margin: "0 auto 14px", lineHeight: 1.6 }}>
+      <div ref={addRef} style={{ textAlign: "center", padding: "40px 24px 20px", position: "relative", zIndex: 1 }}>
+        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", letterSpacing: "0.08em", maxWidth: "560px", margin: "0 auto 14px", lineHeight: 1.6 }}>
           Chaque espace a été conçu pour aider le berger à voir, comprendre et accompagner son troupeau avec sagesse, amour et vision.
         </p>
         <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "0 auto", lineHeight: 1.3 }}>
@@ -273,7 +269,8 @@ export default function HomePage() {
           pointerEvents: "none", zIndex: 0,
         }} />
 
-        <div ref={addRef} style={{ textAlign: "center", marginBottom: "40px", position: "relative", zIndex: 1 }}>          
+        <div ref={addRef} style={{ textAlign: "center", marginBottom: "40px", position: "relative", zIndex: 1 }}>
+          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "10px" }}>Témoignages</p>
           <h2 style={{ color: "#fbbf24", fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 500, maxWidth: "480px", margin: "0 auto", lineHeight: 1.3 }}>
             Ce que disent les responsables
           </h2>
@@ -337,7 +334,7 @@ export default function HomePage() {
         <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: "400px", margin: "0 auto 28px", lineHeight: 1.7, fontSize: "15px" }}>
           SoulTrack vous donne une vision vivante et stratégique pour guider votre église avec précision.
         </p>
-        <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#fbbf24", border: "none", padding: "14px 36px", borderRadius: "10px", fontSize: "16px", fontWeight: 600, cursor: "pointer" }}>
+        <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "14px 36px", borderRadius: "10px", fontSize: "16px", fontWeight: 600, cursor: "pointer" }}>
           Démarrer SoulTrack →
         </button>
       </section>
