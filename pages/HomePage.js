@@ -109,7 +109,7 @@ export default function HomePage() {
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
 
-      {/* GLOW 1 — hero (milieu haut) */}
+      {/* GLOW 1 — hero */}
       <div style={{
         position: "absolute",
         width: "800px", height: "800px", borderRadius: "50%",
@@ -118,7 +118,7 @@ export default function HomePage() {
         pointerEvents: "none", zIndex: 0,
       }} />
 
-      {/* GLOW 2 — section modules (plus bas) */}
+      {/* GLOW 2 — section modules */}
       <div style={{
         position: "absolute",
         width: "700px", height: "700px", borderRadius: "50%",
@@ -138,16 +138,19 @@ export default function HomePage() {
         <div style={{
           maxWidth: "1100px",
           margin: "0 auto",
-          padding: "12px 24px",
-          height: "72px",
+          padding: "20px 24px",        /* ↑ 2. plus d'espace haut/bas = block descend */
+          height: "84px",              /* ↑ 2. hauteur augmentée */
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
         }}>
-          {/* LOGO */}
-          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
-            <Image src="/logo.png" alt="SoulTrack" width={32} height={32} />
-            <span style={{ color: "#fff", fontSize: "16px", fontWeight: 500 }}>SoulTrack</span>
+
+          {/* LOGO — 1. plus grand, 5. gap réduit */}
+          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "7px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
+            {/* 1. taille logo 32→40 */}
+            <Image src="/logo.png" alt="SoulTrack" width={40} height={40} />
+            {/* 1. fontSize 16→19 */}
+            <span style={{ color: "#fff", fontSize: "19px", fontWeight: 500 }}>SoulTrack</span>
           </div>
 
           {/* NAV */}
@@ -207,11 +210,13 @@ export default function HomePage() {
         position: "relative",
         zIndex: 1,
       }}>
-        <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "28px" }}>
+        {/* 3. marginBottom augmenté 28→40 */}
+        <p style={{ position: "relative", zIndex: 1, color: "rgba(255,255,255,0.65)", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "40px" }}>
           Prendre soin d'une église, c'est veiller sur chaque âme avec attention, discernement et fidélité, afin qu'aucune ne se perde en chemin.
         </p>
 
-        <h1 style={{ position: "relative", zIndex: 1, fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "20px" }}>
+        {/* 4. marginBottom augmenté 20→32 */}
+        <h1 style={{ position: "relative", zIndex: 1, fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 500, color: "#fff", lineHeight: 1.15, maxWidth: "680px", marginBottom: "32px" }}>
           Pilotez votre église avec <span style={{ color: "#fbbf24" }}>clarté</span> et précision
         </h1>
 
