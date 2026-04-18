@@ -2,12 +2,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Great_Vibes } from "next/font/google";
 
 export default function HomePage() {
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const fadeRefs = useRef([]);
+  
 
   const testimonials = [
     { name: "Past. Jean", church: "Église Bethel", message: "Avant SoulTrack, je perdais le fil de chaque nouvelle âme. Aujourd'hui, chaque suivi est structuré et aucun membre n'est oublié.", avatar: "/avatar1.png" },
@@ -26,6 +28,11 @@ export default function HomePage() {
   const [tIndex, setTIndex] = useState(max);
   const trackRef = useRef(null);
   const animating = useRef(false);
+
+  const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: "400",
+});
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -147,7 +154,7 @@ export default function HomePage() {
           {/* LOGO */}
           <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
             <Image src="/logo.png" alt="SoulTrack" width={42} height={42} />
-            <span style={{ color: "#fff", fontSize: "16px", fontWeight: 500 }}>SoulTrack</span>
+            <span style={{ color: "#fff", fontSize: "16px", fontWeight: 500, fontFamily: "'Great Vibes', cursive" }}>SoulTrack</span>
           </div>
 
           {/* NAV */}
@@ -219,7 +226,7 @@ export default function HomePage() {
           Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
         </p>
 
-        <div style={{ position: "relative", zIndex: 1, color: "#fff", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "30px" }}>        
+        <div style={{ position: "relative", zIndex: 1, color: "#fff", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "15px" }}>        
           <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "4px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
             Voir comment ça marche
           </button>
