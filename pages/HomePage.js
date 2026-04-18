@@ -227,8 +227,8 @@ export default function HomePage() {
       </section>
 
       {/* ───── LABEL MODULES ───── */}
-      <div ref={addRef} style={{ textAlign: "center", padding: "40px 24px 20px", position: "relative", zIndex: 1 }}>
-        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px",  padding: "40px 24px 20px", letterSpacing: "0.08em", maxWidth: "560px", margin: "0 auto 14px", lineHeight: 1.6 }}>
+      <div ref={addRef} style={{ textAlign: "center", padding: "20px 24px 20px", position: "relative", zIndex: 1 }}>
+        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "16px",  padding: "40px 24px 20px", letterSpacing: "0.08em", maxWidth: "560px", margin: "0 auto 14px", lineHeight: 1.6 }}>
           Chaque espace a été conçu pour aider le berger à voir, comprendre et accompagner son troupeau avec sagesse, amour et vision.
         </p>
         <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, maxWidth: "500px", margin: "0 auto", lineHeight: 1.3 }}>
