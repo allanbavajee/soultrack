@@ -164,7 +164,7 @@ export default function HomePage() {
 
           {/* BOUTONS */}
           <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
-            <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fbbf24,", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
+            <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
               Connexion
             </button>
             <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
@@ -219,8 +219,8 @@ export default function HomePage() {
           Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.
         </p>
 
-        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>         
-          <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "12px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
+        <div style={{ position: "relative", zIndex: 1, color: "#fff", fontSize: "16px", maxWidth: "500px", lineHeight: 1.7, marginBottom: "50px" }}>        
+          <button onClick={() => router.push("/comment-ca-marche")} style={{ background: "transparent", color: "rgba(255,255,255,0.8)", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 28px", borderRadius: "10px", fontSize: "15px", cursor: "pointer" }}>
             Voir comment ça marche
           </button>
         </div>
