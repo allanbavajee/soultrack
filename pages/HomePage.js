@@ -196,6 +196,20 @@ export default function HomePage() {
         </div>
       </section>
 
+{/* GLOW HERO */}
+<div style={{
+  position: "absolute",
+  width: "600px",
+  height: "600px",
+  borderRadius: "50%",
+  background: "radial-gradient(circle, rgba(255,255,255,0.09) 0%, transparent 65%)",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  pointerEvents: "none",
+  zIndex: 0,
+}} />
+
       {/* ───── LABEL MODULES ───── */}
       <div ref={addRef} style={{ textAlign: "center", padding: "64px 24px 48px", position: "relative", zIndex: 1 }}>
         <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "10px" }}>Modules</p>
