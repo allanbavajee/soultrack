@@ -29,52 +29,48 @@ export default function CommentCaMarche() {
     { label: "Contact", path: "/contact" },
   ];
 
-  const modules = [
-    {
-      icon: "👥",
-      title: "Membres",
-      steps: [
-        { title: "Ajouter", desc: "Créer ou importer un membre dans la base." },
-        { title: "Liste", desc: "Visible immédiatement dans la liste globale." },
-        { title: "Assignation", desc: "Envoyé à un conseiller ou cellule." },
-        { title: "Suivi", desc: "Historique, notes et évolution suivis." },
-        { title: "Rapports", desc: "Analyse par conseiller ou cellule." },
-      ],
-    },
-    {
-      icon: "✝️",
-      title: "Évangélisation",
-      steps: [
-        { title: "Nouveau contact", desc: "Ajouter une nouvelle âme rencontrée." },
-        { title: "Suivi", desc: "Relance et accompagnement structuré." },
-        { title: "Conversion", desc: "Suivre décisions et engagements." },
-        { title: "Baptême", desc: "Enregistrer les étapes spirituelles." },
-        { title: "Rapports", desc: "Voir impact global et progression." },
-      ],
-    },
-    {
-      icon: "🏠",
-      title: "Cellules",
-      steps: [
-        { title: "Créer cellule", desc: "Mettre en place un groupe." },
-        { title: "Responsable", desc: "Nommer un leader de cellule." },
-        { title: "Ajouter membres", desc: "Affecter les participants." },
-        { title: "Présences", desc: "Suivre chaque réunion." },
-        { title: "Rapports", desc: "Analyse par cellule." },
-      ],
-    },
-    {
-      icon: "📊",
-      title: "Rapports",
-      steps: [
-        { title: "Vue globale", desc: "Vision complète de l’église." },
-        { title: "Par cellule", desc: "Comparer les dynamiques." },
-        { title: "Par conseiller", desc: "Suivi des responsables." },
-        { title: "Croissance", desc: "Évolution des membres." },
-        { title: "Décision", desc: "Aide stratégique." },
-      ],
-    },
-  ];
+ const modules = [
+  {
+    title: "Membres",
+    steps: [
+      { icon: "➕", title: "Ajouter", desc: "Créer ou importer un membre dans la base." },
+      { icon: "📋", title: "Liste", desc: "Visible immédiatement dans la liste globale." },
+      { icon: "👤", title: "Assignation", desc: "Envoyé à un conseiller ou cellule." },
+      { icon: "📈", title: "Suivi", desc: "Historique, notes et évolution suivis." },
+      { icon: "📊", title: "Rapports", desc: "Analyse par conseiller ou cellule." },
+    ],
+  },
+  {
+    title: "Évangélisation",
+    steps: [
+      { icon: "📞", title: "Nouveau contact", desc: "Ajouter une nouvelle âme rencontrée." },
+      { icon: "🔁", title: "Suivi", desc: "Relance et accompagnement structuré." },
+      { icon: "❤️", title: "Conversion", desc: "Suivre décisions et engagements." },
+      { icon: "💧", title: "Baptême", desc: "Enregistrer les étapes spirituelles." },
+      { icon: "📊", title: "Rapports", desc: "Voir impact global et progression." },
+    ],
+  },
+  {
+    title: "Cellules",
+    steps: [
+      { icon: "🏠", title: "Créer cellule", desc: "Mettre en place un groupe." },
+      { icon: "👨‍💼", title: "Responsable", desc: "Nommer un leader de cellule." },
+      { icon: "➕", title: "Ajouter membres", desc: "Affecter les participants." },
+      { icon: "📅", title: "Présences", desc: "Suivre chaque réunion." },
+      { icon: "📊", title: "Rapports", desc: "Analyse par cellule." },
+    ],
+  },
+  {
+    title: "Rapports",
+    steps: [
+      { icon: "🌍", title: "Vue globale", desc: "Vision complète de l’église." },
+      { icon: "🏘️", title: "Par cellule", desc: "Comparer les dynamiques." },
+      { icon: "👥", title: "Par conseiller", desc: "Suivi des responsables." },
+      { icon: "📉", title: "Croissance", desc: "Évolution des membres." },
+      { icon: "⚡", title: "Décision", desc: "Aide stratégique." },
+    ],
+  },
+];
 
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
@@ -93,57 +89,66 @@ export default function CommentCaMarche() {
       }} />
 
       {/* HEADER */}
+      {/* ───── HEADER ───── */}
       <header style={{
         background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
         borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent",
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
+        position: "sticky", top: 0, zIndex: 100,
         backdropFilter: scrolled ? "blur(16px)" : "none",
         transition: "background 0.3s, border-color 0.3s",
       }}>
         <div style={{
-          maxWidth: "1100px",
-          margin: "0 auto",
-          padding: "22px 24px",
-          height: "88px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          maxWidth: "1100px", margin: "0 auto", padding: "22px 24px", height: "88px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
-          <div onClick={() => router.push("/site/HomePage")}
-            style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
             <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
-            <span style={{
-              color: "#fff",
-              fontSize: "22px",
-              fontWeight: 500,
-              fontFamily: "'Great Vibes', cursive"
-            }}>SoulTrack</span>
+            <span style={{ color: "#fff", fontSize: "22px", fontWeight: 500, fontFamily: "'Great Vibes', cursive" }}>SoulTrack</span>
           </div>
 
-          <nav style={{ display: "flex", gap: "32px" }}>
-            {navItems.map((item) => {
-              const isActive = pathname === item.path;
-
-              return (
-                <span
-                  key={item.path}
-                  onClick={() => router.push(item.path)}
-                  style={{
-                    color: isActive ? "#fbbf24" : "rgba(255,255,255,0.7)",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                    transition: "0.2s",
-                    fontWeight: isActive ? "600" : "400",
-                  }}
-                >
-                  {item.label}
-                </span>
-              );
-            })}
+          <nav style={{ display: "flex", alignItems: "center", gap: "32px", zIndex: 1 }}>
+            {navItems.map((item) => (
+              <span key={item.path} onClick={() => router.push(item.path)}
+                style={{ color: item.path === "/contact" ? "#fbbf24" : "rgba(255,255,255,0.7)", fontSize: "14px", cursor: "pointer", transition: "color 0.2s" }}
+                onMouseEnter={e => e.currentTarget.style.color = "#fff"}
+                onMouseLeave={e => e.currentTarget.style.color = item.path === "/contact" ? "#fbbf24" : "rgba(255,255,255,0.7)"}
+                className="nav-hide"
+              >{item.label}</span>
+            ))}
           </nav>
+
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
+            <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
+              Connexion
+            </button>
+            <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
+              Créer mon église
+            </button>
+          </div>
+
+          <button onClick={() => setOpenMenu(!openMenu)} className="nav-show" style={{ background: "none", border: "none", cursor: "pointer", display: "none", flexDirection: "column", gap: "5px", padding: "4px", zIndex: 1 }}>
+            {[0, 1, 2].map(i => (
+              <span key={i} style={{
+                display: "block", width: "22px", height: "1.5px", background: "rgba(255,255,255,0.85)", borderRadius: "2px", transition: "transform 0.2s, opacity 0.2s",
+                transform: openMenu ? i === 0 ? "rotate(45deg) translate(5px, 5px)" : i === 2 ? "rotate(-45deg) translate(5px, -5px)" : "scaleX(0)" : "none",
+                opacity: openMenu && i === 1 ? 0 : 1,
+              }} />
+            ))}
+          </button>
         </div>
+
+        {openMenu && (
+          <div style={{ background: "#333699", borderTop: "0.5px solid rgba(255,255,255,0.15)", padding: "20px 24px 28px", display: "flex", flexDirection: "column", gap: "20px" }}>
+            {navItems.map((item) => (
+              <span key={item.path} onClick={() => { router.push(item.path); setOpenMenu(false); }}
+                style={{ color: "rgba(255,255,255,0.8)", fontSize: "15px", cursor: "pointer" }}>{item.label}</span>
+            ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
+              <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fff", border: "0.5px solid rgba(255,255,255,0.35)", padding: "11px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>Connexion</button>
+              <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "11px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>Créer mon église</button>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* HERO */}
@@ -177,22 +182,24 @@ export default function CommentCaMarche() {
                   style={{ textAlign: "center", maxWidth: "140px" }}
                 >
                   {/* CERCLE AVEC EMOJI */}
-                  <div style={{
-                    width: isActive ? "75px" : "60px",
-                    height: isActive ? "75px" : "60px",
-                    borderRadius: "50%",
-                    border: `2px solid ${isActive ? "#fbbf24" : "rgba(255,255,255,0.4)"}`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "22px",
-                    margin: "0 auto 10px",
-                    transition: "all 0.25s",
-                    transform: isActive ? "scale(1.15)" : "scale(1)",
-                    background: "rgba(255,255,255,0.05)",
-                  }}>
-                    {module.icon}
-                  </div>
+                  <div
+  style={{
+    width: isActive ? "75px" : "60px",
+    height: isActive ? "75px" : "60px",
+    borderRadius: "50%",
+    border: `2px solid ${isActive ? "#fbbf24" : "rgba(255,255,255,0.4)"}`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "22px",
+    margin: "0 auto 10px",
+    transition: "all 0.25s",
+    transform: isActive ? "scale(1.15)" : "scale(1)",
+    background: "rgba(255,255,255,0.05)",
+  }}
+>
+  {step.icon}
+</div>
 
                   <div style={{ color: "#fff", fontSize: "14px", marginBottom: "6px" }}>
                     {step.title}
