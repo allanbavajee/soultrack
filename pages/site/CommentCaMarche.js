@@ -212,7 +212,7 @@ export default function CommentCaMarche() {
                       margin: "0 auto 10px",
                       transition: "all 0.25s",
                       transform: isActive ? "scale(1.15)" : "scale(1)",
-                      background: isActive ? "#fbbf24" : "rgba(255,255,255,0.05)",
+                      background: "#fbbf24",
                       position: "relative",
                       zIndex: 2,
                     }}
