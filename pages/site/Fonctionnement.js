@@ -24,7 +24,7 @@ export default function Fonctionnement()   {
   const navItems = [
     { label: "Accueil", path: "/site/HomePage" },
     { label: "Fonctionnement", path: "/site/Fonctionnemente" },
-    { label: "À propos", path: "/about" },
+    { label: "À propos", path: "/site/about" },
     { label: "Pricing", path: "/site/pricing" },
     { label: "Contact", path: "/site/contact" },
   ];
