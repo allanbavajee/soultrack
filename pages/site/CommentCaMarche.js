@@ -166,11 +166,28 @@ export default function CommentCaMarche() {
           </h2>
 
           <div style={{
+            position: "relative",
             display: "flex",
             justifyContent: "center",
             gap: "40px",
-            flexWrap: "wrap"
+            flexWrap: "wrap",
+            padding: "40px 0"
+          }}>xWrap: "wrap"
           }}>
+
+          <div
+            style={{
+              position: "absolute",
+              top: "70px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "70%",
+              height: "2px",
+              background: "rgba(255,255,255,0.15)",
+              zIndex: 0,
+            }}
+          />                  
+
             {module.steps.map((step, i) => {
               const isActive = active === `${mIndex}-${i}`;
 
@@ -183,23 +200,25 @@ export default function CommentCaMarche() {
                 >
                   {/* CERCLE AVEC EMOJI */}
                   <div
-  style={{
-    width: isActive ? "75px" : "60px",
-    height: isActive ? "75px" : "60px",
-    borderRadius: "50%",
-    border: `2px solid ${isActive ? "#fbbf24" : "rgba(255,255,255,0.4)"}`,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "22px",
-    margin: "0 auto 10px",
-    transition: "all 0.25s",
-    transform: isActive ? "scale(1.15)" : "scale(1)",
-    background: "rgba(255,255,255,0.05)",
-  }}
->
-  {step.icon}
-</div>
+                    style={{
+                      width: isActive ? "75px" : "60px",
+                      height: isActive ? "75px" : "60px",
+                      borderRadius: "50%",
+                      border: `2px solid ${isActive ? "#fbbf24" : "rgba(255,255,255,0.4)"}`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "22px",
+                      margin: "0 auto 10px",
+                      transition: "all 0.25s",
+                      transform: isActive ? "scale(1.15)" : "scale(1)",
+                      background: "rgba(255,255,255,0.05)",
+                      position: "relative",
+                      zIndex: 2,
+                    }}
+                  >
+                    {step.icon}
+                  </div>
 
                   <div style={{ color: "#fff", fontSize: "14px", marginBottom: "6px" }}>
                     {step.title}
