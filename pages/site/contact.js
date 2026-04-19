@@ -24,10 +24,10 @@ export default function ContactPage() {
 
   const navItems = [
     { label: "Accueil", path: "/site/HomePage" },
-    { label: "Fonctionnement", path: "site/Fonctionnement" },
-    { label: "À propos", path: "site/about" },
-    { label: "Pricing", path: "site/pricing" },
-    { label: "Contact", path: "site/contact" },
+    { label: "Fonctionnement", path: "/site/Fonctionnement" },
+    { label: "À propos", path: "/site/about" },
+    { label: "Pricing", path: "/site/pricing" },
+    { label: "Contact", path: "/site/contact" },
   ];
 
   const handleSubmit = () => {
