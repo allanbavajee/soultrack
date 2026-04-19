@@ -1,18 +1,17 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import { Great_Vibes } from "next/font/google";
-const greatVibes = Great_Vibes({
-  subsets: ["latin"],
-  weight: "400",
-});
+const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
 
 export default function CommentCaMarche() {
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [active, setActive] = useState(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -32,51 +31,41 @@ export default function CommentCaMarche() {
     {
       title: "👥 Membres",
       steps: [
-        "Ajouter une personne",
-        "Apparaît dans la liste des membres",
-        "Envoyer en suivi (cellule / conseiller)",
-        "Suivi actif par responsable",
-        "Analyse & rapport",
+        { title: "Ajouter", desc: "Créer ou importer un membre dans la base." },
+        { title: "Liste", desc: "Visible immédiatement dans la liste globale." },
+        { title: "Assignation", desc: "Envoyé à un conseiller ou cellule." },
+        { title: "Suivi", desc: "Historique, notes et évolution suivis." },
+        { title: "Rapports", desc: "Analyse par conseiller ou cellule." },
       ],
     },
     {
       title: "✝️ Évangélisation",
       steps: [
-        "Ajouter un contact",
-        "Qualifier (visiteur, âme gagnée…)",
-        "Assigner à un conseiller",
-        "Suivi des interactions",
-        "Conversion / baptême",
+        { title: "Nouveau contact", desc: "Ajouter une nouvelle âme rencontrée." },
+        { title: "Suivi", desc: "Relance et accompagnement structuré." },
+        { title: "Conversion", desc: "Suivre décisions et engagements." },
+        { title: "Baptême", desc: "Enregistrer les étapes spirituelles." },
+        { title: "Rapports", desc: "Voir impact global et progression." },
       ],
     },
     {
       title: "🏠 Cellules",
       steps: [
-        "Créer une cellule",
-        "Ajouter responsables",
-        "Affecter membres",
-        "Suivi des présences",
-        "Rapport par cellule",
-      ],
-    },
-    {
-      title: "🧭 Conseillers",
-      steps: [
-        "Créer un conseiller",
-        "Attribuer des membres",
-        "Suivi personnalisé",
-        "Notes & actions",
-        "Rapport conseiller",
+        { title: "Créer cellule", desc: "Mettre en place un groupe." },
+        { title: "Responsable", desc: "Nommer un leader de cellule." },
+        { title: "Ajouter membres", desc: "Affecter les participants." },
+        { title: "Présences", desc: "Suivre chaque réunion." },
+        { title: "Rapports", desc: "Analyse par cellule." },
       ],
     },
     {
       title: "📊 Rapports",
       steps: [
-        "Collecte automatique",
-        "Analyse par cellule",
-        "Analyse par conseiller",
-        "Vision globale",
-        "Décision stratégique",
+        { title: "Vue globale", desc: "Vision complète de l’église." },
+        { title: "Par cellule", desc: "Comparer les dynamiques." },
+        { title: "Par conseiller", desc: "Suivi des responsables." },
+        { title: "Croissance", desc: "Évolution des membres." },
+        { title: "Décision", desc: "Aide stratégique." },
       ],
     },
   ];
@@ -87,35 +76,23 @@ export default function CommentCaMarche() {
       {/* GLOW */}
       <div style={{
         position: "absolute",
-        width: "800px",
-        height: "800px",
-        borderRadius: "50%",
+        width: "800px", height: "800px", borderRadius: "50%",
         background: "radial-gradient(circle, rgba(255,255,255,0.13) 0%, transparent 65%)",
-        top: "80px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        pointerEvents: "none",
+        top: "100px", left: "50%", transform: "translateX(-50%)",
+        zIndex: 0,
       }} />
 
       {/* HEADER */}
       <header style={{
         background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
-        borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent",
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-        backdropFilter: scrolled ? "blur(16px)" : "none",
+        borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "transparent",
+        position: "sticky", top: 0, zIndex: 100,
       }}>
         <div style={{
-          maxWidth: "1100px",
-          margin: "0 auto",
-          padding: "22px 24px",
-          height: "88px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          maxWidth: "1100px", margin: "0 auto", padding: "22px 24px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
-          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", gap: "6px", cursor: "pointer" }}>
             <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
             <span style={{ color: "#fff", fontSize: "22px", fontFamily: "'Great Vibes', cursive" }}>SoulTrack</span>
           </div>
@@ -128,90 +105,68 @@ export default function CommentCaMarche() {
               </span>
             ))}
           </nav>
-
-          <div style={{ display: "flex", gap: "10px" }}>
-            <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fbbf24", border: "1px solid rgba(255,255,255,0.3)", padding: "7px 18px", borderRadius: "8px" }}>
-              Connexion
-            </button>
-            <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", padding: "7px 18px", borderRadius: "8px" }}>
-              Créer mon église
-            </button>
-          </div>
         </div>
       </header>
 
       {/* HERO */}
       <section style={{ textAlign: "center", padding: "80px 24px" }}>
-        <h1 style={{ color: "#fff", fontSize: "40px", marginBottom: "20px" }}>
-          Comment ça marche
+        <h1 style={{ color: "#fff", fontSize: "2.5rem" }}>
+          Comment fonctionne <span style={{ color: "#fbbf24" }}>SoulTrack</span>
         </h1>
-        <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: "500px", margin: "0 auto" }}>
-          Une structure claire pour suivre chaque âme et piloter votre église avec précision.
-        </p>
       </section>
 
       {/* MODULES */}
-      <section style={{ padding: "40px 24px 100px" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "80px" }}>
-          {modules.map((module, idx) => (
-            <div key={idx}>
+      {modules.map((module, mIndex) => (
+        <section key={mIndex} style={{ padding: "40px 24px" }}>
+          <h2 style={{ color: "#fbbf24", textAlign: "center", marginBottom: "40px" }}>
+            {module.title}
+          </h2>
 
-              <h2 style={{ color: "#fbbf24", fontSize: "22px", marginBottom: "40px", textAlign: "center" }}>
-                {module.title}
-              </h2>
-
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative" }}>
-
-                {/* LINE */}
-                <div style={{
-                  position: "absolute",
-                  top: "22px",
-                  left: 0,
-                  right: 0,
-                  height: "1px",
-                  background: "rgba(255,255,255,0.2)",
-                }} />
-
-                {module.steps.map((step, i) => (
-                  <div key={i} style={{ width: "18%", textAlign: "center", position: "relative" }}>
-
-                    {/* CIRCLE */}
-                    <div style={{
-                      width: "44px",
-                      height: "44px",
-                      borderRadius: "50%",
-                      border: "1px solid rgba(255,255,255,0.3)",
-                      margin: "0 auto 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#fff",
-                      fontWeight: 600,
-                      background: i === 0 ? "#fbbf24" : "transparent",
-                    }}>
-                      {i + 1}
-                    </div>
-
-                    <p style={{
-                      color: "#fff",
-                      fontSize: "13px",
-                      lineHeight: 1.6,
-                      opacity: 0.8,
-                    }}>
-                      {step}
-                    </p>
-
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "40px", flexWrap: "wrap" }}>
+            {module.steps.map((step, i) => {
+              const isActive = active === `${mIndex}-${i}`;
+              return (
+                <div key={i}
+                  onMouseEnter={() => setActive(`${mIndex}-${i}`)}
+                  onMouseLeave={() => setActive(null)}
+                  style={{ textAlign: "center", maxWidth: "140px" }}
+                >
+                  {/* CERCLE */}
+                  <div style={{
+                    width: isActive ? "70px" : "60px",
+                    height: isActive ? "70px" : "60px",
+                    borderRadius: "50%",
+                    border: `2px solid ${isActive ? "#fbbf24" : "rgba(255,255,255,0.4)"}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: isActive ? "#fbbf24" : "#fff",
+                    fontWeight: "bold",
+                    margin: "0 auto 10px",
+                    transition: "all 0.25s",
+                    transform: isActive ? "scale(1.1)" : "scale(1)",
+                  }}>
+                    {i + 1}
                   </div>
-                ))}
-              </div>
 
-            </div>
-          ))}
-        </div>
-      </section>
+                  {/* TITLE */}
+                  <div style={{ color: "#fff", fontSize: "14px", marginBottom: "6px" }}>
+                    {step.title}
+                  </div>
+
+                  {/* DESC */}
+                  <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", lineHeight: 1.4 }}>
+                    {step.desc}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
 
       {/* FOOTER */}
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,0.1)", padding: "20px", textAlign: "center", color: "rgba(255,255,255,0.4)" }}>
+      <footer style={{ textAlign: "center", padding: "20px", color: "rgba(255,255,255,0.4)" }}>
         © {new Date().getFullYear()} SoulTrack
       </footer>
     </div>
