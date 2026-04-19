@@ -104,10 +104,10 @@ export default function HomePage() {
 
   const navItems = [
     { label: "Accueil", path: "/site/HomePage" },
-    { label: "Fonctionnement", path: "/Fonctionnement" },
-    { label: "À propos", path: "/about" },
-    { label: "Pricing", path: "/pricing" },
-    { label: "Contact", path: "/contact" },
+    { label: "Fonctionnement", path: "/site/Fonctionnement" },
+    { label: "À propos", path: "/site/about" },
+    { label: "Pricing", path: "/site/pricing" },
+    { label: "Contact", path: "/site/contact" },
   ];
 
   const offset = -(tIndex * STEP) + CARD_WIDTH + GAP;
