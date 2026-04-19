@@ -23,7 +23,7 @@ export default function CommentCaMarche() {
 
   const navItems = [
     { label: "Accueil", path: "/site/HomePage" },
-    { label: "Process", path: "/site/CommentCaMarche" },
+    { label: "Comment Ca Marche", path: "/site/CommentCaMarche" },
     { label: "À propos", path: "/about" },
     { label: "Pricing", path: "/site/pricing" },
     { label: "Contact", path: "/site/contact" },
@@ -87,8 +87,7 @@ export default function CommentCaMarche() {
         transform: "translateX(-50%)",
         zIndex: 0,
       }} />
-
-      {/* HEADER */}
+    
       {/* ───── HEADER ───── */}
       <header style={{
         background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
