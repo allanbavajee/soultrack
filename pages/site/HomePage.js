@@ -104,7 +104,7 @@ export default function HomePage() {
 
   const navItems = [
     { label: "Accueil", path: "/site/HomePage" },
-    { label: "Process", path: "/CommentCaMarche" },
+    { label: "Fonctionnement", path: "/Fonctionnement" },
     { label: "À propos", path: "/about" },
     { label: "Pricing", path: "/pricing" },
     { label: "Contact", path: "/contact" },
