@@ -23,10 +23,10 @@ export default function CommentCaMarche() {
 
   const navItems = [
     { label: "Accueil", path: "/site/HomePage" },
-    { label: "Process", path: "/CommentCaMarche" },
+    { label: "Process", path: "/site/CommentCaMarche" },
     { label: "À propos", path: "/about" },
-    { label: "Pricing", path: "/pricing" },
-    { label: "Contact", path: "/contact" },
+    { label: "Pricing", path: "/site/pricing" },
+    { label: "Contact", path: "/site/contact" },
   ];
 
  const modules = [
@@ -109,9 +109,9 @@ export default function CommentCaMarche() {
           <nav style={{ display: "flex", alignItems: "center", gap: "32px", zIndex: 1 }}>
             {navItems.map((item) => (
               <span key={item.path} onClick={() => router.push(item.path)}
-                style={{ color: item.path === "/contact" ? "#fbbf24" : "rgba(255,255,255,0.7)", fontSize: "14px", cursor: "pointer", transition: "color 0.2s" }}
+                style={{ color: item.path === "/CommentCaMarche" ? "#fbbf24" : "rgba(255,255,255,0.7)", fontSize: "14px", cursor: "pointer", transition: "color 0.2s" }}
                 onMouseEnter={e => e.currentTarget.style.color = "#fff"}
-                onMouseLeave={e => e.currentTarget.style.color = item.path === "/contact" ? "#fbbf24" : "rgba(255,255,255,0.7)"}
+                onMouseLeave={e => e.currentTarget.style.color = item.path === "site/CommentCaMarche" ? "#fbbf24" : "rgba(255,255,255,0.7)"}
                 className="nav-hide"
               >{item.label}</span>
             ))}
