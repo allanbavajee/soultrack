@@ -171,9 +171,9 @@ export default function CommentCaMarche() {
             justifyContent: "center",
             gap: "40px",
             flexWrap: "wrap",
-            padding: "40px 0"
-          }}>xWrap: "wrap"
-          }}>
+            padding: "40px 0"          
+          }}
+          >
 
           <div
             style={{
